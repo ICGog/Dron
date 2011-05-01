@@ -3,6 +3,7 @@
 -behaviour(application).
 
 -export([start/0, stop/0]).
+-export([start/2, stop/1]).
 
 %-------------------------------------------------------------------------------
 % API
@@ -12,7 +13,7 @@ start() ->
     application:start(dron).
 
 stop() ->
-    % TODO(ionel): stop all the workers
+    dron_master:dettach_all_workers(),
     application:stop(dron).
 
 %-------------------------------------------------------------------------------

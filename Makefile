@@ -4,13 +4,14 @@ export EBIN_DIR=ebin
 export LIB_DIR=lib
 export LOG_DIR=log
 export WWW_DIR=www
-export DRON_NODE=dron_master
+export DRON_NODE=dron
 
 DRON_WORKERS=w1 w2 w3
 INCLUDES=$(wildcard $(INCLUDE_DIR)/*.hrl)
 SOURCES=$(wildcard $(SOURCE_DIR)/*.erl)
 TARGETS=$(patsubst $(SOURCE_DIR)/%.erl, $(EBIN_DIR)/%.beam, $(SOURCES))
 
+ERLC_OPTS=-I $(INCLUDE_DIR) -o $(EBIN_DIR) -Wall -v
 ERL_OPTS=-pa $(EBIN_DIR) -sname $(DRON_NODE) dron
 WORKER_ERL_OPTS=-pa $(EBIN_DIR)
 
@@ -21,7 +22,7 @@ compile: $(TARGETS)
 run: $(TARGETS)
 	$(MAKE) start_workers
 	mkdir -p $(LOG_DIR)
-	erl $(ERL_OPTS)
+	DRON_WORKERS="$(DRON_WORKERS)" erl $(ERL_OPTS)
 	$(MAKE) stop_workers
 
 clean:
@@ -33,12 +34,15 @@ clean:
 start_workers: $(TARGETS)
 	for worker in $(DRON_WORKERS) ; do \
 		echo "Starting worker $$worker" ; \
-		erl_call -sname $$worker
-		done
+		erl_call -sname $$worker -s ; \
+	done
 
 .PHONY: stop_workers
 stop_workers: $(TARGETS)
 	for worker in $(DRON_WORKERS) ; do \
 		echo "Stopping worker $$worker" ; \
 		erl_call -sname $$worker -q ; \
-		done
+	done
+
+$(EBIN_DIR)/%.beam: $(SOURCE_DIR)/%.erl $(INCLUDE)
+	erlc $(ERLC_OPTS) $<

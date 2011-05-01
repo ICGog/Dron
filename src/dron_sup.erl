@@ -21,6 +21,6 @@ start_link() ->
 init([]) ->
     % If more than 0 processes fail within 10 seconds, all processes are
     % restarted, including the supervisor.
-    {{ok, one_for_all, 0, 10},
-     [{master, {dron_master, start_link, []}, permanent, 60,
-       worker, [dron_master]}]}.
+    {ok, {{one_for_all, 0, 10},
+          [{master, {dron_master, start_link, []}, permanent, 60,
+            worker, [dron_master]}]}}.

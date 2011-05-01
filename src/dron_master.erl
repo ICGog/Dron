@@ -5,8 +5,8 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--export([start_link/0, attach_worker/1, dettach_worker/1, auto_attach_workers/0,
-         get_workers/0, send_cmd/1]).
+-export([start_link/0, attach_worker/1, dettach_worker/1, dettach_all_workers/0,
+         auto_attach_workers/0, get_workers/0, send_cmd/1]).
 
 -record(state, {workers = dict:new()}).
 
@@ -25,6 +25,11 @@ attach_worker(Worker) ->
 dettach_worker(Worker) ->
     gen_server:call(?NAME, {dettach, Worker}).
 
+dettach_all_workers() ->
+    Workers = get_workers(),
+    Result = lists:map(fun dettach_worker/1, Workers),
+    lists:zip(Workers, Result).
+
 auto_attach_workers() ->
     [_, Host] = string:tokens(atom_to_list(node()), "@"),
     case os:getenv("DRON_WORKERS") of
@@ -38,7 +43,7 @@ auto_attach_workers() ->
                                       true  -> Worker;
                                       false -> Worker ++ "@" ++ Host
                                   end)
-                        end, string:tokens(WorkersEnv, "\n\t"),
+                        end, string:tokens(WorkersEnv, "\n\t")),
                         Result = lists:map(fun attach_worker/1, Workers),
                         lists:zip(Workers, Result)
     end.
@@ -84,7 +89,7 @@ handle_call(get_all_workers, _From, State = #state{workers = Workers}) ->
 handle_call({send_cmd, Cmd}, _From, State = #state{workers = Workers}) ->
     Worker = pick_worker(Workers),
     {ok, Stdout} = worker:run_cmd(Cmd),
-    io:format("Command: ~s~nOutput: ~s", [Cmd, Stdout])
+    io:format("Command: ~s~nOutput: ~s", [Cmd, Stdout]),
     {reply, ok, State}.
 
 handle_cast({}, _State) ->
@@ -118,5 +123,5 @@ dettach_node(Worker, State = #state{workers = Workers}) ->
 
 pick_worker(Workers) ->
     WList = dict:to_list(Workers),
-    Nth = random:uniform(len(WList)),
+    Nth = random:uniform(length(WList)),
     list:nth(Nth, WList).
