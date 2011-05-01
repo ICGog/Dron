@@ -10,6 +10,7 @@
 %-------------------------------------------------------------------------------
 
 start() ->
+    ok = error_logger:logfile({open, "log/dron.log"}),
     application:start(dron).
 
 stop() ->

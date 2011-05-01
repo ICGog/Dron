@@ -7,12 +7,13 @@ export WWW_DIR=www
 export DRON_NODE=dron
 
 DRON_WORKERS=w1 w2 w3
+ERROR_LOG=$(LOG_DIR)/dron.log
 INCLUDES=$(wildcard $(INCLUDE_DIR)/*.hrl)
 SOURCES=$(wildcard $(SOURCE_DIR)/*.erl)
 TARGETS=$(patsubst $(SOURCE_DIR)/%.erl, $(EBIN_DIR)/%.beam, $(SOURCES))
 
 ERLC_OPTS=-I $(INCLUDE_DIR) -o $(EBIN_DIR) -Wall -v
-ERL_OPTS=-pa $(EBIN_DIR) -sname $(DRON_NODE) dron
+ERL_OPTS=-pa $(EBIN_DIR) -sname $(DRON_NODE)
 WORKER_ERL_OPTS=-pa $(EBIN_DIR)
 
 all: compile

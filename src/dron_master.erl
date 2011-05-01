@@ -43,9 +43,8 @@ auto_attach_workers() ->
                                       true  -> Worker;
                                       false -> Worker ++ "@" ++ Host
                                   end)
-                        end, string:tokens(WorkersEnv, "\n\t")),
-                        Result = lists:map(fun attach_worker/1, Workers),
-                        lists:zip(Workers, Result)
+                        end, string:tokens(WorkersEnv, " \n\t")),
+            lists:zip(Workers, lists:map(fun attach_worker/1, Workers))
     end.
     
 get_workers() ->
@@ -74,13 +73,15 @@ handle_call({attach, W}, _From, State = #state{workers = Ws}) ->
         false -> case net_adm:ping(W) of
                      pong -> NewWs = dict:store(W, #worker{worker = W}, Ws),
                              NewState = State#state{workers = NewWs},
+                             error_logger:info_msg("Worker attached: ~p", [W]),
                              {reply, ok, NewState};
                      _    -> {reply, {error, no_connection}, State}
                  end
     end;
-handle_call({dettach, Worker}, _From, State = #state{workers = Workers}) ->
-    case dict:is_key(Worker, Workers) of
-        true  -> {Reply, NewState} = dettach_node(Worker, State),
+handle_call({dettach, W}, _From, State = #state{workers = Ws}) ->
+    case dict:is_key(W, Ws) of
+        true  -> {Reply, NewState} = dettach_worker(W, State),
+                 error_logger:info_msg("Worker dettached: ~p", [W]),
                  {reply, Reply, NewState};
         false -> {reply, {error, not_attached}, State}
     end;
@@ -104,7 +105,11 @@ terminate(_Reason, _State) ->
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
-dettach_node(Worker, State = #state{workers = Workers}) ->
+%-------------------------------------------------------------------------------
+% Internal
+%-------------------------------------------------------------------------------
+
+dettach_worker(Worker, State = #state{workers = Workers}) ->
     Reply =
         case dict:fetch(Worker, Workers) of
             #worker{task_pid = none}    ->
@@ -117,10 +122,6 @@ dettach_node(Worker, State = #state{workers = Workers}) ->
         end,
     {Reply, State#state{workers = dict:erase(Worker, Workers)}}.
                           
-%-------------------------------------------------------------------------------
-% Internal
-%-------------------------------------------------------------------------------
-
 pick_worker(Workers) ->
     WList = dict:to_list(Workers),
     Nth = random:uniform(length(WList)),
