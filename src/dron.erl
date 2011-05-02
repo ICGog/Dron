@@ -23,7 +23,9 @@ stop() ->
 
 start(_Type, _Args) ->
     {ok, Sup} = dron_sup:start_link(),
-    ResAttach = dron_master:auto_attach_workers(),
+    dron_mnesia:start(),
+    dron_mnesia:create_job_table(),
+    dron_master:auto_attach_workers(),
     {ok, Sup}.
 
 stop(_State) ->

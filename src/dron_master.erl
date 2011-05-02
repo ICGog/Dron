@@ -6,7 +6,9 @@
 	 terminate/2, code_change/3]).
 
 -export([start_link/0, attach_worker/1, dettach_worker/1, dettach_all_workers/0,
-         auto_attach_workers/0, get_workers/0, send_cmd/1]).
+         auto_attach_workers/0, get_workers/0, add_job/1, add_job/2]).
+
+-include("dron.hrl").
 
 -record(state, {workers = dict:new()}).
 
@@ -50,9 +52,16 @@ auto_attach_workers() ->
 get_workers() ->
     gen_server:call(?NAME, get_all_workers).
 
-send_cmd(Command) ->
-    gen_server:call(?NAME, {send_cmd, Command}).
+add_job(Job) ->
+    gen_server:call(?NAME, {add_job, Job}).
 
+add_job(Id, Cmd) ->
+    gen_server:call(?NAME, {add_job, #dron_job{id = Id,
+                                               state = waiting,
+                                               started_on = not_yet,
+                                               ended_on = not_yet,
+                                               cmd = Cmd}}).
+                                               
 %-------------------------------------------------------------------------------
 % Internal API
 %-------------------------------------------------------------------------------
@@ -87,11 +96,11 @@ handle_call({dettach, W}, _From, State = #state{workers = Ws}) ->
     end;
 handle_call(get_all_workers, _From, State = #state{workers = Workers}) ->
     {reply, dict:fetch_keys(Workers), State};
-handle_call({send_cmd, Cmd}, _From, State = #state{workers = Workers}) ->
-    Worker = pick_worker(Workers),
-    {ok, Stdout} = worker:run_cmd(Cmd),
-    io:format("Command: ~s~nOutput: ~s", [Cmd, Stdout]),
-    {reply, ok, State}.
+handle_call({add_job, Job}, _From, State = #state{workers = Workers}) ->
+    case dron_mnesia:put_job(Job) of
+        {aborted, Reason} -> {reply, {aborted, Reason}, State};
+        _                 -> {reply, ok, State}
+    end.
 
 handle_cast({}, _State) ->
     not_implemented.
