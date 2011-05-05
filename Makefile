@@ -35,7 +35,7 @@ clean:
 start_workers: $(TARGETS)
 	for worker in $(DRON_WORKERS) ; do \
 		echo "Starting worker $$worker" ; \
-		erl_call -sname $$worker -s ; \
+		echo 'code:add_pathsa(["$(realpath $(EBIN_DIR))"]).' | erl_call -sname $$worker -s -e ; \
 	done
 
 .PHONY: stop_workers

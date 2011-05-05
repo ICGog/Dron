@@ -1,6 +1,11 @@
 -module(dron_worker).
 
--export([get_cmd/0]).
+-export([run_cmd/2]).
 
-get_cmd() ->
+run_cmd(Cmd, Master) ->
+    Output = os:cmd(Cmd),
+    case Status = os:cmd("$?") of
+        "0" -> Master ! {ok, Output};
+        _   -> Master ! {error, Output}
+    end,
     ok.

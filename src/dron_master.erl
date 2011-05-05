@@ -12,7 +12,7 @@
 
 -record(state, {workers = dict:new()}).
 
--record(worker, {worker,
+-record(worker, {name,
                  task_pid = none}).
 
 -define(NAME, {global, ?MODULE}).
@@ -80,7 +80,7 @@ handle_call({attach, W}, _From, State = #state{workers = Ws}) ->
     case dict:is_key(W, Ws) of
         true  -> {reply, {error, already_attached}, State};
         false -> case net_adm:ping(W) of
-                     pong -> NewWs = dict:store(W, #worker{worker = W}, Ws),
+                     pong -> NewWs = dict:store(W, #worker{name = W}, Ws),
                              NewState = State#state{workers = NewWs},
                              error_logger:info_msg("Worker attached: ~p", [W]),
                              {reply, ok, NewState};
@@ -100,7 +100,16 @@ handle_call({add_job, Job}, _From, State = #state{workers = Workers}) ->
     case dron_mnesia:put_job(Job) of
         {aborted, Reason} -> {reply, {aborted, Reason}, State};
         _                 -> {reply, ok, State}
-    end.
+    end,
+    Worker = pick_worker(Workers),
+    spawn_link(Worker#worker.name, dron_worker, run_cmd, [Job#dron_job.cmd, self()]),
+    receive 
+        {ok, Output}    ->
+            io:format("OK: ~p", [Output]);
+        {error, Output} ->
+            io:format("ERROR: ~p", [Output])
+    end,
+    {reply, ok, State}.
 
 handle_cast({}, _State) ->
     not_implemented.
@@ -134,4 +143,5 @@ dettach_worker(Worker, State = #state{workers = Workers}) ->
 pick_worker(Workers) ->
     WList = dict:to_list(Workers),
     Nth = random:uniform(length(WList)),
-    list:nth(Nth, WList).
+    {_, Worker} = lists:nth(Nth, WList),
+    Worker.
