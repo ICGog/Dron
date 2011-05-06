@@ -5,8 +5,9 @@
 -export([init/1, handle_cast/2, handle_call/3, handle_info/2, terminate/2,
         code_change/3]).
 
--export([attach_worker/1, dettach_worker/1, dettach_workers/0,
-         auto_attach_workers/0, get_workers/0]).
+-export([pspawn/3, pspawn_link/3, pspawn/4, start_link/0, attach_worker/1,
+         dettach_worker/1, dettach_workers/0, auto_attach_workers/0, 
+         get_workers/0]).
 
 -record(state, {workers = dict:new()}).
 
@@ -57,6 +58,15 @@ get_workers() ->
 start_link() ->
     gen_server:start_link(?NAME, ?MODULE, [], []).
 
+pspawn(Module, Function, Args) ->
+    pspawn(Module, Function, Args, false).
+
+pspawn_link(Module, Function, Args) ->
+    pspawn(Module, Function, Args, {true, self()}).
+
+pspawn(Module, Function, Args, Link) ->
+    gen_server:call(?NAME, {spawn, {Module, Function, Args}, Link}).
+
 %-------------------------------------------------------------------------------
 % Handlers
 %-------------------------------------------------------------------------------
@@ -82,13 +92,28 @@ handle_call({dettach, W}, _From, State = #state{workers = Ws}) ->
                  {reply, Reply, NewState};
         false -> {reply, {error, not_attached}, State}
     end;
-handle_call(get_all, _From, State = #state{workers = Workers}) ->
+handle_call(get_workers, _From, State = #state{workers = Workers}) ->
     {reply, dict:fetch_keys(Workers), State};
+handle_call({spawn, {Module, Function, Args} = MFA, Link}, _From,
+            State = #state{workers = Workers}) ->
+    Worker = pick_worker(Workers),
+    Pid = spawn(Worker, ?MODULE, , [MFA, Link, self()]),
+    Monitor = erlang:monitor(process, Pid),
+    receive
+        {started, Pid} ->
+            % Continue here
+    
 
 handle_cast({}, _State) ->
     not_implemented.
 
-handle_info(_Call, State) ->
+handle_info({'DOWN', _, process, Pid, noconnection}, State) ->
+    error_logger:error_msg("No connection to ~p", [node(Pid)]),
+    % What should we do when there is no connection?
+    {noreply, State},
+handle_info({'DOWN', _, process, Pid, noproc}, State) ->
+    error_logger:error_msg("Failed to start on ~p", [node(Pid)]),
+    % What should we do when the proc fails to start?
     {noreply, State}.
 
 code_change(_OldVsn, State, _Extra) ->
