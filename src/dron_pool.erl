@@ -7,9 +7,10 @@
 
 -export([pspawn/3, pspawn_link/3, pspawn/4, start_link/0, attach_worker/1,
          dettach_worker/1, dettach_workers/0, auto_attach_workers/0, 
-         get_workers/0]).
+         get_workers/0, kill_worker/1, kill_workers/0]).
 
--record(state, {workers = dict:new()}).
+-record(state, {workers = dict:new(),
+                free_workers = dict:new()}).
 
 -record(worker, {worker,
                  task_pid = none}).
@@ -51,6 +52,12 @@ auto_attach_workers() ->
 get_workers() ->
     gen_server:call(?NAME, get_workers).
 
+kill_worker(Worker) ->
+    gen_server:call(?NAME, {kill, Worker}).
+
+kill_workers() ->
+    gen_server:call(?NAME, kill_workers).
+
 %-------------------------------------------------------------------------------
 % Internal API
 %-------------------------------------------------------------------------------
@@ -74,36 +81,62 @@ pspawn(Module, Function, Args, Link) ->
 init([]) ->
     {ok, #state{}}.
 
-handle_call({attach, W}, _From, State = #state{workers = Ws}) ->
-    case dict:is_key(W, Ws) of
+handle_call({attach, W}, _From, State = #state{workers = Ws,
+                                               free_workers = FWs}) ->
+    case dict:is_key(W, Ws) or dict:is_key(W, FWS) of
         true  -> {reply, {error, already_attached}, State};
         false -> case net_adm:ping(W) of
-                     pong -> NewWs = dict:store(W, #worker{name = W}, Ws),
-                             NewState = State#state{workers = NewWs},
+                     pong -> NewWs = dict:store(W, #worker{name = W}, FWs),
+                             NewState = State#state{free_workers = NewWs},
                              error_logger:info_msg("Worker attached: ~p", [W]),
                              {reply, ok, NewState};
                      _    -> {reply, {error, no_connection}, State}
                  end
     end;
-handle_call({dettach, W}, _From, State = #state{workers = Ws}) ->
-    case dict:is_key(W, Ws) of
+handle_call({dettach, W}, _From, State = #state{workers = Ws,
+                                                free_workers = FWS}) ->
+    case dict:is_key(W, FWs) or dict:is_key(W, Ws) of
         true  -> {Reply, NewState} = dettach_worker(W, State),
                  error_logger:info_msg("Worker dettached: ~p", [W]),
                  {reply, Reply, NewState};
         false -> {reply, {error, not_attached}, State}
     end;
-handle_call(get_workers, _From, State = #state{workers = Workers}) ->
-    {reply, dict:fetch_keys(Workers), State};
-handle_call({spawn, {Module, Function, Args} = MFA, Link}, _From,
-            State = #state{workers = Workers}) ->
-    Worker = pick_worker(Workers),
-    Pid = spawn(Worker, ?MODULE, , [MFA, Link, self()]),
+handle_call(get_workers, _From, State = #state{workers = Ws
+                                               free_workers = FWs}) ->
+    {reply, lists:append(dict:fetch_keys(Ws), 
+                         dict:fetch_keys(FWs), State};
+handle_call({kill, Worker}, _From, State) ->
+    {Reply, NewState} = kill_worker(Worker, State),
+    {reply, Reply, NewState};
+handle_call(kill_workers, _From, State = #state{workers = Ws,
+                                                free_workers = FWs}) ->
+    NewState = dict:fold(fun (W, _, CurState) ->
+                                 quick_kill_worker(W, CurState)
+                         end, State, dict:fetch_keys(Ws)),
+    FinalState = dict:fold(fun (W, _, CurState) ->
+                                   quick_kill_worker(W, CurState)
+                           end, NewState, dict:fetch_keys(FWs)),
+    {reply, ok, FinalState};
+handle_call({spawn, {Module, Function, Args} = MFA, Link}, From,
+            State = #state{workers = Ws, free_workers = FWs}) ->
+    % TODO(ionel): Queue the requests when there are no workers.
+    Worker = pick_worker(FWs),
+    Pid = spawn(Worker, ?MODULE, worker_init, [MFA, Link, self()]),
     Monitor = erlang:monitor(process, Pid),
     receive
-        {started, Pid} ->
-            % Continue here
-    
-
+        {started, Pid} -> 
+            NewFWs = dict:erase(Worker, FWs),
+            NewWs = dict:store(#worker{worker = Worker,
+                                       task_pid = Pid},
+                               Ws),
+            {reply, State#state{workers = NewWs, free_workers = NewFWs}};
+        {'DOWN', Monitor, process, Pid, Reason} ->
+            case Link of {true, Caller} -> exit(Caller, Reason);
+                         false          -> ok
+            end,
+            {reply, {error, could_not_spawn}, State}
+    end.
+        
 handle_cast({}, _State) ->
     not_implemented.
 
@@ -126,19 +159,47 @@ terminate(_Reason, _State) ->
 % Internal
 %-------------------------------------------------------------------------------
 
-dettach_worker(Worker, State = #state{workers = Workers}) ->
+dettach_worker(Worker, State = #state{workers = Ws,
+                                      free_workers = FWs}) ->
     Reply =
-        case dict:fetch(Worker, Workers) of
-            #worker{task_pid = none}    ->
-                ok;
-            #worker{task_pid = TaskPid} ->
-                exit(TaskPid, kill),
-                receive {'DOWN', _, process, TaskPid, _} -> ok
-                after 10000 -> {error, timed_out_waiting_task_pid_down}
-                end
+        case dict:is_key(Worker, FWs) of
+            true  -> dict:erase(Worker, FWs),
+                     ok;
+            false -> case dict:fetch(Worker, Ws) of
+                         #worker{task_pid = none}    ->
+                             ok;
+                         #worker{task_pid = TaskPid} ->
+                             error_logger:info_msg("Killed task on worker ~p",
+                                                   [node(TaskPid)])
+                                 exit(TaskPid, kill),
+                             receive {'DOWN', _, process, TaskPid, _} -> ok
+                             after 10000 -> {error,
+                                             timed_out_waiting_task_pid_down}
+                             end
+                     end,
         end,
-    {Reply, State#state{workers = dict:erase(Worker, Workers)}}.
-                          
+    {Reply, State#state{workers = Ws, free_workers = FWs}}.
+        
+kill_worker(Worker, State = #state{workers = Ws}) ->
+    case dict:is_key(Worker, Ws) of
+        true  -> error_logger:info_msg("Killing node ~p", [Worker]),
+                 rpc:call(Worker, init, stop, []),
+                 receive {nodedown, Worker} ->
+                         {ok, State#state{workers = dict:erase(Worker, Ws)}}
+                 after 10000 ->
+                         monitor_node(Worker, false),
+                         {{error, timeout_on_killing}, State}
+                 end;
+        false -> {{error, nothing_running}, State}
+    end.
+       
+quick_kill_worker(Worker, State = #state{workers = Ws,
+                                         free_workers = FWs}) ->
+    monitor_node(Worker, false),
+    rpc:cast(Worker, erlang, halt, []),
+    State#state{workers = dict:erase(Worker, Ws),
+                free_workers = dict:erase(Worker, FWs)}.
+           
 pick_worker(Workers) ->
     WList = dict:to_list(Workers),
     Nth = random:uniform(length(WList)),
