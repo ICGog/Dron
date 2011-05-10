@@ -204,3 +204,11 @@ pick_worker(Workers) ->
     Nth = random:uniform(length(WList)),
     {_, Worker} = lists:nth(Nth, WList),
     Worker.
+
+worker_init({M, F, A}, Link, PoolPid) ->
+    case Link of
+        {true, Caller} -> link(Caller);
+        false          -> ok
+    end,
+    PoolPid ! {started, self()},
+    apply(M, F, A).
