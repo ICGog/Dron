@@ -83,18 +83,18 @@ init([]) ->
 
 handle_call({attach, W}, _From, State = #state{workers = Ws,
                                                free_workers = FWs}) ->
-    case dict:is_key(W, Ws) or dict:is_key(W, FWS) of
+    case dict:is_key(W, Ws) or dict:is_key(W, FWs) of
         true  -> {reply, {error, already_attached}, State};
         false -> case net_adm:ping(W) of
-                     pong -> NewWs = dict:store(W, #worker{name = W}, FWs),
-                             NewState = State#state{free_workers = NewWs},
+                     pong -> NewFWs = dict:store(W, #worker{name = W}, FWs),
+                             NewState = State#state{free_workers = NewFWs},
                              error_logger:info_msg("Worker attached: ~p", [W]),
                              {reply, ok, NewState};
                      _    -> {reply, {error, no_connection}, State}
                  end
     end;
 handle_call({dettach, W}, _From, State = #state{workers = Ws,
-                                                free_workers = FWS}) ->
+                                                free_workers = FWs}) ->
     case dict:is_key(W, FWs) or dict:is_key(W, Ws) of
         true  -> {Reply, NewState} = dettach_worker(W, State),
                  error_logger:info_msg("Worker dettached: ~p", [W]),
@@ -112,10 +112,10 @@ handle_call(kill_workers, _From, State = #state{workers = Ws,
                                                 free_workers = FWs}) ->
     NewState = dict:fold(fun (W, _, CurState) ->
                                  quick_kill_worker(W, CurState)
-                         end, State, dict:fetch_keys(Ws)),
+                         end, State, Ws),
     FinalState = dict:fold(fun (W, _, CurState) ->
                                    quick_kill_worker(W, CurState)
-                           end, NewState, dict:fetch_keys(FWs)),
+                           end, NewState, FWs),
     {reply, ok, FinalState};
 handle_call({spawn, {Module, Function, Args} = MFA, Link}, From,
             State = #state{workers = Ws, free_workers = FWs}) ->
@@ -142,11 +142,11 @@ handle_cast({}, _State) ->
 
 handle_info({'DOWN', _, process, Pid, noconnection}, State) ->
     error_logger:error_msg("No connection to ~p", [node(Pid)]),
-    % What should we do when there is no connection?
+    % TODO(ionel): What should we do when there is no connection?
     {noreply, State},
 handle_info({'DOWN', _, process, Pid, noproc}, State) ->
     error_logger:error_msg("Failed to start on ~p", [node(Pid)]),
-    % What should we do when the proc fails to start?
+    % TODO(ionel): What should we do when the proc fails to start?
     {noreply, State}.
 
 code_change(_OldVsn, State, _Extra) ->
@@ -161,28 +161,27 @@ terminate(_Reason, _State) ->
 
 dettach_worker(Worker, State = #state{workers = Ws,
                                       free_workers = FWs}) ->
-    Reply =
-        case dict:is_key(Worker, FWs) of
-            true  -> dict:erase(Worker, FWs),
-                     ok;
-            false -> case dict:fetch(Worker, Ws) of
-                         #worker{task_pid = none}    ->
-                             ok;
-                         #worker{task_pid = TaskPid} ->
-                             error_logger:info_msg("Killed task on worker ~p",
-                                                   [node(TaskPid)])
+    case dict:is_key(Worker, FWs) of
+        true  -> {ok, State#state{free_workers = dict:erase(Worker, FWs)}};
+        false -> Reply = case dict:fetch(Worker, Ws) of
+                             #worker{task_pid = none}    ->
+                                 ok;
+                             #worker{task_pid = TaskPid} ->
+                                 error_logger:info_msg(
+                                   "Killed task on worker ~p",
+                                   [node(TaskPid)]),
                                  exit(TaskPid, kill),
-                             receive {'DOWN', _, process, TaskPid, _} -> ok
-                             after 10000 -> {error,
-                                             timed_out_waiting_task_pid_down}
-                             end
-                     end,
-        end,
-    {Reply, State#state{workers = Ws, free_workers = FWs}}.
+                                 receive {'DOWN', _, process, TaskPid, _} -> ok
+                                 after 10000 -> {error,
+                                                 timed_out_waiting_worker_down}
+                                 end
+                         end,
+                 {Reply, State#state{workers = dict:erase(Worker, Ws)}}
+    end.
         
 kill_worker(Worker, State = #state{workers = Ws}) ->
     case dict:is_key(Worker, Ws) of
-        true  -> error_logger:info_msg("Killing node ~p", [Worker]),
+        true  -> error_logger:info_msg("Killing worker ~p", [Worker]),
                  rpc:call(Worker, init, stop, []),
                  receive {nodedown, Worker} ->
                          {ok, State#state{workers = dict:erase(Worker, Ws)}}
