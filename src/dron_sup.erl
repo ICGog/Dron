@@ -23,6 +23,6 @@ init([]) ->
     % restarted, including the supervisor.
     {ok, {{one_for_all, 0, 10},
           [{master, {dron_master, start_link, []}, permanent, 60,
-            worker, [dron_master]}],
-          [{pool, {dron_pool, start_link, []}, permanent, 60,
+            worker, [dron_master]},
+           {pool, {dron_pool, start_link, []}, permanent, 60,
             worker, [dron_pool]}]}}.

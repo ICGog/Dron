@@ -121,7 +121,8 @@ handle_call({spawn, MFA, Link}, _From, State = #state{workers = Ws,
                                                       free_workers = FWs}) ->
     % TODO(ionel): Queue the requests when there are no workers.
     Worker = pick_worker(FWs),
-    Pid = spawn(Worker, ?MODULE, worker_init, [MFA, Link, self()]),
+    Pid = spawn(Worker#worker.worker, ?MODULE, worker_init,
+                [MFA, Link, self()]),
     Monitor = erlang:monitor(process, Pid),
     receive
         {started, Pid} -> 

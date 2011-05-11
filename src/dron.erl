@@ -14,7 +14,8 @@ start() ->
     application:start(dron).
 
 stop() ->
-    dron_master:dettach_all_workers(),
+    dron_pool:kill_workers(),
+    dron_pool:dettach_workers(),
     application:stop(dron).
 
 %-------------------------------------------------------------------------------
@@ -25,7 +26,7 @@ start(_Type, _Args) ->
     {ok, Sup} = dron_sup:start_link(),
     dron_mnesia:start(),
     dron_mnesia:create_job_table(),
-    dron_master:auto_attach_workers(),
+    dron_pool:auto_attach_workers(),
     {ok, Sup}.
 
 stop(_State) ->
