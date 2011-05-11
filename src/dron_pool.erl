@@ -7,7 +7,7 @@
 
 -export([pspawn/3, pspawn_link/3, pspawn/4, start_link/0, attach_worker/1,
          dettach_worker/1, dettach_workers/0, auto_attach_workers/0, 
-         get_workers/0, kill_worker/1, kill_workers/0]).
+         get_workers/0, kill_worker/1, kill_workers/0, worker_init/3]).
 
 -record(state, {workers = dict:new(),
                 free_workers = dict:new()}).
@@ -86,7 +86,7 @@ handle_call({attach, W}, _From, State = #state{workers = Ws,
     case dict:is_key(W, Ws) or dict:is_key(W, FWs) of
         true  -> {reply, {error, already_attached}, State};
         false -> case net_adm:ping(W) of
-                     pong -> NewFWs = dict:store(W, #worker{name = W}, FWs),
+                     pong -> NewFWs = dict:store(W, #worker{worker = W}, FWs),
                              NewState = State#state{free_workers = NewFWs},
                              error_logger:info_msg("Worker attached: ~p", [W]),
                              {reply, ok, NewState};
@@ -101,10 +101,10 @@ handle_call({dettach, W}, _From, State = #state{workers = Ws,
                  {reply, Reply, NewState};
         false -> {reply, {error, not_attached}, State}
     end;
-handle_call(get_workers, _From, State = #state{workers = Ws
+handle_call(get_workers, _From, State = #state{workers = Ws,
                                                free_workers = FWs}) ->
     {reply, lists:append(dict:fetch_keys(Ws), 
-                         dict:fetch_keys(FWs), State};
+                         dict:fetch_keys(FWs)), State};
 handle_call({kill, Worker}, _From, State) ->
     {Reply, NewState} = kill_worker(Worker, State),
     {reply, Reply, NewState};
@@ -117,8 +117,8 @@ handle_call(kill_workers, _From, State = #state{workers = Ws,
                                    quick_kill_worker(W, CurState)
                            end, NewState, FWs),
     {reply, ok, FinalState};
-handle_call({spawn, {Module, Function, Args} = MFA, Link}, From,
-            State = #state{workers = Ws, free_workers = FWs}) ->
+handle_call({spawn, MFA, Link}, _From, State = #state{workers = Ws,
+                                                      free_workers = FWs}) ->
     % TODO(ionel): Queue the requests when there are no workers.
     Worker = pick_worker(FWs),
     Pid = spawn(Worker, ?MODULE, worker_init, [MFA, Link, self()]),
@@ -143,7 +143,7 @@ handle_cast({}, _State) ->
 handle_info({'DOWN', _, process, Pid, noconnection}, State) ->
     error_logger:error_msg("No connection to ~p", [node(Pid)]),
     % TODO(ionel): What should we do when there is no connection?
-    {noreply, State},
+    {noreply, State};
 handle_info({'DOWN', _, process, Pid, noproc}, State) ->
     error_logger:error_msg("Failed to start on ~p", [node(Pid)]),
     % TODO(ionel): What should we do when the proc fails to start?

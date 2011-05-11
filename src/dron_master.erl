@@ -9,11 +9,6 @@
 
 -include("dron.hrl").
 
--record(state, {workers = dict:new()}).
-
--record(worker, {name,
-                 task_pid = none}).
-
 -define(NAME, {global, ?MODULE}).
 
 %-------------------------------------------------------------------------------
@@ -42,22 +37,14 @@ start_link() ->
 %------------------------------------------------------------------------------
 
 init([]) ->
-    {ok, #state{}}.
+    {ok, []}.
 
-handle_call({add_job, Job}, _From, State = #state{workers = Workers}) ->
+handle_call({add_job, Job}, _From, State) ->
     case dron_mnesia:put_job(Job) of
         {aborted, Reason} -> {reply, {aborted, Reason}, State};
-        _                 -> {reply, ok, State}
-    end,
-    Worker = pick_worker(Workers),
-    spawn_link(Worker#worker.name, dron_worker, run_cmd, [Job#dron_job.cmd, self()]),
-    receive 
-        {ok, Output}    ->
-            io:format("OK: ~p", [Output]);
-        {error, Output} ->
-            io:format("ERROR: ~p", [Output])
-    end,
-    {reply, ok, State}.
+        _                 -> dron_task:start_link(Job),
+                             {reply, ok, State}
+    end.
 
 handle_cast({}, _State) ->
     not_implemented.

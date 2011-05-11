@@ -1,9 +1,13 @@
 -module(dron_task).
 
--export([start_link/, run/2]).
+-export([start_link/1]).
+
+-export([spawn_loop/3, run/2]).
 
 -include("dron.hrl").
 
+%-------------------------------------------------------------------------------
+% API
 %-------------------------------------------------------------------------------
 
 start_link(Job) ->
@@ -11,10 +15,14 @@ start_link(Job) ->
                          spawn_loop([Job], 0, none)
                end).
 
+%-------------------------------------------------------------------------------
+% Internal
+%-------------------------------------------------------------------------------
+
 spawn_loop(_, 10, Reason) ->
     exit({max_failures, Reason});
 spawn_loop(Args, NFail, _Reason) ->
-    Pid = dron_pool:pspawn_link(dron_task, run, [Args + self()]),
+    Pid = dron_pool:pspawn_link(dron_task, run, Args ++ self()),
     receive
         {'EXIT', Pid, normal} ->
             ok;
@@ -28,10 +36,10 @@ spawn_loop(Args, NFail, _Reason) ->
                         Output
      end.
 
-run(Cmd, Tasklet) ->
+run(Cmd, TaskPid) ->
     Output = os:cmd(Cmd),
-    case Status = os:cmd("$?") of
-        "0" -> Tasklet ! {ok, Output};
-        _   -> Tasklet ! {error, Output}
+    case os:cmd("$?") of
+        "0" -> TaskPid ! {ok, Output};
+        _   -> TaskPid ! {error, Output}
     end,
     ok.
