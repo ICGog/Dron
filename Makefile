@@ -16,8 +16,6 @@ ERLC_OPTS=-I $(INCLUDE_DIR) -o $(EBIN_DIR) -Wall -v
 ERL_OPTS=-pa $(EBIN_DIR) -sname $(DRON_NODE)
 WORKER_ERL_OPTS=-pa $(EBIN_DIR)
 
-all: compile
-
 compile: $(TARGETS)
 
 run: $(TARGETS)
@@ -35,7 +33,8 @@ clean:
 start_workers: $(TARGETS)
 	for worker in $(DRON_WORKERS) ; do \
 		echo "Starting worker $$worker" ; \
-		echo 'code:add_pathsa(["$(realpath $(EBIN_DIR))"]).' | erl_call -sname $$worker -s -e ; \
+		echo 'code:add_pathsa(["$(realpath $(EBIN_DIR))"]).' | \
+		erl_call -sname $$worker -s -e ; \
 	done
 
 .PHONY: stop_workers
