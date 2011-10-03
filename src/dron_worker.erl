@@ -1,5 +1,5 @@
 -module(dron_worker).
--author('Ionel Corneliu Gog').
+-author("Ionel Corneliu Gog").
 -include("dron.hrl").
 -behaviour(gen_server).
 
@@ -8,8 +8,6 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3]).
 
-%--------------------------------------------------------------------------------
-% API
 %--------------------------------------------------------------------------------
 
 start_worker() ->
@@ -23,12 +21,16 @@ run(Cmd) ->
 %--------------------------------------------------------------------------------
 
 init([]) ->
-    {ok}.
+    {ok, []}.
 
 handle_call(_Request, _From, _State) ->
     not_implemented.
 
-handle_cast({run, Cmd}, _State) ->
+handle_cast({run, Cmd}, State) ->
+    Output = os:cmd(Cmd),
+    file:write_file("output", io_lib:fwrite("~p", [Output])),
+    {noreply, State};
+handle_cast(_Request, _State) ->
     not_implemented.
 
 handle_info(_Info, _State) ->
