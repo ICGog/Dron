@@ -3,7 +3,7 @@
 -include("dron.hrl").
 
 -export([start/0, stop/0]).
--export([create_job_table/0, delete_job_table/0]).
+-export([create_job_table/0, delete_table/1]).
 
 %-------------------------------------------------------------------------------
 
