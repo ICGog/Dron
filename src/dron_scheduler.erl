@@ -6,13 +6,13 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3]).
 
--export([start_scheduler/0, schedule/1, unschedule/1]).
+-export([start/0, schedule/1, unschedule/1]).
 
 -record(timers, {timers = dict:new()}).
 
 %-------------------------------------------------------------------------------
 
-start_scheduler() ->
+start() ->
     gen_server:start_link(?NAME, ?MODULE, [], []).
 
 schedule(Job) ->
@@ -55,5 +55,8 @@ code_change(_OldVsn, State, _Extra) ->
 terminate(_Reason, _State) ->
     ok.
 
-run_instance(Job) ->
-    not_implemented.
+run_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout}) ->
+    dron_mnesia:write(#job_instance{name = Name, cmd_line = Cmd,
+                                    timeout = Timeout, run_time = time()}),
+    Worker = dron_pool:get_worker(),
+    dron_worker:run_cmd({global, Worker}, Cmd).

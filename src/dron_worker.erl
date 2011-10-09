@@ -3,18 +3,18 @@
 -include("dron.hrl").
 -behaviour(gen_server).
 
--export([start_worker/0, run/1]).
+-export([start/1, run/2]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3]).
 
 %--------------------------------------------------------------------------------
 
-start_worker() ->
-    gen_server:start_link(?NAME, ?MODULE, [], []).
+start(WName) ->
+    gen_server:start_link(WName, ?MODULE, [], []).
 
-run(Cmd) ->
-    gen_server:cast(?NAME, {run, Cmd}).
+run(WName, Cmd) ->
+    gen_server:cast(WName, {run, Cmd}).
 
 %--------------------------------------------------------------------------------
 % Internal
