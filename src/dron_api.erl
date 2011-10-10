@@ -7,7 +7,10 @@
 %-------------------------------------------------------------------------------
 
 register_job(Job) ->
-    mnesia:write(Job),
+    Trans = fun() ->
+                    mnesia:write(Job)
+            end,
+    mnesia:transaction(Trans),
     dron_scheduler:schedule(Job).
 
 unregister_job(Job) ->

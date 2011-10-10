@@ -11,10 +11,10 @@
 %--------------------------------------------------------------------------------
 
 start(WName) ->
-    gen_server:start_link(WName, ?MODULE, [], []).
+    gen_server:start_link({global, WName}, ?MODULE, [], []).
 
 run(WName, Cmd) ->
-    gen_server:cast(WName, {run, Cmd}).
+    gen_server:cast({global, WName}, {run, Cmd}).
 
 %--------------------------------------------------------------------------------
 % Internal

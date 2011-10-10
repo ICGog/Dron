@@ -13,17 +13,21 @@ SOURCES=$(wildcard $(SOURCE_DIR)/*.erl)
 TARGETS=$(patsubst $(SOURCE_DIR)/%.erl, $(EBIN_DIR)/%.beam, $(SOURCES))
 
 ERLC_OPTS=-I $(INCLUDE_DIR) -o $(EBIN_DIR) -Wall -v
-ERL_OPTS=-pa $(EBIN_DIR) -sname $(DRON_NODE)
+ERL_OPTS=-pa $(EBIN_DIR) -I $(INCLUDE_DIR) -sname $(DRON_NODE) -s dron
 WORKER_ERL_OPTS=-pa $(EBIN_DIR)
+
+all: compile
 
 compile: $(TARGETS)
 
 run: $(TARGETS)
 	$(MAKE) start_workers
 	mkdir -p $(LOG_DIR)
-	DRON_WORKERS="$(DRON_WORKERS)" erl $(ERL_OPTS)
+	DRON_WORKERS="$(DRON_WORKERS)" WORKER_ERL_OPTS="$(WORKER_ERL_OPTS)" \
+	erl $(ERL_OPTS)
 	$(MAKE) stop_workers
 
+.PHONY: clean
 clean:
 	rm -f $(TARGETS)
 	rm -rf $(LOG_DIR)
@@ -44,5 +48,9 @@ stop_workers: $(TARGETS)
 		erl_call -sname $$worker -q ; \
 	done
 
-$(EBIN_DIR)/%.beam: $(SOURCE_DIR)/%.erl $(INCLUDE)
+################################################################################
+# Internal
+################################################################################
+
+$(EBIN_DIR)/%.beam: $(SOURCE_DIR)/%.erl $(INCLUDES)
 	erlc $(ERLC_OPTS) $<

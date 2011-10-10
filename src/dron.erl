@@ -19,11 +19,11 @@ stop() ->
 %-------------------------------------------------------------------------------
 
 start(_Type, _Args) ->
-    ok = error_logger:logfile({open, "log/dron.log"}),
+    error_logger:logfile({open, "log/dron.log"}),
     dron_mnesia:start(),
     dron_pool:start(),
     dron_scheduler:start(),
-    {ok}.
+    ok.
 
 stop(_State) ->
     dron_mnesia:stop(),

@@ -4,4 +4,4 @@
 
 -record(archive_job, {name, version, cmd_line, start_time, frequency, timeout}).
 
--define(NAME, {global, node()}).
+-define(NAME, {global, ?MODULE}).

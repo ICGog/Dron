@@ -9,15 +9,16 @@
 
 start() ->
     ok = mnesia:create_schema([node()]),
+    ok = mnesia:start(),
     create_jobs_table(),
     create_job_instances_table(),
-    ok = mnesia:start().
+    ok.
 
 stop() ->
-    stopped = mnesia:stop(),
     delete_table(jobs),
     delete_table(job_instances),
-    ok = mnesia:delete_schema([node()]).
+    ok = mnesia:delete_schema([node()]),
+    stopped = mnesia:stop().
 
 create_jobs_table() ->
     {atomic, ok} =
