@@ -20,7 +20,7 @@ stop() ->
 
 start(_Type, _Args) ->
     error_logger:logfile({open, "log/dron.log"}),
-    dron_mnesia:start(),
+    dron_mnesia:start([node()], [{n_ram_copies, 1}]),
     dron_pool:start(),
     dron_scheduler:start(),
     ok.
