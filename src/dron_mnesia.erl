@@ -31,9 +31,6 @@ stop_node(Node) ->
     ok = mnesia:delete_schema([Node]),
     ok = rpc:call(Node, mnesia, stop, []).
 
-get_new_id() ->
-    mnesia:dirty_update_counter(ids, id, 1).
-
 %-------------------------------------------------------------------------------
 % Internal
 %-------------------------------------------------------------------------------
