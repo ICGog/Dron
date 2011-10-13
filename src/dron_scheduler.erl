@@ -27,7 +27,8 @@ unschedule(Job) ->
 
 run_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout}) ->
     Trans = fun() ->
-                    mnesia:write(#job_instance{name = Name, cmd_line = Cmd,
+                    mnesia:write(#job_instance{jid = dron_mnesia:get_new_id(),
+                                               name = Name, cmd_line = Cmd,
                                                timeout = Timeout,
                                                run_time = time()})
             end,

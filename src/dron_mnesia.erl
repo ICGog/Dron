@@ -2,7 +2,7 @@
 -author("Ionel Corneliu Gog").
 -include("dron.hrl").
 
--export([start/2, start_node/1, stop/0, stop_node/1]).
+-export([start/2, start_node/1, stop/0, stop_node/1, get_new_id/0]).
 
 %-------------------------------------------------------------------------------
 
@@ -12,6 +12,7 @@ start(Nodes, Mode) ->
                 ok = rpc:call(Node, mnesia, start, []) end, Nodes),
     create_jobs_table(Nodes, Mode),
     create_job_instances_table(Nodes, Mode),
+    create_ids_table(Nodes, Mode),
     ok.
 
 start_node(Node) ->
@@ -29,6 +30,9 @@ stop() ->
 stop_node(Node) ->
     ok = mnesia:delete_schema([Node]),
     ok = rpc:call(Node, mnesia, stop, []).
+
+get_new_id() ->
+    mnesia:dirty_update_counter(ids, id, 1).
 
 %-------------------------------------------------------------------------------
 % Internal
@@ -50,6 +54,16 @@ create_job_instances_table(Nodes, Mode) ->
           job_instances,
           [{record_name, job_instance},
            {attributes, record_info(fields, job_instance)},
+           {type, set},
+           {frag_properties, [{node_pool, Nodes},
+                              {n_fragments, length(Nodes)}] ++ Mode}]).
+
+create_ids_table(Nodes, Mode) ->
+    {atomic, ok} =
+        mnesia:create_table(
+          ids,
+          [{record_name, id},
+           {attributes, record_info(fields, id)},
            {type, set},
            {frag_properties, [{node_pool, Nodes},
                               {n_fragments, length(Nodes)}] ++ Mode}]).
