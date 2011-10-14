@@ -27,7 +27,7 @@ unschedule(Job) ->
 
 run_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout}) ->
     dron_db:store_object(
-      #job_instance{jid = dron_mnesia:get_new_id(),
+      #job_instance{jid = dron_db:get_new_id(),
                     name = Name, cmd_line = Cmd,
                     timeout = Timeout,
                     run_time = time()}),
