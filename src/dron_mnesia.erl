@@ -2,7 +2,7 @@
 -author("Ionel Corneliu Gog").
 -include("dron.hrl").
 
--export([start/2, start_node/1, stop/0, stop_node/1, get_new_id/0]).
+-export([start/2, start_node/1, stop/0, stop_node/1]).
 
 %-------------------------------------------------------------------------------
 

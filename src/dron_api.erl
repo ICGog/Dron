@@ -7,13 +7,10 @@
 %-------------------------------------------------------------------------------
 
 register_job(Job) ->
-    Trans = fun() ->
-                    mnesia:write(Job)
-            end,
-    mnesia:transaction(Trans),
+    dron_db:store_object(Job),
     dron_scheduler:schedule(Job).
 
 unregister_job(Job) ->
     dron_scheduler:unschedule(Job),
-    mnesia:delete_object(Job).
+    dron_db:delete_object(Job).
     

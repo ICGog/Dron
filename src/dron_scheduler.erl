@@ -26,13 +26,11 @@ unschedule(Job) ->
 %-------------------------------------------------------------------------------
 
 run_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout}) ->
-    Trans = fun() ->
-                    mnesia:write(#job_instance{jid = dron_mnesia:get_new_id(),
-                                               name = Name, cmd_line = Cmd,
-                                               timeout = Timeout,
-                                               run_time = time()})
-            end,
-    mnesia:transaction(Trans),
+    dron_db:store_object(
+      #job_instance{jid = dron_mnesia:get_new_id(),
+                    name = Name, cmd_line = Cmd,
+                    timeout = Timeout,
+                    run_time = time()}),
     Worker = dron_pool:get_worker(),
     dron_worker:run(Worker, Cmd).
 
