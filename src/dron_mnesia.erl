@@ -11,6 +11,7 @@ start(Nodes, Mode) ->
     lists:map(fun(Node) ->
                 ok = rpc:call(Node, mnesia, start, []) end, Nodes),
     create_jobs_table(Nodes, Mode),
+    create_jobs_archive_table(Nodes, Mode),
     create_job_instances_table(Nodes, Mode),
     create_ids_table(Nodes, Mode),
     ok.
@@ -39,6 +40,16 @@ create_jobs_table(Nodes, Mode) ->
     {atomic, ok} =
         mnesia:create_table(
           jobs,
+          [{record_name, job},
+           {attributes, record_info(fields, job)},
+           {type, set},
+           {frag_properties, [{node_pool, Nodes},
+                              {n_fragments, length(Nodes)}] ++ Mode}]).
+
+create_jobs_archive_table(Nodes, Mode) ->
+    {atomic, ok} =
+        mnesia:create_table(
+          jobs_archive,
           [{record_name, job},
            {attributes, record_info(fields, job)},
            {type, set},

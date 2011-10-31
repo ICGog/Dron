@@ -8,7 +8,8 @@
 
 -export([start/0, add_worker/1, remove_worker/1, get_worker/0]).
 
--record(workers, {workers = []}).
+% A gb_tree of (#used_slots, [workers]) and a set of workers.
+-record(workers, {workers = sets:new(), slot_workers = gb_trees:new()}).
 
 %-------------------------------------------------------------------------------
 
@@ -31,28 +32,40 @@ get_worker() ->
 init([]) ->
     {ok, #workers{}}.
 
-handle_call({add, Worker}, _From, State = #workers{workers = Ws}) ->
-    case lists:member(Worker, Ws) of
+handle_call({add, Worker}, _From, State = #workers{workers = Ws,
+                                                  slot_workers = Sws}) ->
+    case sets:is_element(Worker, Ws) of
         true  -> {reply, {error, already_added}, State};
         false -> case net_adm:ping(Worker) of
-                     pong -> NewWs = [Worker | Ws],
-                             NewState = State#workers{workers = NewWs},
-                             dron_worker:start({global, Worker}),
-                             {reply, ok, NewState};
+                     pong -> dron_worker:start({global, Worker}),
+                             SWorkers = case gb_trees:lookup(0, Sws) of
+                                            {value, CurSws} -> CurSws;
+                                            none            -> []
+                                        end,
+                             NewSws = gb_trees:enter(
+                                        0, [Worker | SWorkers], Sws),
+                             {reply, ok,
+                              State#workers{
+                                slot_workers = NewSws,
+                                workers = sets:add_element(Worker, Ws)}};
                      _    -> {reply, {error, no_connection}, State}
                  end
     end;
-handle_call({remove, Worker}, _From, State = #workers{workers = Ws}) ->
-    case lists:member(Worker, Ws) of
-        true  -> NewWs = lists:delete(Worker, Ws),
-                 {reply, ok, State#workers{workers = NewWs}};
+handle_call({remove, Worker}, _From, State = #workers{workers = Ws,
+                                                     slot_workers = Sws}) ->
+    case sets:is_element(Worker, Ws) of
+        true  -> {reply, ok, State#workers{
+                               workers = sets:del_element(Worker, Ws),
+                               slot_workers =
+                                   delete_worker(Worker, Sws,
+                                                 gb_trees:iterator(Sws))}};
         false -> {reply, {error, unknown_worker}, State}
     end;
-handle_call({get_worker}, _From, State = #workers{workers = Ws}) ->
-    case Ws of
-        [] -> {reply, {error, no_workers}, State};
-        [Worker | Workers] -> {reply, Worker,
-                               State#workers{workers = Workers ++ [Worker]}}
+handle_call({get_worker}, _From, State = #workers{slot_workers = Sws}) ->
+    case get_worker(Sws) of
+        {Worker, NewSws} -> {reply, Worker, State#workers{
+                                              slot_workers = NewSws}};
+        none             -> {reply, {error, no_workers}, State}
     end;
 handle_call(_Request, _From, _State) ->
     not_implemented.
@@ -68,3 +81,41 @@ code_change(_OldVsn, State, _Extra) ->
 
 terminate(_Reason, _State) ->
     ok.
+
+% Find worker in the tree of (#slots, [workers]).
+% It returns the same tree if the pair could not be found.
+delete_worker(W, Sws, Iter) ->
+    case gb_trees:next(Iter) of
+        {Key, Value, NewIter} ->
+            case delete_worker(W, Value) of
+                []   -> gb_trees:delete(Key, Sws);
+                none -> delete_worker(W, Sws, NewIter);
+                Wls  -> gb_trees:enter(Key, Wls, Sws)
+             end;
+        none -> Sws
+    end.
+
+% Deletes a worker from a list if it can find it.
+delete_worker(_, []) ->
+    none;
+delete_worker(W, [W|Wls]) ->
+    Wls;
+delete_worker(W, [_|Wls]) ->
+    [W|delete_worker(W, Wls)].
+
+get_worker(Sws) ->
+    case gb_trees:is_empty(Sws) of
+        true  -> none;
+        false -> {Slots, [W|Aws]} = gb_trees:smallest(Sws),
+                 NewSws = add_worker_to_slot(W, Slots + 1, Sws),
+                 case Aws of
+                     [] -> gb_trees:delete(Slots, NewSws);
+                     _  -> gb_trees:enter(Slots, Aws, NewSws)
+                 end
+    end.
+
+add_worker_to_slot(W, Slot, Sws) ->
+    case gb_trees:lookup(Slot, Sws) of
+        {value, Ws} -> gb_trees:enter(Slot, [W | Ws]);
+        none        -> gb_trees:enter(Slot, [W])
+    end.

@@ -28,7 +28,7 @@ get_job(Name) ->
                                         read)
             end,
     case mnesia:transaction(Trans) of
-        {atomic, Job} -> {ok, Job};
+        {atomic, [Job]} -> {ok, Job};
         {aborted, Reason} -> {error, Reason}
     end.
 
@@ -38,9 +38,21 @@ get_job_instance(Jid) ->
                                                         '_', '_', '_'}, read)
             end,
     case mnesia:transaction(Trans) of
-        {atomic, JobInstance} -> {ok, JobInstance};
+        {atomic, [JobInstance]} -> {ok, JobInstance};
         {aborted, Reason} -> {error, Reason}
     end.
 
 archive_job(Name) ->
-    ok.
+    Trans = fun() ->
+                    case mnesia:wread({jobs, Name}) of
+                        [Job] -> case mnesia:delete({jobs, Name}) of
+                                     ok -> mnesia:write({jobs_archive, Job});
+                                     _  -> mnesia:abort("Could not delete job")
+                                 end;
+                        _     -> mnesia:abort("No such job")
+                    end
+            end,
+    case mnesia:transaction(Trans) of
+        {atomic, ok} -> ok;
+        {aborted, Reason} -> {error, Reason}
+    end.
