@@ -6,7 +6,8 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3]).
 
--export([start/0, add_worker/1, remove_worker/1, get_worker/0]).
+-export([start/0, add_worker/1, auto_add_workers/0, remove_worker/1,
+         get_worker/0]).
 
 % A gb_tree of (#used_slots, [workers]) and a set of workers.
 -record(workers, {workers = sets:new(), slot_workers = gb_trees:new()}).
@@ -19,6 +20,25 @@ start() ->
 add_worker(Worker) ->
     gen_server:call(?NAME, {add, Worker}).
 
+% Returns a list of (worker, result).
+auto_add_workers() ->
+    [_, Host] = string:tokens(atom_to_list(node()), "@"),
+    case os:getenv("DRON_WORKER_NODES") of
+        false ->
+            [];
+        WorkersEnv ->
+            Workers = lists:map(
+                        fun(Worker) ->
+                                list_to_atom(
+                                  case lists:member($@, Worker) of
+                                      true  -> Worker;
+                                      false -> Worker ++ "@" ++ Host
+                                  end)
+                        end, string:tokens(WorkersEnv, " \n\t")),
+            Result = lists:map(fun add_worker/1, Workers),
+            lists:zip(Workers, Result)
+    end.
+            
 remove_worker(Worker) ->
     gen_server:call(?NAME, {remove, Worker}).
 
