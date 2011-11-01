@@ -10,7 +10,7 @@
          get_worker/0]).
 
 % A gb_tree of (#used_slots, [workers]) and a set of workers.
--record(workers, {workers = sets:new(), slot_workers = gb_trees:new()}).
+-record(workers, {workers = sets:new(), slot_workers = gb_trees:empty()}).
 
 %-------------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ add_worker(Worker) ->
 % Returns a list of (worker, result).
 auto_add_workers() ->
     [_, Host] = string:tokens(atom_to_list(node()), "@"),
-    case os:getenv("DRON_WORKER_NODES") of
+    case os:getenv("DRON_WORKERS") of
         false ->
             [];
         WorkersEnv ->

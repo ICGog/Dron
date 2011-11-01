@@ -1,7 +1,10 @@
 {application, dron, [{description, "Job Scheduler"},
                     {vsn, "0.1"},
-                    {modules, [dron_scheduler, dron_mnesia, dron_pool,
-                    dron_worker]},
+                    {modules, [dron_api,
+                               dron_scheduler,
+                               dron_mnesia,
+                               dron_pool,
+                               dron_worker]},
                     {env, []},
+                    {mod, {dron, []}},
                     {applications, [kernel, stdlib]}]}.
-                    
