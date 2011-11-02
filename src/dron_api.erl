@@ -13,4 +13,3 @@ register_job(Job) ->
 unregister_job(Job) ->
     dron_scheduler:unschedule(Job),
     ok = dron_db:archive_job(Job).
-    

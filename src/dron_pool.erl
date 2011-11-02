@@ -90,9 +90,10 @@ handle_call({remove, Worker}, _From, State = #workers{workers = Ws,
                                                  gb_trees:iterator(Sws))}};
         false -> {reply, {error, unknown_worker}, State}
     end;
-handle_call({get_worker}, _From, State = #workers{slot_workers = Sws}) ->
+handle_call({get_worker}, _From, State = #workers{workers = Ws,
+                                                  slot_workers = Sws}) ->
     case get_worker(Sws) of
-        {Worker, NewSws} -> {reply, ordict:fetch(Worker),
+        {Worker, NewSws} -> {reply, orddict:fetch(Worker, Ws),
                              State#workers{
                                slot_workers = NewSws}};
         none             -> {reply, {error, no_workers}, State}
@@ -139,13 +140,13 @@ get_worker(Sws) ->
         false -> {Slots, [W|Aws]} = gb_trees:smallest(Sws),
                  NewSws = add_worker_to_slot(W, Slots + 1, Sws),
                  case Aws of
-                     [] -> gb_trees:delete(Slots, NewSws);
-                     _  -> gb_trees:enter(Slots, Aws, NewSws)
+                     [] -> {W, gb_trees:delete(Slots, NewSws)};
+                     _  -> {W, gb_trees:enter(Slots, Aws, NewSws)}
                  end
     end.
 
 add_worker_to_slot(W, Slot, Sws) ->
     case gb_trees:lookup(Slot, Sws) of
-        {value, Ws} -> gb_trees:enter(Slot, [W | Ws]);
-        none        -> gb_trees:enter(Slot, [W])
+        {value, Ws} -> gb_trees:enter(Slot, [W | Ws], Sws);
+        none        -> gb_trees:enter(Slot, [W], Sws)
     end.

@@ -2,15 +2,16 @@
 -author("Ionel Corneliu Gog").
 -include("dron.hrl").
 
--export([get_job/1, store_job_instance/1, get_job_instance/1, archive_job/1,
-         store_worker/1, delete_worker/1]).
+-export([store_job/1, get_job/1, store_job_instance/1, get_job_instance/1,
+         archive_job/1, store_worker/1, delete_worker/1]).
 
 %-------------------------------------------------------------------------------
 
 store_job(Job) ->
     Trans = fun() ->
                     case mnesia:wread({jobs, Job#job.name}) of
-                        [OldJob] -> mnesia:write({jobs_archive, OldJob})
+                        [OldJob] -> mnesia:write({jobs_archive, OldJob});
+                        _        -> ok
                     end,
                     mnesia:write(jobs, Job, write)
             end,            
