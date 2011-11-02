@@ -2,19 +2,26 @@
 -author("Ionel Corneliu Gog").
 -include("dron.hrl").
 
--export([get_new_id/0, get_job/1, store_job_instance/1, get_job_instance/1,
-         archive_job/1, store_worker/1, delete_worker/1]).
+-export([get_job/1, store_job_instance/1, get_job_instance/1, archive_job/1,
+         store_worker/1, delete_worker/1]).
 
 %-------------------------------------------------------------------------------
 
-% TODO: Check dirty update counter. It can send an exit signal!
-get_new_id() ->
-    mnesia:dirty_update_counter(ids, id, 1).
-
+store_job(Job) ->
+    Trans = fun() ->
+                    case mnesia:wread({jobs, Job#job.name}) of
+                        [OldJob] -> mnesia:write({jobs_archive, OldJob})
+                    end,
+                    mnesia:write(jobs, Job, write)
+            end,            
+    case mnesia:transaction(Trans) of
+        {atomic, ok}      -> ok;
+        {aborted, Reason} -> {error, Reason}
+    end.
+            
 get_job(Name) ->
     Trans = fun() ->
-                    mnesia:match_object(jobs, {job, Name, '_', '_', '_', '_'},
-                                        read)
+                    mnesia:read(jobs, Name, read)
             end,
     case mnesia:transaction(Trans) of
         {atomic, [Job]}   -> {ok, Job};
@@ -23,7 +30,7 @@ get_job(Name) ->
 
 store_job_instance(JobInstance) ->
     Trans = fun() ->
-                    mnesia:write(job_instances ,JobInstance, write)
+                    mnesia:write(job_instances, JobInstance, write)
             end,            
     case mnesia:transaction(Trans) of
         {atomic, ok}      -> ok;
@@ -32,8 +39,7 @@ store_job_instance(JobInstance) ->
 
 get_job_instance(Jid) ->
     Trans = fun() ->
-                    mnesia:match_object(job_instances, {job_instance, Jid, '_',
-                                                        '_', '_', '_'}, read)
+                    mnesia:read(job_instances, Jid, read)
             end,
     case mnesia:transaction(Trans) of
         {atomic, [JobInstance]} -> {ok, JobInstance};

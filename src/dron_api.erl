@@ -7,10 +7,10 @@
 %-------------------------------------------------------------------------------
 
 register_job(Job) ->
-    ok = dron_db:store_object(Job),
+    ok = dron_db:store_job(Job),
     dron_scheduler:schedule(Job).
 
 unregister_job(Job) ->
     dron_scheduler:unschedule(Job),
-    ok = dron_db:delete_object(Job).
+    ok = dron_db:archive_job(Job).
     

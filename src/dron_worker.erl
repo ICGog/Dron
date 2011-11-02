@@ -26,9 +26,12 @@ init([]) ->
 handle_call(_Request, _From, _State) ->
     not_implemented.
 
-handle_cast({run, #job_instance{cmd_line = Cmd}}, State) ->
+handle_cast({run, #job_instance{jid = {Node, MicroSecs}, name = Name,
+                                cmd_line = Cmd}}, State) ->
     Output = os:cmd(Cmd),
-    file:write_file("output", io_lib:fwrite("~p", [Output])),
+    file:write_file(Name ++ "_" ++ atom_to_list(Node) + "_" ++ 
+                        integer_to_list(MicroSecs),
+                    io_lib:fwrite("~p", [Output])),
     {noreply, State};
 handle_cast(_Request, _State) ->
     not_implemented.

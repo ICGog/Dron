@@ -26,7 +26,8 @@ unschedule(Job) ->
 %-------------------------------------------------------------------------------
 
 run_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout}) ->
-    JobInstance = #job_instance{jid = dron_db:get_new_id(),
+    {_, _, MicroSecs} = erlang:now(),
+    JobInstance = #job_instance{jid = {node(), MicroSecs},
                                 name = Name, cmd_line = Cmd,
                                 timeout = Timeout,
                                 run_time = time()},
