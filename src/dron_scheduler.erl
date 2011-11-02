@@ -6,13 +6,13 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3]).
 
--export([start/0, schedule/1, unschedule/1, run_instance/1]).
+-export([start_link/0, schedule/1, unschedule/1, run_instance/1]).
 
 -record(timers, {timers = dict:new()}).
 
 %-------------------------------------------------------------------------------
 
-start() ->
+start_link() ->
     gen_server:start_link(?NAME, ?MODULE, [], []).
 
 schedule(Job) ->
@@ -26,13 +26,13 @@ unschedule(Job) ->
 %-------------------------------------------------------------------------------
 
 run_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout}) ->
-    dron_db:store_object(
-      #job_instance{jid = dron_db:get_new_id(),
-                    name = Name, cmd_line = Cmd,
-                    timeout = Timeout,
-                    run_time = time()}),
+    ok = dron_db:store_object(
+           #job_instance{jid = dron_db:get_new_id(),
+                         name = Name, cmd_line = Cmd,
+                         timeout = Timeout,
+                         run_time = time()}),
     Worker = dron_pool:get_worker(),
-    dron_worker:run(Worker, Cmd).
+    dron_worker:run(Worker#worker.name, Cmd).
 
 %-------------------------------------------------------------------------------
 % Internal

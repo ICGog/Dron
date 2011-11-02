@@ -6,19 +6,22 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3]).
 
--export([start/0, add_worker/1, auto_add_workers/0, remove_worker/1,
-         get_worker/0]).
+-export([start_link/0, add_worker/1, add_worker/2, auto_add_workers/0,
+         remove_worker/1, get_worker/0]).
 
 % A gb_tree of (#used_slots, [workers]) and a set of workers.
--record(workers, {workers = sets:new(), slot_workers = gb_trees:empty()}).
+-record(workers, {workers = orddict:new(), slot_workers = gb_trees:empty()}).
 
 %-------------------------------------------------------------------------------
 
-start() ->
+start_link() ->
     gen_server:start_link(?NAME, ?MODULE, [], []).
 
 add_worker(Worker) ->
-    gen_server:call(?NAME, {add, Worker}).
+    gen_server:call(?NAME, {add, Worker, dron_config:max_slots()}).
+
+add_worker(Worker, MaxSlots) ->
+    gen_server:call(?NAME, {add, Worker, MaxSlots}).
 
 % Returns a list of (worker, result).
 auto_add_workers() ->
@@ -52,30 +55,36 @@ get_worker() ->
 init([]) ->
     {ok, #workers{}}.
 
-handle_call({add, Worker}, _From, State = #workers{workers = Ws,
-                                                  slot_workers = Sws}) ->
-    case sets:is_element(Worker, Ws) of
+handle_call({add, Worker, Slots}, _From, State = #workers{
+                                           workers = Ws,
+                                           slot_workers = Sws}) ->
+    case orddict:is_key(Worker, Ws) of
         true  -> {reply, {error, already_added}, State};
         false -> case net_adm:ping(Worker) of
-                     pong -> dron_worker:start({global, Worker}),
+                     pong -> dron_worker:start_link({global, Worker}),
                              SWorkers = case gb_trees:lookup(0, Sws) of
                                             {value, CurSws} -> CurSws;
                                             none            -> []
                                         end,
                              NewSws = gb_trees:enter(
                                         0, [Worker | SWorkers], Sws),
+                             NewW = #worker{name = Worker,
+                                            max_slots = Slots,
+                                            used_slots = 0},
+                             ok = dron_db:store_worker(NewW),
                              {reply, ok,
                               State#workers{
                                 slot_workers = NewSws,
-                                workers = sets:add_element(Worker, Ws)}};
+                                workers = orddict:store(Worker, NewW, Ws)}};
                      _    -> {reply, {error, no_connection}, State}
                  end
     end;
 handle_call({remove, Worker}, _From, State = #workers{workers = Ws,
                                                      slot_workers = Sws}) ->
-    case sets:is_element(Worker, Ws) of
-        true  -> {reply, ok, State#workers{
-                               workers = sets:del_element(Worker, Ws),
+    case orddict:is_key(Worker, Ws) of
+        true  -> ok = dron_db:delete_worker(Worker),
+                 {reply, ok, State#workers{
+                               workers = orddict:erase(Worker, Ws),
                                slot_workers =
                                    delete_worker(Worker, Sws,
                                                  gb_trees:iterator(Sws))}};
@@ -83,8 +92,9 @@ handle_call({remove, Worker}, _From, State = #workers{workers = Ws,
     end;
 handle_call({get_worker}, _From, State = #workers{slot_workers = Sws}) ->
     case get_worker(Sws) of
-        {Worker, NewSws} -> {reply, Worker, State#workers{
-                                              slot_workers = NewSws}};
+        {Worker, NewSws} -> {reply, ordict:fetch(Worker),
+                             State#workers{
+                               slot_workers = NewSws}};
         none             -> {reply, {error, no_workers}, State}
     end;
 handle_call(_Request, _From, _State) ->

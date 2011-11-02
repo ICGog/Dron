@@ -13,6 +13,7 @@ start(Nodes, Mode) ->
     create_jobs_table(Nodes, Mode),
     create_jobs_archive_table(Nodes, Mode),
     create_job_instances_table(Nodes, Mode),
+    create_workers_table(Nodes),
     create_ids_table(Nodes, Mode),
     ok.
 
@@ -65,6 +66,15 @@ create_job_instances_table(Nodes, Mode) ->
            {type, set},
            {frag_properties, [{node_pool, Nodes},
                               {n_fragments, length(Nodes)}] ++ Mode}]).
+
+create_workers_table(Nodes) ->
+    {atomic, ok} =
+        mnesia:create_table(
+          workers,
+          [{record_name, worker},
+           {attributes, record_info(fields, worker)},
+           {type, set},
+           {disc_copies, Nodes}]).
 
 create_ids_table(Nodes, Mode) ->
     {atomic, ok} =
