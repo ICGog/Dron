@@ -13,8 +13,8 @@
 start_link(WName) ->
     gen_server:start_link({global, WName}, ?MODULE, [], []).
 
-run(WName, Cmd) ->
-    gen_server:cast({global, WName}, {run, Cmd}).
+run(WName, JobInstance) ->
+    gen_server:cast({global, WName}, {run, JobInstance}).
 
 %-------------------------------------------------------------------------------
 % Internal
@@ -26,7 +26,7 @@ init([]) ->
 handle_call(_Request, _From, _State) ->
     not_implemented.
 
-handle_cast({run, Cmd}, State) ->
+handle_cast({run, #job_instance{cmd_line = Cmd}}, State) ->
     Output = os:cmd(Cmd),
     file:write_file("output", io_lib:fwrite("~p", [Output])),
     {noreply, State};

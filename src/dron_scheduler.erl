@@ -26,13 +26,15 @@ unschedule(Job) ->
 %-------------------------------------------------------------------------------
 
 run_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout}) ->
-    ok = dron_db:store_object(
-           #job_instance{jid = dron_db:get_new_id(),
-                         name = Name, cmd_line = Cmd,
-                         timeout = Timeout,
-                         run_time = time()}),
+    JobInstance = #job_instance{jid = dron_db:get_new_id(),
+                                name = Name, cmd_line = Cmd,
+                                timeout = Timeout,
+                                run_time = time()},
+    ok = dron_db:store_job_instance(JobInstance),
     Worker = dron_pool:get_worker(),
-    dron_worker:run(Worker#worker.name, Cmd).
+    dron_worker:run(Worker#worker.name, JobInstance),
+    ok = dron_db:store_worker(Worker#worker{
+                                used_slots = Worker#worker.used_slots + 1}).
 
 %-------------------------------------------------------------------------------
 % Internal

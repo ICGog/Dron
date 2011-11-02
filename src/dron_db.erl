@@ -2,8 +2,8 @@
 -author("Ionel Corneliu Gog").
 -include("dron.hrl").
 
--export([get_new_id/0, get_job/1, archive_job/1, store_worker/1,
-         delete_worker/1]).
+-export([get_new_id/0, get_job/1, store_job_instance/1, get_job_instance/1,
+         archive_job/1, store_worker/1, delete_worker/1]).
 
 %-------------------------------------------------------------------------------
 
@@ -18,6 +18,15 @@ get_job(Name) ->
             end,
     case mnesia:transaction(Trans) of
         {atomic, [Job]}   -> {ok, Job};
+        {aborted, Reason} -> {error, Reason}
+    end.
+
+store_job_instance(JobInstance) ->
+    Trans = fun() ->
+                    mnesia:write(job_instances ,JobInstance, write)
+            end,            
+    case mnesia:transaction(Trans) of
+        {atomic, ok}      -> ok;
         {aborted, Reason} -> {error, Reason}
     end.
 
