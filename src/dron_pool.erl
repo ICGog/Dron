@@ -61,7 +61,7 @@ handle_call({add, Worker, Slots}, _From, State = #workers{
     case orddict:is_key(Worker, Ws) of
         true  -> {reply, {error, already_added}, State};
         false -> case net_adm:ping(Worker) of
-                     pong -> dron_worker:start_link({global, Worker}),
+                     pong -> dron_worker:start_link(Worker),
                              SWorkers = case gb_trees:lookup(0, Sws) of
                                             {value, CurSws} -> CurSws;
                                             none            -> []

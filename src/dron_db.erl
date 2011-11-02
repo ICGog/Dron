@@ -50,15 +50,13 @@ get_job_instance(Jid) ->
 archive_job(Name) ->
     Trans = fun() ->
                     case mnesia:wread({jobs, Name}) of
-                        [Job] -> case mnesia:delete({jobs, Name}) of
-                                     ok -> mnesia:write({jobs_archive, Job});
-                                     _  -> mnesia:abort("Could not delete job")
-                                 end;
-                        _     -> mnesia:abort("No such job")
+                        [Job] -> ok = mnesia:delete({jobs, Name}),
+                                 mnesia:write(jobs_archive, Job, write);
+                        _     -> no_such_job
                     end
             end,
     case mnesia:transaction(Trans) of
-        {atomic, ok}      -> ok;
+        {atomic, Return}  -> Return;
         {aborted, Reason} -> {error, Reason}
     end.
 

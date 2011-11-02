@@ -19,7 +19,7 @@ stop() ->
 %-------------------------------------------------------------------------------
 
 start(_Type, _Args) ->
-    error_logger:logfile({open, "log/dron.log"}),
+    ok = error_logger:logfile({open, "log/dron.log"}),
     error_logger:info_msg("~nDron Scheduler is starting...~n", []),
     {ok, Sup} = dron_sup:start(),
     dron_mnesia:start([node()], [{n_ram_copies, 1}]),
