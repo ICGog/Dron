@@ -1,9 +1,11 @@
 -module(dron_db).
 -author("Ionel Corneliu Gog").
 -include("dron.hrl").
+-include_lib("stdlib/include/qlc.hrl").
 
 -export([store_job/1, get_job/1, store_job_instance/1, get_job_instance/1,
-         archive_job/1, store_worker/1, delete_worker/1, set_worker_status/2]).
+        archive_job/1, store_worker/1, delete_worker/1, set_worker_status/2,
+        get_workers/1]).
 
 %-------------------------------------------------------------------------------
 
@@ -87,6 +89,16 @@ set_worker_status(WName, Enabled) ->
                                                 write);
                         _        -> no_such_job
                     end
+            end,
+    case mnesia:transaction(Trans) of
+        {atomic, Return}  -> Return;
+        {aborted, Reason} -> {error, Reason}
+    end.
+
+get_workers(Enabled) ->
+    Trans = fun() ->
+                    qlc:eval(qlc:q([W || W <- mnesia:table(workers),
+                                   W#worker.enabled == Enabled]))
             end,
     case mnesia:transaction(Trans) of
         {atomic, Return}  -> Return;
