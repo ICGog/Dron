@@ -3,7 +3,7 @@
 -include("dron.hrl").
 
 -export([store_job/1, get_job/1, store_job_instance/1, get_job_instance/1,
-         archive_job/1, store_worker/1, delete_worker/1]).
+         archive_job/1, store_worker/1, delete_worker/1, set_worker_status/2]).
 
 %-------------------------------------------------------------------------------
 
@@ -69,11 +69,26 @@ store_worker(Worker) ->
         {aborted, Reason} -> {error, Reason}
     end.
 
-delete_worker(Name) ->
+delete_worker(WName) ->
     Trans = fun() ->
-                    mnesia:delete({workers, Name})
+                    mnesia:delete({workers, WName})
             end,
     case mnesia:transaction(Trans) of
         {atomic, ok}      -> ok;
+        {aborted, Reason} -> {error, Reason}
+    end.
+
+% enabled = true | false.
+set_worker_status(WName, Enabled) ->
+    Trans = fun() ->
+                    case mnesia:wread({workers, WName}) of
+                        [Worker] -> mnesia:write(workers, Worker#worker{
+                                                            enabled = Enabled},
+                                                write);
+                        _        -> no_such_job
+                    end
+            end,
+    case mnesia:transaction(Trans) of
+        {atomic, Return}  -> Return;
         {aborted, Reason} -> {error, Reason}
     end.

@@ -4,7 +4,7 @@
 
 -record(archive_job, {name, version, cmd_line, start_time, frequency, timeout}).
 
--record(worker, {name, max_slots, used_slots}).
+-record(worker, {name, enabled, max_slots, used_slots}).
 
 -record(id, {counter, id}).
 

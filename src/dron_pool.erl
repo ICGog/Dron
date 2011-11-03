@@ -17,11 +17,11 @@
 start_link() ->
     gen_server:start_link(?NAME, ?MODULE, [], []).
 
-add_worker(Worker) ->
-    gen_server:call(?NAME, {add, Worker, dron_config:max_slots()}).
+add_worker(WName) ->
+    gen_server:call(?NAME, {add, WName, dron_config:max_slots()}).
 
-add_worker(Worker, MaxSlots) ->
-    gen_server:call(?NAME, {add, Worker, MaxSlots}).
+add_worker(WName, MaxSlots) ->
+    gen_server:call(?NAME, {add, WName, MaxSlots}).
 
 % Returns a list of (worker, result).
 auto_add_workers() ->
@@ -46,7 +46,7 @@ remove_worker(Worker) ->
     gen_server:call(?NAME, {remove, Worker}).
 
 get_worker() ->
-    gen_server:call(?NAME, {get_worker}).
+    gen_server:call(?NAME, get_worker).
 
 %-------------------------------------------------------------------------------
 % Internal
@@ -55,48 +55,50 @@ get_worker() ->
 init([]) ->
     {ok, #workers{}}.
 
-handle_call({add, Worker, Slots}, _From, State = #workers{
-                                           workers = Ws,
-                                           slot_workers = Sws}) ->
-    case orddict:is_key(Worker, Ws) of
+handle_call({add, WName, Slots}, _From, State = #workers{
+                                          workers = Ws,
+                                          slot_workers = Sws}) ->
+    case orddict:is_key(WName, Ws) of
         true  -> {reply, {error, already_added}, State};
-        false -> case net_adm:ping(Worker) of
-                     pong -> dron_worker:start_link(Worker),
+        false -> case net_adm:ping(WName) of
+                     pong -> dron_worker:start_link(WName),
+                             monitor_node(WName, true),
                              SWorkers = case gb_trees:lookup(0, Sws) of
                                             {value, CurSws} -> CurSws;
                                             none            -> []
                                         end,
                              NewSws = gb_trees:enter(
-                                        0, [Worker | SWorkers], Sws),
-                             NewW = #worker{name = Worker,
+                                        0, [WName | SWorkers], Sws),
+                             NewW = #worker{name = WName,
+                                            enabled = true,
                                             max_slots = Slots,
                                             used_slots = 0},
                              ok = dron_db:store_worker(NewW),
                              {reply, ok,
                               State#workers{
                                 slot_workers = NewSws,
-                                workers = orddict:store(Worker, NewW, Ws)}};
+                                workers = orddict:store(WName, NewW, Ws)}};
                      _    -> {reply, {error, no_connection}, State}
                  end
     end;
-handle_call({remove, Worker}, _From, State = #workers{workers = Ws,
+handle_call({remove, WName}, _From, State = #workers{workers = Ws,
                                                      slot_workers = Sws}) ->
-    case orddict:is_key(Worker, Ws) of
-        true  -> ok = dron_db:delete_worker(Worker),
+    case orddict:is_key(WName, Ws) of
+        true  -> ok = dron_db:delete_worker(WName),
                  {reply, ok, State#workers{
-                               workers = orddict:erase(Worker, Ws),
+                               workers = orddict:erase(WName, Ws),
                                slot_workers =
-                                   delete_worker(Worker, Sws,
-                                                 gb_trees:iterator(Sws))}};
+                                   evict_worker(WName, Sws,
+                                                gb_trees:iterator(Sws))}};
         false -> {reply, {error, unknown_worker}, State}
     end;
-handle_call({get_worker}, _From, State = #workers{workers = Ws,
-                                                  slot_workers = Sws}) ->
+handle_call(get_worker, _From, State = #workers{workers = Ws,
+                                                slot_workers = Sws}) ->
     case get_worker(Sws) of
-        {Worker, NewSws} -> {reply, orddict:fetch(Worker, Ws),
-                             State#workers{
-                               slot_workers = NewSws}};
-        none             -> {reply, {error, no_workers}, State}
+        {WName, NewSws} -> {reply, orddict:fetch(WName, Ws),
+                            State#workers{
+                              slot_workers = NewSws}};
+        none            -> {reply, {error, no_workers}, State}
     end;
 handle_call(_Request, _From, _State) ->
     not_implemented.
@@ -104,6 +106,15 @@ handle_call(_Request, _From, _State) ->
 handle_cast(_Request, _State) ->
     not_implemented.
 
+handle_info({nodedown, WName}, State = #workers{workers = Ws,
+                                                slot_workers = Sws}) ->
+    % TODO: Restart job instances when a node is down.
+    error_logger:error_msg("Node ~p failed!~n", [WName]),
+    evict_worker(WName, Sws, gb_trees:iterator(Sws)),
+    orddict:erase(WName, Ws),
+    dron_db:set_worker_status(WName, false),
+
+    {noreply, State};
 handle_info(_Request, _State) ->
     not_implemented.
 
@@ -115,12 +126,12 @@ terminate(_Reason, _State) ->
 
 % Find worker in the tree of (#slots, [workers]).
 % It returns the same tree if the pair could not be found.
-delete_worker(W, Sws, Iter) ->
+evict_worker(WName, Sws, Iter) ->
     case gb_trees:next(Iter) of
         {Key, Value, NewIter} ->
-            case delete_worker(W, Value) of
+            case delete_worker(WName, Value) of
                 []   -> gb_trees:delete(Key, Sws);
-                none -> delete_worker(W, Sws, NewIter);
+                none -> evict_worker(WName, Sws, NewIter);
                 Wls  -> gb_trees:enter(Key, Wls, Sws)
              end;
         none -> Sws
@@ -129,24 +140,24 @@ delete_worker(W, Sws, Iter) ->
 % Deletes a worker from a list if it can find it.
 delete_worker(_, []) ->
     none;
-delete_worker(W, [W|Wls]) ->
+delete_worker(WName, [WName|Wls]) ->
     Wls;
-delete_worker(W, [_|Wls]) ->
-    [W|delete_worker(W, Wls)].
+delete_worker(WName, [_|Wls]) ->
+    [WName|delete_worker(WName, Wls)].
 
 get_worker(Sws) ->
     case gb_trees:is_empty(Sws) of
         true  -> none;
-        false -> {Slots, [W|Aws]} = gb_trees:smallest(Sws),
-                 NewSws = add_worker_to_slot(W, Slots + 1, Sws),
+        false -> {Slots, [WName|Aws]} = gb_trees:smallest(Sws),
+                 NewSws = add_worker_to_slot(WName, Slots + 1, Sws),
                  case Aws of
-                     [] -> {W, gb_trees:delete(Slots, NewSws)};
-                     _  -> {W, gb_trees:enter(Slots, Aws, NewSws)}
+                     [] -> {WName, gb_trees:delete(Slots, NewSws)};
+                     _  -> {WName, gb_trees:enter(Slots, Aws, NewSws)}
                  end
     end.
 
-add_worker_to_slot(W, Slot, Sws) ->
+add_worker_to_slot(WName, Slot, Sws) ->
     case gb_trees:lookup(Slot, Sws) of
-        {value, Ws} -> gb_trees:enter(Slot, [W | Ws], Sws);
-        none        -> gb_trees:enter(Slot, [W], Sws)
+        {value, Ws} -> gb_trees:enter(Slot, [WName | Ws], Sws);
+        none        -> gb_trees:enter(Slot, [WName], Sws)
     end.
