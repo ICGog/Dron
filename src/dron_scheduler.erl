@@ -27,13 +27,14 @@ unschedule(Job) ->
 
 run_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout}) ->
     {_, _, MicroSecs} = erlang:now(),
+    Worker = #worker{name = WName} = dron_pool:get_worker(),
     JobInstance = #job_instance{jid = {node(), MicroSecs},
                                 name = Name, cmd_line = Cmd,
                                 timeout = Timeout,
-                                run_time = time()},
+                                run_time = time(),
+                                worker = WName},
     ok = dron_db:store_job_instance(JobInstance),
-    Worker = dron_pool:get_worker(),
-    dron_worker:run(Worker#worker.name, JobInstance),
+    dron_worker:run(WName, JobInstance),
     ok = dron_db:store_worker(Worker#worker{
                                 used_slots = Worker#worker.used_slots + 1}).
 
