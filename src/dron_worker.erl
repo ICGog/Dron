@@ -26,11 +26,13 @@ init([]) ->
 handle_call(_Request, _From, _State) ->
     not_implemented.
 
-handle_cast({run, #job_instance{jid = {Node, MicroSecs}, name = Name,
+handle_cast({run, #job_instance{jid = {Node, {{Y, M, D}, {H, Min, Sec}}},
+                                       name = Name,
                                 cmd_line = Cmd}}, State) ->
     Output = os:cmd(Cmd),
     error_logger:info_msg("Output:~p~n", [Output]),
-    FileName = io_lib:format("~s_~p_~p", [Name, Node, MicroSecs]),
+    FileName = io_lib:format("~s_~p-~p-~p-~p:~p:~p", [Name, Y, M, D, H, Min,
+                                                      Sec]),
     file:write_file(FileName, io_lib:fwrite("~p", [Output])),
     {noreply, State};
 handle_cast(_Request, _State) ->

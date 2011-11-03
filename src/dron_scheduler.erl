@@ -26,9 +26,9 @@ unschedule(Job) ->
 %-------------------------------------------------------------------------------
 
 run_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout}) ->
-    {_, _, MicroSecs} = erlang:now(),
+    Date = calendar:now_to_local_time(erlang:now()),
     Worker = #worker{name = WName} = dron_pool:get_worker(),
-    JobInstance = #job_instance{jid = {node(), MicroSecs},
+    JobInstance = #job_instance{jid = {node(), Date},
                                 name = Name, cmd_line = Cmd,
                                 timeout = Timeout,
                                 run_time = time(),
