@@ -4,8 +4,9 @@
 -include_lib("stdlib/include/qlc.hrl").
 
 -export([store_job/1, get_job/1, store_job_instance/1, get_job_instance/1,
-        archive_job/1, store_worker/1, delete_worker/1, set_worker_status/2,
-        set_failed_worker/1, get_workers/1, get_job_instances_on_worker/1]).
+         get_job_instance/2, archive_job/1, store_worker/1, delete_worker/1,
+         set_worker_status/2, set_failed_worker/1, get_workers/1,
+         get_job_instances_on_worker/1]).
 
 %-------------------------------------------------------------------------------
 
@@ -28,6 +29,7 @@ get_job(Name) ->
             end,
     case mnesia:transaction(Trans) of
         {atomic, [Job]}   -> {ok, Job};
+        {atomic, []}      -> {error, no_job};
         {aborted, Reason} -> {error, Reason}
     end.
 
@@ -46,9 +48,22 @@ get_job_instance(Jid) ->
             end,
     case mnesia:transaction(Trans) of
         {atomic, [JobInstance]} -> {ok, JobInstance};
-        {aborted, Reason} -> {error, Reason}
+        {atomic, []}            -> {error, no_job_instance};
+        {aborted, Reason}       -> {error, Reason}
     end.
 
+get_job_instance(JName, RTime) ->
+    Trans = fun() ->
+                    qlc:eval(qlc:q([JI || JI <- mnesia:table(job_instances),
+                                          JI#job_instance.name == JName,
+                                          JI#job_instance.run_time == RTime]))
+            end,
+    case mnesia:transaction(Trans) of
+        {atomic, [JobInstance]} -> {ok, JobInstance};
+        {atomic, []}            -> {error, no_job_instance};
+        {aborted, Reason}       -> {error, Reason}
+    end.
+        
 archive_job(Name) ->
     Trans = fun() ->
                     case mnesia:wread({jobs, Name}) of
