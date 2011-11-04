@@ -5,7 +5,7 @@
 
 -export([store_job/1, get_job/1, store_job_instance/1, get_job_instance/1,
         archive_job/1, store_worker/1, delete_worker/1, set_worker_status/2,
-        get_workers/1, get_job_instances_on_worker/1]).
+        set_failed_worker/1, get_workers/1, get_job_instances_on_worker/1]).
 
 %-------------------------------------------------------------------------------
 
@@ -87,7 +87,22 @@ set_worker_status(WName, Enabled) ->
                         [Worker] -> mnesia:write(workers, Worker#worker{
                                                             enabled = Enabled},
                                                 write);
-                        _        -> no_such_job
+                        _        -> no_such_worker
+                    end
+            end,
+    case mnesia:transaction(Trans) of
+        {atomic, Return}  -> Return;
+        {aborted, Reason} -> {error, Reason}
+    end.
+
+set_failed_worker(WName) ->
+    Trans = fun() ->
+                    case mnesia:wread({workers, WName}) of
+                        [Worker] -> mnesia:write(workers, Worker#worker{
+                                                            enabled = false,
+                                                            used_slots = 0},
+                                                 write);
+                        _        -> no_such_worker
                     end
             end,
     case mnesia:transaction(Trans) of

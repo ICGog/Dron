@@ -14,7 +14,6 @@ start(Nodes, Mode) ->
     create_jobs_archive_table(Nodes, Mode),
     create_job_instances_table(Nodes, Mode),
     create_workers_table(Nodes),
-    create_ids_table(Nodes, Mode),
     ok.
 
 start_node(Node) ->
@@ -22,6 +21,9 @@ start_node(Node) ->
     ok = rpc:call(Node, mnesia, start, []),
     {ok, _RetValue} = mnesia:change_config(extra_db_nodes, [Node]),
     {atomic, ok} = mnesia:change_table_copy_type(schema, Node, disc_copies),
+    {atomic, ok} = mnesia:change_table_frag(jobs, {add_node, Node}),
+    {atomic, ok} = mnesia:change_table_frag(jobs_archive, {add_node, Node}),
+    {atomic, ok} = mnesia:change_table_frag(job_instances, {add_node, Node}),
     ok.
 
 stop() ->
@@ -75,13 +77,3 @@ create_workers_table(Nodes) ->
            {attributes, record_info(fields, worker)},
            {type, set},
            {disc_copies, Nodes}]).
-
-create_ids_table(Nodes, Mode) ->
-    {atomic, ok} =
-        mnesia:create_table(
-          ids,
-          [{record_name, id},
-           {attributes, record_info(fields, id)},
-           {type, set},
-           {frag_properties, [{node_pool, Nodes},
-                              {n_fragments, length(Nodes)}] ++ Mode}]).

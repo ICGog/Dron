@@ -100,23 +100,23 @@ handle_call(get_worker, _From, State = #workers{workers = Ws,
                               slot_workers = NewSws}};
         none            -> {reply, {error, no_workers}, State}
     end;
-handle_call(_Request, _From, _State) ->
-    not_implemented.
+handle_call(Request, _From, _State) ->
+    {unexpected_request, Request}.
 
 handle_cast(_Request, _State) ->
     not_implemented.
 
 handle_info({nodedown, WName}, State = #workers{workers = Ws,
                                                 slot_workers = Sws}) ->
-    % TODO: Restart job instances when a node is down.
     error_logger:error_msg("Node ~p failed!~n", [WName]),
     evict_worker(WName, Sws, gb_trees:iterator(Sws)),
     orddict:erase(WName, Ws),
-    dron_db:set_worker_status(WName, false),
-
+    dron_db:set_failed_worker(WName),
+    FailedJIs = dron_db:get_job_instances_on_worker(WName),
+    % TODO: Update job instance status and rerun it.
     {noreply, State};
-handle_info(_Request, _State) ->
-    not_implemented.
+handle_info(Request, _State) ->
+    {unexpected_request, Request}.
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
