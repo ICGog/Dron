@@ -9,7 +9,7 @@
          code_change/3, run_job_instance/1]).
 
 % A dict of (JID, Pid).
--record(jipids, {jipids = dict:new()}).
+-record(jipids, {jipids = dict:new(), pidjis = dict:new()}).
 
 %-------------------------------------------------------------------------------
 
@@ -33,32 +33,38 @@ init([]) ->
 handle_call({kill, JId}, _From, State = #jipids{jipids = JIPids}) ->
     case dict:find(JId, JIPids) of
         {ok, Pid} -> exit(Pid, {JId, kill}),
-                     {reply, killed, State#jipids{
-                                       jipids = dict:erase(JId, JIPids)}};
+                     {reply, killed, State};
         error     -> {reply, not_running, State}
     end;
 handle_call(_Request, _From, _State) ->
     unexpected_request.
 
 handle_cast({run, JI = #job_instance{jid = JId}},
-            State = #jipids{jipids = JIPids}) ->
+            State = #jipids{jipids = JIPids, pidjis = PidJIs}) ->
     JIPid = spawn_link(dron_worker, run_job_instance, [JI]),
     NewJIPids = dict:store(JId, JIPid, JIPids),
+    NewPidJIs = dict:store(JIPid, JId, PidJIs),
     JIPid ! {self(), start},
-    {noreply, State#jipids{jipids = NewJIPids}};
+    {noreply, State#jipids{jipids = NewJIPids, pidjis = NewPidJIs}};
 handle_cast(_Request, _State) ->
     unexpected_request.
 
 handle_info({JId, ok}, State = #jipids{jipids = JIPids}) ->
     error_logger:info_msg("~p has finished", [JId]),
     {noreply, State#jipids{jipids = dict:erase(JId, JIPids)}};
-handle_info({'EXIT', Pid, {JId, killed}}, State = #jipids{jipids = JIPids}) ->
+handle_info({'EXIT', Pid, {JId, killed}}, State = #jipids{jipids = JIPids,
+                                                          pidjis = PidJIs}) ->
     error_logger:info_msg("~p has been killed", [JId]),
-    {noreply, State#jipids{jipids = dict:erase(JId, JIPids)}};
-handle_info({'EXIT', Pid, Reason}, State) ->
-    % TODO: Update structures when jis fail.
+    {noreply, State#jipids{jipids = dict:erase(JId, JIPids),
+                          pidjis = dict:erase(Pid, PidJIs)}};
+handle_info({'EXIT', Pid, Reason}, State = #jipids{jipids = JIPids,
+                                                  pidjis = PidJIs}) ->
     error_logger:info_msg("~p ~p", [Pid, Reason]),
-    {noreply, State};
+    case dict:find(Pid, PidJIs) of
+        {ok, JId} -> {noreply, State#jipids{jipids = dict:erase(JId, JIPids),
+                                            pidjis = dict:erase(Pid, PidJIs)}};
+        error     -> {noreply, State}
+    end;
 handle_info(_Info, _State) ->
     unexpected_request.
 
