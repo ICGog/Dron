@@ -51,6 +51,7 @@ handle_cast(_Request, _State) ->
 
 handle_info({JId, ok}, State = #jipids{jipids = JIPids}) ->
     error_logger:info_msg("~p has finished", [JId]),
+    dron_scheduler ! {finished, JId},
     {noreply, State#jipids{jipids = dict:erase(JId, JIPids)}};
 handle_info({'EXIT', Pid, {JId, killed}}, State = #jipids{jipids = JIPids,
                                                           pidjis = PidJIs}) ->

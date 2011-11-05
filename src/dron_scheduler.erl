@@ -4,11 +4,11 @@
 -behaviour(gen_server).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
-         code_change/3]).
+         code_change/3, timeout_instance/1]).
 
 -export([start_link/0, schedule/1, unschedule/1, run_instance/1]).
 
--record(timers, {timers = dict:new()}).
+-record(timers, {timers = dict:new(), jitimeout = dict:new()}).
 
 %-------------------------------------------------------------------------------
 
@@ -26,17 +26,27 @@ unschedule(Job) ->
 %-------------------------------------------------------------------------------
 
 run_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout}) ->
-    Date = calendar:now_to_local_time(erlang:now()),
+    Date = calendar:now_to_universal_time(erlang:now()),
     Worker = #worker{name = WName} = dron_pool:get_worker(),
-    JobInstance = #job_instance{jid = {node(), Date},
-                                name = Name, cmd_line = Cmd,
-                                timeout = Timeout,
-                                run_time = time(),
-                                worker = WName},
+    JobInstance = #job_instance{jid = {node(), Date}, name = Name,
+                                cmd_line = Cmd, state = running,
+                                timeout = Timeout, run_time = erlang:now(),
+                                num_retry = 1, worker = WName},
+    % If the write fails then the job instance fails. Note: this should not be
+    % considered a job instance failure.
     ok = dron_db:store_job_instance(JobInstance),
     dron_worker:run(WName, JobInstance),
+    {ok, TRef} = timer:apply_after(Timeout, ?MODULE, timeout_instance,
+                                   [JobInstance]),
     ok = dron_db:store_worker(Worker#worker{
                                 used_slots = Worker#worker.used_slots + 1}).
+
+timeout_instance(JI = #job_instance{jid = JId, worker = WName}) ->
+    case dron_worker:kill_job_instance(WName, JId) of
+        killed      -> ok = dron_db:store_job_instance(JI#job_instance{
+                                                         state = timeout});
+        not_running -> ok
+    end.
 
 %-------------------------------------------------------------------------------
 % Internal
@@ -49,22 +59,26 @@ init([]) ->
 handle_call(_Request, _From, _State) ->
     not_implemented.
 
-handle_cast({schedule, Job = #job{name = Name, start_time = STime,
+handle_cast({schedule, Job = #job{name = JName, start_time = STime,
                                   frequency = Freq}},
             #timers{timers = Timers}) ->
     {ok, TRef} = timer:apply_interval(Freq, ?MODULE, run_instance, [Job]),
-    {noreply, #timers{timers = dict:store(Name, TRef, Timers)}};
+    {noreply, #timers{timers = dict:store(JName, TRef, Timers)}};
     
-handle_cast({unschedule, #job{name = Name}},
+handle_cast({unschedule, #job{name = JName}},
            #timers{timers = Timers}) ->
-    {ok, TRef} = dict:find(Name, Timers),
+    {ok, TRef} = dict:find(JName, Timers),
     {ok, cancel} = timer:cancel(TRef),
-    {noreply, #timers{timers = dict:erase(Name, Timers)}};
+    {noreply, #timers{timers = dict:erase(JName, Timers)}};
 
 handle_cast(_Request, _State) ->
     not_implemented.
 
-handle_info({Killed, JId}, State) ->
+handle_info({finished, JId}, State) ->
+    ok = dron_db:set_job_instance_state(JId, finished),
+    {noreply, State};
+handle_info({killed, JId}, State) ->
+    ok = dron_db:set_job_instance_state(JId, killed),
     % TODO: Handle killed JI.
     {noreply, State};
 handle_info({failed, JId, Reason}, State) ->

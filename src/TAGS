@@ -1,21 +1,24 @@
 
-src/dron.erl,54
+/home/ionel/code/Dron/src/dron.erl,54
 start(11,233
 stop(14,274
 start(21,487
 stop(31,924
 
-src/dron_worker.erl,145
-start_link(13,317
-run(16,400
-init(23,660
-handle_call(26,687
-handle_cast(29,749
-handle_info(41,1299
-terminate(44,1351
-code_change(47,1390
+/home/ionel/code/Dron/src/dron_worker.erl,220
+-record(jipids12,325
+start_link(16,469
+run(19,552
+kill_job_instance(22,638
+init(29,897
+handle_call(33,966
+handle_cast(42,1283
+handle_info(52,1712
+terminate(73,2803
+code_change(76,2842
+run_job_instance(79,2899
 
-src/dron_pool.erl,347
+/home/ionel/code/Dron/src/dron_pool.erl,347
 -record(workers13,376
 start_link(17,537
 add_worker(20,605
@@ -24,58 +27,60 @@ remove_worker(45,1523
 get_worker(48,1595
 init(55,1826
 handle_call(58,1861
-handle_cast(106,4340
-handle_info(109,4395
-code_change(121,4849
-terminate(124,4906
-evict_worker(129,5054
-delete_worker(141,5463
-get_worker(148,5616
-add_worker_to_slot(159,6025
+handle_cast(106,4353
+handle_info(109,4408
+code_change(121,4925
+terminate(124,4982
+evict_worker(129,5130
+delete_worker(141,5539
+get_worker(148,5692
+add_worker_to_slot(159,6101
 
-src/dron_db.erl,240
-store_job(12,403
-get_job(25,861
-store_job_instance(34,1099
-get_job_instance(43,1378
-archive_job(52,1646
-store_worker(65,2099
-delete_worker(74,2344
-set_worker_status(84,2610
-get_workers(98,3155
-get_job_instances_on_worker(108,3482
+/home/ionel/code/Dron/src/dron_db.erl,270
+store_job(13,455
+get_job(27,989
+store_job_instance(38,1326
+get_job_instance(47,1605
+archive_job(71,2599
+store_worker(86,3137
+delete_worker(95,3382
+set_worker_status(105,3648
+set_failed_worker(121,4287
+get_workers(138,4997
+get_job_instances_on_worker(148,5330
 
-src/dron_mnesia.erl,217
+/home/ionel/code/Dron/src/dron_mnesia.erl,193
 start(9,214
-start_node(20,571
-stop(27,828
-stop_node(32,940
-create_jobs_table(40,1216
-create_jobs_archive_table(50,1543
-create_job_instances_table(60,1886
-create_workers_table(70,2249
-create_ids_table(79,2495
+start_node(19,536
+stop(29,1017
+stop_node(34,1129
+create_jobs_table(42,1405
+create_jobs_archive_table(52,1732
+create_job_instances_table(62,2075
+create_workers_table(72,2438
 
-src/dron_sup.erl,27
+/home/ionel/code/Dron/src/dron_sup.erl,27
 start(10,197
 init(18,539
 
-src/dron_config.erl,17
+/home/ionel/code/Dron/src/dron_config.erl,17
 max_slots(8,161
 
-src/dron_scheduler.erl,215
+/home/ionel/code/Dron/src/dron_scheduler.erl,241
 -record(timers11,273
-start_link(15,396
-schedule(18,464
-unschedule(21,527
-run_instance(28,772
-init(45,1610
-handle_call(48,1644
-handle_cast(51,1706
-handle_info(66,2294
-code_change(69,2349
-terminate(72,2406
+start_link(15,420
+schedule(18,488
+unschedule(21,551
+run_instance(28,796
+timeout_instance(42,1596
+init(54,2114
+handle_call(58,2186
+handle_cast(61,2248
+handle_info(76,2836
+code_change(85,3078
+terminate(88,3135
 
-src/dron_api.erl,43
-register_job(9,201
-unregister_job(13,290
+/home/ionel/code/Dron/src/dron_api.erl,69
+register_job(9,222
+unregister_job(13,311
+kill_job_instance(17,415
