@@ -8,7 +8,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3, run_job_instance/1]).
 
-% A dict of (JID, Pid).
+% A dict of (JId, Pid) and a dict of (Pid, JId).
 -record(jipids, {jipids = dict:new(), pidjis = dict:new()}).
 
 %-------------------------------------------------------------------------------
@@ -55,13 +55,15 @@ handle_info({JId, ok}, State = #jipids{jipids = JIPids}) ->
 handle_info({'EXIT', Pid, {JId, killed}}, State = #jipids{jipids = JIPids,
                                                           pidjis = PidJIs}) ->
     error_logger:info_msg("~p has been killed", [JId]),
+    dron_scheduler ! {killed, JId},
     {noreply, State#jipids{jipids = dict:erase(JId, JIPids),
                           pidjis = dict:erase(Pid, PidJIs)}};
 handle_info({'EXIT', Pid, Reason}, State = #jipids{jipids = JIPids,
                                                   pidjis = PidJIs}) ->
     error_logger:info_msg("~p ~p", [Pid, Reason]),
     case dict:find(Pid, PidJIs) of
-        {ok, JId} -> {noreply, State#jipids{jipids = dict:erase(JId, JIPids),
+        {ok, JId} -> dron_scheduler ! {failed, JId, Reason},
+                     {noreply, State#jipids{jipids = dict:erase(JId, JIPids),
                                             pidjis = dict:erase(Pid, PidJIs)}};
         error     -> {noreply, State}
     end;

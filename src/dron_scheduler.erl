@@ -43,6 +43,7 @@ run_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout}) ->
 %-------------------------------------------------------------------------------
 
 init([]) ->
+    register(dron_scheduler, self()),
     {ok, #timers{}}.
 
 handle_call(_Request, _From, _State) ->
@@ -63,6 +64,12 @@ handle_cast({unschedule, #job{name = Name}},
 handle_cast(_Request, _State) ->
     not_implemented.
 
+handle_info({Killed, JId}, State) ->
+    % TODO: Handle killed JI.
+    {noreply, State};
+handle_info({failed, JId, Reason}, State) ->
+    % TODO: Handle JI failure.
+    {noreply, State};
 handle_info(_Request, _State) ->
     not_implemented.
 
