@@ -81,20 +81,27 @@ handle_cast(_Request, _State) ->
 handle_info({running, JId, TRef}, State = #timers{jitimeout = JITimeout}) ->
     {noreply, State#timers{jitimeout = dict:store(JId, TRef, JITimeout)}};
 handle_info({finished, JId}, State = #timers{jitimeout = JITimeout}) ->
-    ok = dron_db:set_job_instance_state(JId, finished),
     NewJITimeout = clear_timeout_timer(JId, JITimeout),
+    ok = dron_db:set_job_instance_state(JId, finished),
+    {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
+    ok = dron_pool:release_worker_slot(WName),
     {noreply, State#timers{jitimeout = NewJITimeout}};
 handle_info({killed, JId}, State = #timers{jitimeout = JITimeout}) ->
     NewJITimeout = clear_timeout_timer(JId, JITimeout),
     ok = dron_db:set_job_instance_state(JId, killed),
-    % TODO: Handle killed JI.
+    {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
+    ok = dron_pool:release_worker_slot(WName),
     {noreply, State#timers{jitimeout = NewJITimeout}};
 handle_info({failed, JId, Reason}, State = #timers{jitimeout = JITimeout}) ->
     NewJITimeout = clear_timeout_timer(JId, JITimeout),
+    {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
+    ok = dron_pool:release_worker_slot(WName),
     % TODO: Handle JI failure.
     {noreply, State#timers{jitimeout = NewJITimeout}};
 handle_info({timeout, JId}, State = #timers{jitimeout = JITimeout}) ->
     NewJITimeout = clear_timeout_timer(JId, JITimeout),
+    {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
+    ok = dron_pool:release_worker_slot(WName),
     % TODO: Handle JI timeout.
     {noreply, State#timers{jitimeout = NewJITimeout}};
 handle_info(_Request, _State) ->
