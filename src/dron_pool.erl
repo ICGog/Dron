@@ -89,18 +89,16 @@ handle_call({add, WName, Slots}, _From, State = #workers{
     end;
 handle_call({remove, WName}, _From, State = #workers{workers = Ws,
                                                      slot_workers = Sws}) ->
-       case orddict:is_key(WName, Ws) of
-           true -> NewWs = disable_worker(WName, Ws),
-                   case dron_db:delete_worker(WName) of
-                       ok -> {reply, ok,
-                              State#workers{
-                                workers = NewWs,
-                                slot_workers =
-                                    evict_worker(WName, Sws,
-                                                 gb_trees:iterator(Sws))}};
-                       Error  -> {reply, Error, State}
-                   end; 
-        false   -> {reply, {error, unknown_worker}, State}
+       case orddict:find(WName, Ws) of
+           {ok, W} -> NewWs = disable_worker(WName, Ws),
+                      case dron_db:delete_worker(WName) of
+                          ok -> {reply, ok,
+                                 State#workers{
+                                   workers = NewWs,
+                                   slot_workers = evict_worker(W, Sws)}};
+                          Error  -> {reply, Error, State}
+                      end; 
+           error   -> {reply, {error, unknown_worker}, State}
     end;
 handle_call({release_slot, WName}, _From,
             State = #workers{workers = Ws, slot_workers = Sws}) ->
@@ -140,10 +138,9 @@ handle_cast(_Request, _State) ->
 handle_info({nodedown, WName}, State = #workers{workers = Ws,
                                                 slot_workers = Sws}) ->
     error_logger:error_msg("Node ~p failed!~n", [WName]),
+    {ok, W} = ordict:find(WName, Ws),
     {noreply, State#workers{workers = disable_worker(WName, Ws),
-                            slot_workers =
-                                evict_worker(WName, Sws,
-                                             gb_trees:iterator(Sws))}};
+                            slot_workers = evict_worker(W, Sws)}};
 handle_info(Request, _State) ->
     {unexpected_request, Request}.
 
@@ -153,27 +150,15 @@ code_change(_OldVsn, State, _Extra) ->
 terminate(_Reason, _State) ->
     ok.
 
-% Find worker in the tree of (#slots, [workers]).
+% Deletes worker from the tree of (#slots, [workers]).
 % It returns the same tree if the pair could not be found.
-evict_worker(WName, Sws, Iter) ->
-    case gb_trees:next(Iter) of
-        {Key, Value, NewIter} ->
-            case delete_worker(WName, Value) of
-                []   -> gb_trees:delete(Key, Sws);
-                none -> evict_worker(WName, Sws, NewIter);
-                Wls  -> gb_trees:enter(Key, Wls, Sws)
-             end;
-        none -> Sws
+evict_worker(#worker{name = WName, used_slots = USlots}, Sws) ->
+    {value, Ws} = gb_trees:lookup(USlots, Sws),
+    case lists:delete(WName, Ws) of
+        []   -> gb_trees:delete(USlots, Sws);
+        Wls  -> gb_trees:enter(USlots, Wls, Sws)
     end.
-
-% Deletes a worker from a list if it can find it.
-delete_worker(_, []) ->
-    none;
-delete_worker(WName, [WName|Wls]) ->
-    Wls;
-delete_worker(WName, [_|Wls]) ->
-    [WName|delete_worker(WName, Wls)].
-
+   
 get_worker(Ws, Sws) ->
     case gb_trees:is_empty(Sws) of
         true  -> none;
