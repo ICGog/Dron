@@ -17,4 +17,4 @@ unregister_job(Job) ->
 kill_job_instance(JName, RTime) ->
     {ok, #job_instance{jid = JId, worker = WName}} =
         dron_db:get_job_instance(JName, RTime),
-    killed = dron_worker:kill_job_instance(WName, JId).
+    killed = dron_worker:kill_job_instance(WName, JId, false).

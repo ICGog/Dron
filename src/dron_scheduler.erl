@@ -4,9 +4,9 @@
 -behaviour(gen_server).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
-         code_change/3, timeout_instance/1]).
+         code_change/3, run_instance/2, timeout_instance/1]).
 
--export([start_link/0, schedule/1, unschedule/1, run_instance/1]).
+-export([start_link/0, schedule/1, unschedule/1]).
 
 -record(timers, {timers = dict:new(), jitimeout = dict:new()}).
 
@@ -25,10 +25,11 @@ unschedule(Job) ->
 % Internal API
 %-------------------------------------------------------------------------------
 
-run_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout}) ->
+run_instance(WPid, #job{name = Name, cmd_line = Cmd, timeout = Timeout}) ->
     Date = calendar:now_to_universal_time(erlang:now()),
     Worker = #worker{name = WName} = dron_pool:get_worker(),
-    JobInstance = #job_instance{jid = {node(), Date}, name = Name,
+    JId = {node(), Date},
+    JobInstance = #job_instance{jid = JId, name = Name,
                                 cmd_line = Cmd, state = running,
                                 timeout = Timeout, run_time = erlang:now(),
                                 num_retry = 1, worker = WName},
@@ -39,10 +40,11 @@ run_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout}) ->
     {ok, TRef} = timer:apply_after(Timeout, ?MODULE, timeout_instance,
                                    [JobInstance]),
     ok = dron_db:store_worker(Worker#worker{
-                                used_slots = Worker#worker.used_slots + 1}).
+                                used_slots = Worker#worker.used_slots + 1}),
+    WPid ! {running, JId, TRef}.
 
 timeout_instance(JI = #job_instance{jid = JId, worker = WName}) ->
-    case dron_worker:kill_job_instance(WName, JId) of
+    case dron_worker:kill_job_instance(WName, JId, true) of
         killed      -> ok = dron_db:store_job_instance(JI#job_instance{
                                                          state = timeout});
         not_running -> ok
@@ -62,28 +64,39 @@ handle_call(_Request, _From, _State) ->
 handle_cast({schedule, Job = #job{name = JName, start_time = STime,
                                   frequency = Freq}},
             #timers{timers = Timers}) ->
-    {ok, TRef} = timer:apply_interval(Freq, ?MODULE, run_instance, [Job]),
+    {ok, TRef} = timer:apply_interval(Freq, ?MODULE, run_instance,
+                                      [self(), Job]),
     {noreply, #timers{timers = dict:store(JName, TRef, Timers)}};
     
 handle_cast({unschedule, #job{name = JName}},
            #timers{timers = Timers}) ->
     {ok, TRef} = dict:find(JName, Timers),
     {ok, cancel} = timer:cancel(TRef),
+    % TODO: Cancel the timeout timers.
     {noreply, #timers{timers = dict:erase(JName, Timers)}};
 
 handle_cast(_Request, _State) ->
     not_implemented.
 
-handle_info({finished, JId}, State) ->
+handle_info({running, JId, TRef}, State = #timers{jitimeout = JITimeout}) ->
+    {noreply, State#timers{jitimeout = dict:store(JId, TRef, JITimeout)}};
+handle_info({finished, JId}, State = #timers{jitimeout = JITimeout}) ->
     ok = dron_db:set_job_instance_state(JId, finished),
-    {noreply, State};
-handle_info({killed, JId}, State) ->
+    NewJITimeout = clear_timeout_timer(JId, JITimeout),
+    {noreply, State#timers{jitimeout = NewJITimeout}};
+handle_info({killed, JId}, State = #timers{jitimeout = JITimeout}) ->
+    NewJITimeout = clear_timeout_timer(JId, JITimeout),
     ok = dron_db:set_job_instance_state(JId, killed),
     % TODO: Handle killed JI.
-    {noreply, State};
-handle_info({failed, JId, Reason}, State) ->
+    {noreply, State#timers{jitimeout = NewJITimeout}};
+handle_info({failed, JId, Reason}, State = #timers{jitimeout = JITimeout}) ->
+    NewJITimeout = clear_timeout_timer(JId, JITimeout),
     % TODO: Handle JI failure.
-    {noreply, State};
+    {noreply, State#timers{jitimeout = NewJITimeout}};
+handle_info({timeout, JId}, State = #timers{jitimeout = JITimeout}) ->
+    NewJITimeout = clear_timeout_timer(JId, JITimeout),
+    % TODO: Handle JI timeout.
+    {noreply, State#timers{jitimeout = NewJITimeout}};
 handle_info(_Request, _State) ->
     not_implemented.
 
@@ -92,3 +105,11 @@ code_change(_OldVsn, State, _Extra) ->
 
 terminate(_Reason, _State) ->
     ok.
+
+clear_timeout_timer(JId, JITimeout) ->
+    case dict:find(JId, JITimeout) of
+        {ok, TRef} -> timer:cancel(TRef);
+        error      -> error_logger:error_msg("~p does not have a timeout timer",
+                                             [JId])
+    end,
+    dict:erase(JId, JITimeout).

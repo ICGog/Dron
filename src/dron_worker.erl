@@ -3,7 +3,7 @@
 -include("dron.hrl").
 -behaviour(gen_server).
 
--export([start_link/1, run/2, kill_job_instance/2]).
+-export([start_link/1, run/2, kill_job_instance/3]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3, run_job_instance/1]).
@@ -19,8 +19,9 @@ start_link(WName) ->
 run(WName, JobInstance) ->
     gen_server:cast({global, WName}, {run, JobInstance}).
 
-kill_job_instance(WName, JId) ->
-    gen_server:call({global, WName}, {kill, JId}).
+kill_job_instance(WName, JId, Timeout) ->
+    gen_server:call({global, WName}, {kill, JId, Timeout}).
+
 
 %-------------------------------------------------------------------------------
 % Internal
@@ -30,9 +31,13 @@ init([]) ->
     process_flag(trap_exit, true),
     {ok, #jipids{}}.
 
-handle_call({kill, JId}, _From, State = #jipids{jipids = JIPids}) ->
+handle_call({kill, JId, Timeout}, _From, State = #jipids{jipids = JIPids}) ->
+    Reason = case Timeout of
+                 false -> killed;
+                 true  -> timeout
+             end,
     case dict:find(JId, JIPids) of
-        {ok, Pid} -> exit(Pid, {JId, kill}),
+        {ok, Pid} -> exit(Pid, {JId, Reason}),
                      {reply, killed, State};
         error     -> {reply, not_running, State}
     end;
@@ -53,10 +58,10 @@ handle_info({JId, ok}, State = #jipids{jipids = JIPids}) ->
     error_logger:info_msg("~p has finished", [JId]),
     dron_scheduler ! {finished, JId},
     {noreply, State#jipids{jipids = dict:erase(JId, JIPids)}};
-handle_info({'EXIT', Pid, {JId, killed}}, State = #jipids{jipids = JIPids,
+handle_info({'EXIT', Pid, {JId, Reason}}, State = #jipids{jipids = JIPids,
                                                           pidjis = PidJIs}) ->
     error_logger:info_msg("~p has been killed", [JId]),
-    dron_scheduler ! {killed, JId},
+    dron_scheduler ! {Reason, JId},
     {noreply, State#jipids{jipids = dict:erase(JId, JIPids),
                           pidjis = dict:erase(Pid, PidJIs)}};
 handle_info({'EXIT', Pid, Reason}, State = #jipids{jipids = JIPids,
