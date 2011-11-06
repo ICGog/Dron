@@ -7,7 +7,7 @@
          code_change/3]).
 
 -export([start_link/0, add_worker/1, add_worker/2, auto_add_workers/0,
-         remove_worker/1, get_worker/0]).
+         remove_worker/1, get_worker/0, release_worker_slot/1]).
 
 % A gb_tree of (#used_slots, [workers]) and a set of workers.
 -record(workers, {workers = orddict:new(), slot_workers = gb_trees:empty()}).
@@ -48,6 +48,9 @@ remove_worker(Worker) ->
 get_worker() ->
     gen_server:call(?NAME, get_worker).
 
+release_worker_slot(WName) ->
+    gen_server:call(?NAME, {release_slot, WName}).
+
 %-------------------------------------------------------------------------------
 % Internal
 %-------------------------------------------------------------------------------
@@ -86,17 +89,38 @@ handle_call({add, WName, Slots}, _From, State = #workers{
     end;
 handle_call({remove, WName}, _From, State = #workers{workers = Ws,
                                                      slot_workers = Sws}) ->
-    case orddict:is_key(WName, Ws) of
-        true  -> case dron_db:delete_worker(WName) of
-                     ok -> {reply, ok, State#workers{
-                                         workers = orddict:erase(WName, Ws),
-                                         slot_workers =
-                                             evict_worker(WName, Sws,
-                                                          gb_trees:iterator(Sws)
-                                                         )}};
-                     Error  -> {reply, Error, State}
-                 end; 
-        false -> {reply, {error, unknown_worker}, State}
+       case orddict:is_key(WName, Ws) of
+           true -> NewWs = disable_worker(WName, Ws),
+                   case dron_db:delete_worker(WName) of
+                       ok -> {reply, ok,
+                              State#workers{
+                                workers = NewWs,
+                                slot_workers =
+                                    evict_worker(WName, Sws,
+                                                 gb_trees:iterator(Sws))}};
+                       Error  -> {reply, Error, State}
+                   end; 
+        false   -> {reply, {error, unknown_worker}, State}
+    end;
+handle_call({release_slot, WName}, _From,
+            State = #workers{workers = Ws, slot_workers = Sws}) ->
+    case orddict:find(WName, Ws) of
+        {ok, W = #worker{used_slots = USlots}} ->
+                NewW = W#worker{used_slots = USlots - 1},
+                {value, SlotWs} = gb_trees:lookup(USlots, Sws),
+                NoSws = gb_trees:enter(USlots, lists:delete(WName, SlotWs),
+                                       Sws),
+                NewSlotWs = case gb_trees:lookup(USlots - 1, NoSws) of
+                                {value, NSlotWs} -> [NewW | NSlotWs];
+                                none             -> [NewW]
+                            end,
+                dron_db:store_worker(NewW),
+                {reply, ok, State#workers{
+                              workers = dict:store(WName, NewW, Ws),
+                              slot_workers = gb_trees:enter(USlots - 1,
+                                                            NewSlotWs,
+                                                            NoSws)}};
+        error   -> {reply, {error, unknown_worker}, State}
     end;
 handle_call(get_worker, _From, State = #workers{workers = Ws,
                                                 slot_workers = Sws}) ->
@@ -116,23 +140,10 @@ handle_cast(_Request, _State) ->
 handle_info({nodedown, WName}, State = #workers{workers = Ws,
                                                 slot_workers = Sws}) ->
     error_logger:error_msg("Node ~p failed!~n", [WName]),
-    NewSws = evict_worker(WName, Sws, gb_trees:iterator(Sws)),
-    NewWs = case orddict:find(WName, Ws) of
-                {ok, Worker} -> NWs = orddict:erase(WName, Ws),
-                                ok = dron_db:store_worker(Worker#worker{
-                                                            enabled = false}),
-                                NWs;
-                error        -> error_logger:error_msg(
-                                  "Worker ~p not in-memory", [WName]),
-                                Ws
-            end,
-    % If these db writes fail then the whole worker is restarted.
-    % TODO: Make sure waiting JIs get rerun.
-    {ok, FailedJIs} = dron_db:get_job_instances_on_worker(WName),
-    lists:map(fun(JI) -> ok = dron_db:store_job_instance(
-                                JI#job_instance{state = waiting}) end,
-              FailedJIs),
-    {noreply, State#workers{workers = NewWs, slot_workers = NewSws}};
+    {noreply, State#workers{workers = disable_worker(WName, Ws),
+                            slot_workers =
+                                evict_worker(WName, Sws,
+                                             gb_trees:iterator(Sws))}};
 handle_info(Request, _State) ->
     {unexpected_request, Request}.
 
@@ -184,3 +195,18 @@ add_worker_to_slot(WName, Slot, Sws) ->
         {value, Ws} -> gb_trees:enter(Slot, [WName | Ws], Sws);
         none        -> gb_trees:enter(Slot, [WName], Sws)
     end.
+
+disable_worker(WName, Ws) ->
+    NewWs = case orddict:find(WName, Ws) of
+                {ok, Worker} -> NWs = orddict:erase(WName, Ws),
+                                ok = dron_db:store_worker(Worker#worker{
+                                                            enabled = false}),
+                                NWs;
+                error        -> error_logger:error_msg(
+                                  "Worker ~p not in-memory", [WName]),
+                                Ws
+            end,
+    % If these db writes fail then the whole worker is restarted.
+    {ok, FailedJIs} = dron_db:get_job_instances_on_worker(WName),
+    lists:map(fun(JI) -> dron_scheduler ! {worker_disabled, JI} end, FailedJIs),
+    NewWs.
