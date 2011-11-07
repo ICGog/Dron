@@ -42,8 +42,8 @@ auto_add_workers() ->
             lists:zip(Workers, Result)
     end.
             
-remove_worker(Worker) ->
-    gen_server:call(?NAME, {remove, Worker}).
+remove_worker(WName) ->
+    gen_server:call(?NAME, {remove, WName}).
 
 get_worker() ->
     gen_server:call(?NAME, get_worker).
@@ -109,12 +109,12 @@ handle_call({release_slot, WName}, _From,
                 NoSws = gb_trees:enter(USlots, lists:delete(WName, SlotWs),
                                        Sws),
                 NewSlotWs = case gb_trees:lookup(USlots - 1, NoSws) of
-                                {value, NSlotWs} -> [NewW | NSlotWs];
-                                none             -> [NewW]
+                                {value, NSlotWs} -> [WName | NSlotWs];
+                                none             -> [WName]
                             end,
                 dron_db:store_worker(NewW),
                 {reply, ok, State#workers{
-                              workers = dict:store(WName, NewW, Ws),
+                              workers = orddict:store(WName, NewW, Ws),
                               slot_workers = gb_trees:enter(USlots - 1,
                                                             NewSlotWs,
                                                             NoSws)}};
@@ -138,7 +138,7 @@ handle_cast(_Request, _State) ->
 handle_info({nodedown, WName}, State = #workers{workers = Ws,
                                                 slot_workers = Sws}) ->
     error_logger:error_msg("Node ~p failed!~n", [WName]),
-    {ok, W} = ordict:find(WName, Ws),
+    {ok, W} = orddict:find(WName, Ws),
     {noreply, State#workers{workers = disable_worker(WName, Ws),
                             slot_workers = evict_worker(W, Sws)}};
 handle_info(Request, _State) ->

@@ -58,6 +58,8 @@ handle_info({JId, ok}, State = #jipids{jipids = JIPids}) ->
     error_logger:info_msg("~p has finished", [JId]),
     dron_scheduler ! {finished, JId},
     {noreply, State#jipids{jipids = dict:erase(JId, JIPids)}};
+handle_info({'EXIT', _Pid, normal}, State) ->
+    {noreply, State};
 handle_info({'EXIT', Pid, {JId, Reason}}, State = #jipids{jipids = JIPids,
                                                           pidjis = PidJIs}) ->
     error_logger:info_msg("~p has been killed", [JId]),
@@ -66,7 +68,7 @@ handle_info({'EXIT', Pid, {JId, Reason}}, State = #jipids{jipids = JIPids,
                           pidjis = dict:erase(Pid, PidJIs)}};
 handle_info({'EXIT', Pid, Reason}, State = #jipids{jipids = JIPids,
                                                   pidjis = PidJIs}) ->
-    error_logger:info_msg("~p ~p", [Pid, Reason]),
+    error_logger:info_msg("Job instance exited: ~p ~p", [Pid, Reason]),
     case dict:find(Pid, PidJIs) of
         {ok, JId} -> dron_scheduler ! {failed, JId, Reason},
                      {noreply, State#jipids{jipids = dict:erase(JId, JIPids),
