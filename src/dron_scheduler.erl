@@ -111,7 +111,7 @@ handle_info({timeout, JId}, State = #timers{jitimeout = JITimeout}) ->
     ok = dron_pool:release_worker_slot(WName),
     {noreply, State#timers{jitimeout = NewJITimeout}};
 handle_info({worker_disabled, JI}, State) ->
-    % TODO: Rerun job instance.
+    run_instance(self(), JI),
     {noreply, State};
 handle_info(_Request, _State) ->
     not_implemented.
