@@ -22,7 +22,6 @@ run(WName, JobInstance) ->
 kill_job_instance(WName, JId, Timeout) ->
     gen_server:call({global, WName}, {kill, JId, Timeout}).
 
-
 %-------------------------------------------------------------------------------
 % Internal
 %-------------------------------------------------------------------------------
@@ -54,10 +53,12 @@ handle_cast({run, JI = #job_instance{jid = JId}},
 handle_cast(_Request, _State) ->
     unexpected_request.
 
-handle_info({JId, ok}, State = #jipids{jipids = JIPids}) ->
+handle_info({JId, JPid, ok}, State = #jipids{jipids = JIPids,
+                                            pidjis = PidJIs}) ->
 %    error_logger:info_msg("~p has finished", [JId]),
     dron_scheduler ! {finished, JId},
-    {noreply, State#jipids{jipids = dict:erase(JId, JIPids)}};
+    {noreply, State#jipids{jipids = dict:erase(JId, JIPids),
+                          pidjis = dict:erase(JPid, PidJIs)}};
 handle_info({'EXIT', _Pid, normal}, State) ->
     {noreply, State};
 handle_info({'EXIT', Pid, {JId, Reason}}, State = #jipids{jipids = JIPids,
@@ -99,4 +100,4 @@ run_job_instance(JI = #job_instance{jid = JId, name = Name, cmd_line = Cmd}) ->
  %   FileName = io_lib:format("~s_~p-~p-~p-~p:~p:~p", [Name, Y, M, D, H, Min,
  %                                                     Sec]),
  %   file:write_file(FileName, io_lib:fwrite("~s", [Output]), [write]),
-    WPid ! {JId, ok}.
+    WPid ! {JId, self(), ok}.
