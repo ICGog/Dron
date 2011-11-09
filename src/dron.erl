@@ -26,6 +26,7 @@ start(_Type, _Args) ->
     error_logger:info_msg("~nDron Scheduler is running!~n", []),
     AutoWorkers = dron_pool:auto_add_workers(),
     error_logger:info_msg("Auto attaching workers: ~w~n", [AutoWorkers]),
+    error_logger:tty(false),
     {ok, Sup}.
 
 stop(_State) ->
