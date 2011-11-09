@@ -6,7 +6,7 @@
 -export([store_job/1, get_job/1, store_job_instance/1, get_job_instance/1,
          get_job_instance/2, set_job_instance_state/2, archive_job/1,
          store_worker/1, delete_worker/1, get_workers/1,
-         get_job_instances_on_worker/1]).
+         get_job_instances_on_worker/1, store_job_time/1, get_job_time/1]).
 
 %-------------------------------------------------------------------------------
 
@@ -133,3 +133,23 @@ get_job_instances_on_worker(WName) ->
         {atomic, Return}  -> {ok, Return};
         {aborted, Reason} -> {error, Reason}
     end.
+
+store_job_time(JobTime) ->
+    Trans = fun() ->
+                    mnesia:write(job_time, JobTime, write)
+            end,
+    case mnesia:transaction(Trans) of
+        {atomic, ok}      -> ok;
+        {aborted, Reason} -> {error, Reason}
+    end.
+
+get_job_time(JName) ->
+    Trans = fun() ->
+                    mnesia:read(job_time, JName, read)
+            end,
+    case mnesia:transaction(Trans) of
+        {atomic, [JobTime]} -> {ok, JobTime};
+        {atomic, []}        -> {error, no_job_time};
+        {atomic, _}         -> {error, multiple_job_time};
+        {aborted, Reason}   -> {error, Reason}
+    end.            

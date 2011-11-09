@@ -14,6 +14,7 @@ start(Nodes, Mode) ->
     create_jobs_archive_table(Nodes, Mode),
     create_job_instances_table(Nodes, Mode),
     create_workers_table(Nodes),
+    create_job_time_table([node()]),
     ok.
 
 start_node(Node) ->
@@ -77,3 +78,12 @@ create_workers_table(Nodes) ->
            {attributes, record_info(fields, worker)},
            {type, set},
            {disc_copies, Nodes}]).
+
+create_job_time_table(Nodes) ->
+    {atomic, ok} =
+        mnesia:create_table(
+          job_time,
+          [{record_name, job_time},
+           {attributes, record_info(fields, job_time)},
+           {type, set},
+           {ram_copies, Nodes}]).

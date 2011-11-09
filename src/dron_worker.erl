@@ -55,7 +55,7 @@ handle_cast(_Request, _State) ->
     unexpected_request.
 
 handle_info({JId, ok}, State = #jipids{jipids = JIPids}) ->
-    error_logger:info_msg("~p has finished", [JId]),
+%    error_logger:info_msg("~p has finished", [JId]),
     dron_scheduler ! {finished, JId},
     {noreply, State#jipids{jipids = dict:erase(JId, JIPids)}};
 handle_info({'EXIT', _Pid, normal}, State) ->
@@ -85,18 +85,18 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 run_job_instance(JI = #job_instance{jid = JId, name = Name, cmd_line = Cmd}) ->
-    error_logger:info_msg("~p", [JI]),
+    %error_logger:info_msg("~p", [JI]),
     {_, {{Y, M, D}, {H, Min, Sec}}} = JId,
     WPid = receive
-               {Pid, start} -> error_logger:info_msg(
-                                 "Started job instance ~p~n", [JId]),
+               {Pid, start} -> %error_logger:info_msg(
+                                % "Started job instance ~p~n", [JId]),
                                Pid
            after 10000 ->
                    exit(start_timeout)
            end,
     Output = os:cmd(Cmd),
-    error_logger:info_msg("Output:~s~n", [Output]),
-    FileName = io_lib:format("~s_~p-~p-~p-~p:~p:~p", [Name, Y, M, D, H, Min,
-                                                      Sec]),
-    file:write_file(FileName, io_lib:fwrite("~s", [Output]), [write]),
+    %error_logger:info_msg("Output:~s~n", [Output]),
+ %   FileName = io_lib:format("~s_~p-~p-~p-~p:~p:~p", [Name, Y, M, D, H, Min,
+ %                                                     Sec]),
+ %   file:write_file(FileName, io_lib:fwrite("~s", [Output]), [write]),
     WPid ! {JId, ok}.

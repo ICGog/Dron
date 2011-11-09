@@ -27,8 +27,20 @@ unschedule(JName) ->
 %-------------------------------------------------------------------------------
 
 run_instance_from_job(WPid, #job{name = Name, cmd_line = Cmd,
-                                 timeout = Timeout}) ->
+                                 timeout = Timeout, frequency = Freq}) ->
     Date = calendar:now_to_universal_time(erlang:now()),
+    RT = time_to_millisecs(erlang:now()),
+    case dron_db:get_job_time(Name) of
+        {error, no_job_time} -> dron_db:store_job_time(
+                                  #job_time{name = Name,
+                                            expected_run_time = RT,
+                                            run_time = RT});
+        {ok, JT = #job_time{expected_run_time = ERT}} ->
+            dron_db:store_job_time(
+              JT#job_time{expected_run_time = ERT + Freq,
+                          run_time = RT}),
+            error_logger:info_msg("Delay: ~p", [RT - ERT - Freq])
+    end,
     run_instance(WPid, #job_instance{jid = {node(), Date}, name = Name,
                                      cmd_line = Cmd, state = running,
                                      timeout = Timeout, run_time = erlang:now(),
@@ -78,7 +90,8 @@ handle_cast({unschedule, JName}, #timers{timers = Timers}) ->
 handle_cast(_Request, _State) ->
     not_implemented.
 
-handle_info({running, JId, TRef}, State = #timers{jitimeout = JITimeout}) ->
+handle_info({running, JId, TRef},
+            State = #timers{jitimeout = JITimeout}) ->
     {noreply, State#timers{jitimeout = dict:store(JId, TRef, JITimeout)}};
 handle_info({finished, JId}, State = #timers{jitimeout = JITimeout}) ->
     NewJITimeout = clear_timeout_timer(JId, JITimeout),
@@ -129,3 +142,6 @@ clear_timeout_timer(JId, JITimeout) ->
                                              [JId])
     end,
     dict:erase(JId, JITimeout).
+
+time_to_millisecs({MegaSecs, Secs, MicroSecs}) ->
+    (MegaSecs * 1000000 + Secs) * 1000 + MicroSecs div 1000.

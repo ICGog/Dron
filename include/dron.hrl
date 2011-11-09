@@ -8,4 +8,6 @@
 
 -record(worker, {name, enabled, max_slots, used_slots}).
 
+-record(job_time, {name, expected_run_time, run_time}).
+
 -define(NAME, {global, ?MODULE}).
