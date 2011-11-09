@@ -19,9 +19,9 @@ start_link(WName) ->
 run(WName, JobInstance) ->
     gen_server:cast({global, WName}, {run, JobInstance}).
 
+%% @doc Kills a job instance. It returns when the job instance is killed.
 kill_job_instance(WName, JId, Timeout) ->
     gen_server:call({global, WName}, {kill, JId, Timeout}).
-
 
 %-------------------------------------------------------------------------------
 % Internal
@@ -54,15 +54,20 @@ handle_cast({run, JI = #job_instance{jid = JId}},
 handle_cast(_Request, _State) ->
     unexpected_request.
 
-handle_info({JId, ok}, State = #jipids{jipids = JIPids}) ->
-    error_logger:info_msg("~p has finished", [JId]),
+handle_info({JId, JPid, ok}, State = #jipids{jipids = JIPids,
+                                             pidjis = PidJIs}) ->
+    %% Notifies the scheduler that a job instance has finished.
     dron_scheduler ! {finished, JId},
-    {noreply, State#jipids{jipids = dict:erase(JId, JIPids)}};
+    {noreply, State#jipids{jipids = dict:erase(JId, JIPids),
+                           pidjis = dict:erase(JPid, PidJIs)}};
 handle_info({'EXIT', _Pid, normal}, State) ->
+    %% A job instance finished successfully.
     {noreply, State};
 handle_info({'EXIT', Pid, {JId, Reason}}, State = #jipids{jipids = JIPids,
                                                           pidjis = PidJIs}) ->
     error_logger:info_msg("~p has been killed", [JId]),
+    %% Notify the scheduler why the job instance was killed.
+    %% (timeout | killed).
     dron_scheduler ! {Reason, JId},
     {noreply, State#jipids{jipids = dict:erase(JId, JIPids),
                           pidjis = dict:erase(Pid, PidJIs)}};
@@ -92,11 +97,11 @@ run_job_instance(JI = #job_instance{jid = JId, name = Name, cmd_line = Cmd}) ->
                                  "Started job instance ~p~n", [JId]),
                                Pid
            after 10000 ->
-                   exit(start_timeout)
+                   exit(no_start_timeout)
            end,
     Output = os:cmd(Cmd),
     error_logger:info_msg("Output:~s~n", [Output]),
     FileName = io_lib:format("~s_~p-~p-~p-~p:~p:~p", [Name, Y, M, D, H, Min,
                                                       Sec]),
     file:write_file(FileName, io_lib:fwrite("~s", [Output]), [write]),
-    WPid ! {JId, ok}.
+    WPid ! {JId, self(), ok}.
