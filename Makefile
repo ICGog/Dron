@@ -36,6 +36,7 @@ run: $(TARGETS)
 clean:
 	rm -f $(TARGETS)
 	rm -rf $(LOG_DIR)
+	rm -rf $(TEST_DIR)/*.beam
 	rm -rf Mnesia.*
 	$(MAKE) -C $(TEST_DIR) clean
 
