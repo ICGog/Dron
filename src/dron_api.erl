@@ -6,6 +6,7 @@
 
 %-------------------------------------------------------------------------------
 
+%% @TODO: These calls may have synchronization issues.
 register_job(Job) ->
     ok = dron_db:store_job(Job),
     dron_scheduler:schedule(Job).

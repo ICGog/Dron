@@ -30,7 +30,7 @@ get_job(Name) ->
     case mnesia:transaction(Trans) of
         {atomic, [Job]}         -> {ok, Job};
         {atomic, []}            -> {error, no_job};
-        {atomic, multiple_jobs} -> {error, multiple_jobs};
+        {atomic, _Jobs}         -> {error, multiple_jobs};
         {aborted, Reason}       -> {error, Reason}
     end.
 
@@ -48,10 +48,10 @@ get_job_instance(Jid) ->
                     mnesia:read(job_instances, Jid, read)
             end,
     case mnesia:transaction(Trans) of
-        {atomic, [JobInstance]}           -> {ok, JobInstance};
-        {atomic, []}                      -> {error, no_job_instance};
-        {atomic, multiple_job_instances}  -> {error, multiple_job_instances};
-        {aborted, Reason}                 -> {error, Reason}
+        {atomic, [JobInstance]} -> {ok, JobInstance};
+        {atomic, []}            -> {error, no_job_instance};
+        {atomic, _JobInstances} -> {error, multiple_job_instances};
+        {aborted, Reason}       -> {error, Reason}
     end.
 
 get_job_instance(JName, RTime) ->
@@ -61,10 +61,10 @@ get_job_instance(JName, RTime) ->
                                           JI#job_instance.run_time == RTime]))
             end,
     case mnesia:transaction(Trans) of
-        {atomic, [JobInstance]}           -> {ok, JobInstance};
-        {atomic, []}                      -> {error, no_job_instance};
-        {atomic, multiple_job_instances}  -> {error, multiple_job_instances};
-        {aborted, Reason}                 -> {error, Reason}
+        {atomic, [JobInstance]} -> {ok, JobInstance};
+        {atomic, []}            -> {error, no_job_instance};
+        {atomic, _JobInstances} -> {error, multiple_job_instances};
+        {aborted, Reason}       -> {error, Reason}
     end.
 
 set_job_instance_state(JId, State) ->
@@ -91,7 +91,7 @@ archive_job(Name) ->
                     end
             end,
     case mnesia:transaction(Trans) of
-        {atomic, ok} -> ok;
+        {atomic, ok}      -> ok;
         {atomic, Return}  -> {error, Return};
         {aborted, Reason} -> {error, Reason}
     end.

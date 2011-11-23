@@ -9,8 +9,8 @@
          code_change/3, run_job_instance/1]).
 
 % A dict of (JId, Pid) and a dict of (Pid, JId).
--record(jipids, {jipids = dict:new(), pidjis = dict:new(),
-                jitimeout = dict:new()}).
+-record(wstate, {jipids = dict:new(), pidjis = dict:new(),
+                 jitimeout = dict:new()}).
 
 %-------------------------------------------------------------------------------
 
@@ -33,13 +33,13 @@ kill_job_instance(WName, JId, Timeout) ->
 
 init([]) ->
     process_flag(trap_exit, true),
-    {ok, #jipids{}}.
+    {ok, #wstate{}}.
 
 handle_call(_Request, _From, _State) ->
     unexpected_request.
 
 handle_cast({run, JI = #job_instance{jid = JId, worker = WName}, Timeout},
-            State = #jipids{jipids = JIPids, pidjis = PidJIs,
+            State = #wstate{jipids = JIPids, pidjis = PidJIs,
                            jitimeout = JITimeout}) ->
     {ok, TRef} = timer:apply_after(Timeout, ?MODULE, kill_job_instance,
                                    [WName, JId, true]),
@@ -48,9 +48,9 @@ handle_cast({run, JI = #job_instance{jid = JId, worker = WName}, Timeout},
     NewJIPids = dict:store(JId, JIPid, JIPids),
     NewPidJIs = dict:store(JIPid, JId, PidJIs),
     JIPid ! {self(), start},
-    {noreply, State#jipids{jipids = NewJIPids, pidjis = NewPidJIs,
+    {noreply, State#wstate{jipids = NewJIPids, pidjis = NewPidJIs,
                           jitimeout = NewJITimeout}};
-handle_cast({kill, JId, Timeout}, State = #jipids{jipids = JIPids,
+handle_cast({kill, JId, Timeout}, State = #wstate{jipids = JIPids,
                                                  pidjis = PidJIs,
                                                  jitimeout = JITimeout}) ->
     Reason = case Timeout of
@@ -60,7 +60,7 @@ handle_cast({kill, JId, Timeout}, State = #jipids{jipids = JIPids,
     case dict:find(JId, JIPids) of
         {ok, Pid} -> exit(Pid, {JId, Reason}),
                      {noreply,
-                      State#jipids{jipids = dict:erase(JId, JIPids),
+                      State#wstate{jipids = dict:erase(JId, JIPids),
                                    pidjis = dict:erase(Pid, PidJIs),
                                    jitimeout = clear_timeout(JId, JITimeout)}};
         error     -> {noreply, State}
@@ -68,16 +68,17 @@ handle_cast({kill, JId, Timeout}, State = #jipids{jipids = JIPids,
 handle_cast(_Request, _State) ->
     unexpected_request.
 
-handle_info({JId, JPid, ok}, State = #jipids{jipids = JIPids,
+handle_info({JId, JPid, ok}, State = #wstate{jipids = JIPids,
                                             pidjis = PidJIs,
                                             jitimeout = JITimeout}) ->
     %% Notifies the scheduler that a job instance has finished.
     dron_scheduler ! {finished, JId},
-    {noreply, State#jipids{jipids = dict:erase(JId, JIPids),
+    {noreply, State#wstate{jipids = dict:erase(JId, JIPids),
                           pidjis = dict:erase(JPid, PidJIs),
                           jitimeout = clear_timeout(JId, JITimeout)}};
 handle_info({'EXIT', _Pid, normal}, State) ->
-    %% A job instance finished successfully.
+    %% A job instance finished successfully. The state is already updated when
+    %% the worker is informed that the job instance finished.
     {noreply, State};
 handle_info({'EXIT', _Pid, {JId, Reason}}, State) ->
     error_logger:info_msg("~p has been killed", [JId]),
@@ -85,14 +86,14 @@ handle_info({'EXIT', _Pid, {JId, Reason}}, State) ->
     %% (timeout | killed).
     dron_scheduler ! {Reason, JId},
     {noreply, State};
-handle_info({'EXIT', Pid, Reason}, State = #jipids{jipids = JIPids,
+handle_info({'EXIT', Pid, Reason}, State = #wstate{jipids = JIPids,
                                                   pidjis = PidJIs,
                                                   jitimeout = JITimeout}) ->
     error_logger:info_msg("Job instance exited: ~p ~p", [Pid, Reason]),
     case dict:find(Pid, PidJIs) of
         {ok, JId} -> dron_scheduler ! {failed, JId, Reason},
                      {noreply,
-                      State#jipids{jipids = dict:erase(JId, JIPids),
+                      State#wstate{jipids = dict:erase(JId, JIPids),
                                    pidjis = dict:erase(Pid, PidJIs),
                                    jitimeout = clear_timeout(JId, JITimeout)}};
         error     -> {noreply, State}
