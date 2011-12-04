@@ -11,7 +11,7 @@ job_instance_registered(jobInstanceId, jobInstanceInfo) ->
 
 start(Port) ->
     thrift_socket_server:start([{handler, ?MODULE},
-                                {service, dron_thirft},
+                                {service, dron_thrift},
                                 {port, Port},
                                 {name, dron_server}]).
 
