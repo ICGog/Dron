@@ -5,6 +5,7 @@ export EBIN_DIR=ebin
 export LIB_DIR=lib
 export LOG_DIR=log
 export WWW_DIR=www
+export THRIFT_DIR=thrift
 export DRON_NODE=dron
 
 DRON_WORKERS=w1 w2 w3
@@ -37,6 +38,7 @@ clean:
 	rm -f $(TARGETS)
 	rm -rf $(LOG_DIR)
 	rm -rf $(TEST_DIR)/*.beam
+	rm -rf $(THRIFT_DIR)/gen-erl
 	rm -rf Mnesia.*
 	$(MAKE) -C $(TEST_DIR) clean
 
