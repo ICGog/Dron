@@ -11,9 +11,11 @@ DRON_WORKERS=w1 w2 w3
 ERROR_LOG=$(LOG_DIR)/dron.log
 INCLUDES=$(wildcard $(INCLUDE_DIR)/*.hrl)
 SOURCES=$(wildcard $(SOURCE_DIR)/*.erl)
-TARGETS=$(patsubst $(SOURCE_DIR)/%.erl, $(EBIN_DIR)/%.beam, $(SOURCES))
+TARGETS=$(patsubst $(SOURCE_DIR)/%.erl, $(EBIN_DIR)/%.beam, $(SOURCES)) $(ADDITIONAL_ERL_TARGETS)
 TEST_SOURCES=$(wildcard $(TEST_DIR)/*.erl)
 TEST_TARGETS=$(patsubst $(TEST_DIR)/%.erl, $(TEST_DIR)/%.beam, $(TEST_SOURCES))
+ADDITIONAL_ERL_SOURCES=$(LIB_DIR)/mochijson2/mochijson2.erl
+ADDITIONAL_ERL_TARGETS=$(EBIN_DIR)/mochijson2.beam
 
 ERLC_OPTS=-I $(INCLUDE_DIR) -o $(EBIN_DIR) -Wall -v
 ERL_OPTS=-pa $(EBIN_DIR) -pa $(TEST_DIR) -I $(INCLUDE_DIR) -sname $(DRON_NODE) -s dron
@@ -59,6 +61,11 @@ stop_workers: $(TARGETS)
 ################################################################################
 # Internal
 ################################################################################
+
+$(ADDITIONAL_ERL_TARGETS): $(ADDITIONAL_ERL_SOURCES)
+	for src in $(ADDITIONAL_ERL_SOURCES) ; do \
+		erlc $(ERLC_OPTS) $$src ; \
+	done
 
 $(EBIN_DIR)/%.beam: $(SOURCE_DIR)/%.erl $(INCLUDES)
 	erlc $(ERLC_OPTS) $<
