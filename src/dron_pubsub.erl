@@ -41,7 +41,9 @@ init([]) ->
 handle_call({start_consumer, Exchange, RoutingKey}, _From,
             State = #state{channel = Channel}) ->
     Queue = create_queue(Channel, Exchange, RoutingKey),
-    _ConsumerTag = setup_consumer(Channel, Queue, self()),
+    %% TODO: Make the consumer adjustable.
+    ConsumerPid = proc_lib:start_link(dron_consumer, init,
+                                      [self(), Channel, Queue]),
     {reply, ok, State};
 handle_call({setup_exchange, Name, Type}, _From,
             State = #state{channel = Channel}) ->
@@ -68,16 +70,6 @@ handle_call(_Request, _From, _State) ->
 handle_cast(_Request, _State) ->
     not_implemented.
 
-handle_info(#'basic.cancel_ok'{consumer_tag = _ConsumerTag}, State) ->
-    % Received when a subscription is cancelled.
-    {noreply, State};
-handle_info({#'basic.deliver'{consumer_tag = _ConsumerTag,
-                             delivery_tag = DeliveryTag},
-             #amqp_msg{payload = Payload}},
-            State = #state{channel = Channel}) ->
-    error_logger:info_msg("Message: ~p", [Payload]),
-    amqp_channel:cast(Channel, #'basic.ack'{delivery_tag = DeliveryTag}),
-    {noreply, State};
 handle_info(_Message, _State) ->
     not_implemented.
 
@@ -96,13 +88,3 @@ create_queue(Channel, Exchange, RoutingKey) ->
                             routing_key = RoutingKey},
     #'queue.bind_ok'{} = amqp_channel:call(Channel, Binding),
     Queue.
-
-setup_consumer(Channel, Queue, ConsumerPid) ->
-    Sub = #'basic.consume'{queue = Queue},
-    #'basic.consume_ok'{consumer_tag = ConsumerTag} =
-        amqp_channel:subscribe(Channel, Sub, ConsumerPid),
-    receive
-        #'basic.consume_ok'{consumer_tag = ConsumerTag} ->
-            ok
-    end,
-    ConsumerTag.
