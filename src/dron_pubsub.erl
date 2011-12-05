@@ -7,7 +7,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3]).
 
--export([start_link/0, start_consumer/2, publish_message/3, setup_exchange/2,
+-export([start_link/0, start_consumer/3, publish_message/3, setup_exchange/2,
          stop_exchange/1]).
 
 -record(state, {connection, channel, consumers = dict:new()}).
@@ -17,8 +17,8 @@
 start_link() ->
     gen_server:start_link(?NAME, ?MODULE, [], []).
 
-start_consumer(Exchange, RoutingKey) ->
-    gen_server:call(?NAME, {start_consumer, Exchange, RoutingKey}).
+start_consumer(Module, Exchange, RoutingKey) ->
+    gen_server:call(?NAME, {start_consumer, Module, Exchange, RoutingKey}).
     
 publish_message(Exchange, RoutingKey, Payload) ->
     gen_server:call(?NAME, {publish_message, Exchange, RoutingKey, Payload}).
@@ -33,36 +33,37 @@ stop_exchange(Exchange) ->
 % Internal
 %-------------------------------------------------------------------------------
 
+%% IMPORTANT: At the moment it only uses a connection and a channel for all
+%% the messages. Check how this affects the perfomance.
 init([]) ->
     {ok, Connection} = amqp_connection:start(#amqp_params_network{}),
     {ok, Channel} = amqp_connection:open_channel(Connection),
     {ok, #state{connection = Connection, channel = Channel}}.
 
-handle_call({start_consumer, Exchange, RoutingKey}, _From,
+handle_call({start_consumer, Module, Exchange, RoutingKey}, _From,
             State = #state{channel = Channel}) ->
     Queue = create_queue(Channel, Exchange, RoutingKey),
-    %% TODO: Make the consumer adjustable.
-    ConsumerPid = proc_lib:start_link(dron_consumer, init,
-                                      [self(), Channel, Queue]),
+    proc_lib:start_link(Module, init, [self(), Channel, Queue]),
     {reply, ok, State};
 handle_call({setup_exchange, Name, Type}, _From,
             State = #state{channel = Channel}) ->
     Exchange = #'exchange.declare'{exchange = Name, type = Type},
     case amqp_channel:call(Channel, Exchange) of
-        #'exchange.declare_ok'{} -> ok;
-        _                        -> error
-    end,
-    {reply, ok, State};
+        #'exchange.declare_ok'{} -> {reply, ok, State};
+        _                        -> {reply, error, State}
+    end;
 handle_call({stop_exchange, Exchange}, _From,
             State = #state{channel = Channel}) ->
-    #'exchange.delete_ok'{} =
-        amqp_channel:call(Channel, #'exchange.delete'{exchange = Exchange}),
-    {reply, ok, State};
+    case amqp_channel:call(Channel, #'exchange.delete'{exchange = Exchange}) of
+        #'exchange.delete_ok'{} -> {reply, ok, State};
+        _                       -> {reply, error, State}
+    end;
 handle_call({publish_message, Exchange, RoutingKey, Payload}, _From,
             State = #state{channel = Channel}) ->
-    Pub = #'basic.publish'{exchange = Exchange,
-                           routing_key = RoutingKey},
-    ok = amqp_channel:cast(Channel, Pub, #amqp_msg{payload = Payload}),
+    ok = amqp_channel:cast(Channel,
+                           #'basic.publish'{exchange = Exchange,
+                                            routing_key = RoutingKey},
+                           #amqp_msg{payload = Payload}),
     {reply, ok, State};
 handle_call(_Request, _From, _State) ->
     not_implemented.
@@ -76,7 +77,8 @@ handle_info(_Message, _State) ->
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
-terminate(_Reason, #state{connection = Connection}) ->
+terminate(_Reason, #state{channel = Channel, connection = Connection}) ->
+    amqp_channel:close(Channel),
     amqp_connection:close(Connection),
     ok.
 
