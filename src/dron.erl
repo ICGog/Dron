@@ -28,6 +28,9 @@ start(_Type, _Args) ->
     lists:map(fun({Exchange, Type}) ->
                       dron_pubsub:setup_exchange(Exchange, Type) end,
               dron_config:dron_exchanges()),
+    lists:map(fun({Module, Exchange, RoutingKey}) ->
+                      dron_pubsub:start_consumer(Module, Exchange, RoutingKey)
+              end, dron_config:dron_consumers()),
     error_logger:info_msg("~nDron PubSub is running!~n", []),
     AutoWorkers = dron_pool:auto_add_workers(),
     error_logger:info_msg("Auto attaching workers: ~w~n", [AutoWorkers]),
