@@ -4,33 +4,54 @@ import java.io.IOException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.mapred.dron.Dron;
+import org.json.simple.JSONObject;
 
 public class JobStateChangeMonitor extends JobInProgressListener {
 
 	private static final Log LOG = LogFactory.getLog(JobStateChangeMonitor.class);
 	
+	private final Dron dron;
+	private final String exchangeName;
+	
+	public JobStateChangeMonitor(Dron dron, String exchangeName) {
+		this.dron = dron;
+		this.exchangeName = exchangeName;
+	}
+	
 	@Override
 	public void jobAdded(JobInProgress job) throws IOException {
-		System.out.println("Job Added Event");
-		LOG.info("Job Added Event");
+		// Ignore Event.
 	}
 
 	@Override
 	public void jobRemoved(JobInProgress job) {
-		System.out.println("Job Removed Event");
-		LOG.info("Job Removed Event");
+		// Ignore Event.
 	}
 
 	@Override
 	public void jobUpdated(JobChangeEvent event) {
-		System.out.println("Job Event");
-		LOG.info("Job Event");
-		if (event.getJobInProgress().getStatus().getRunState() ==
-				JobStatus.SUCCEEDED) {
-			System.out.println("Job Completed");
+		JobInProgress jobInProgress = event.getJobInProgress();
+		if (jobInProgress.getStatus().getRunState() == JobStatus.SUCCEEDED) {		
+			JSONObject jsonObject = new JSONObject();
+			jsonObject.put("hadoop", "succeeded");
+			publish(jsonObject.toJSONString());
+		} else if (jobInProgress.getStatus().getRunState() == JobStatus.FAILED) {
+			JSONObject jsonObject = new JSONObject();
+			jsonObject.put("hadoop", "failed");
+			publish(jsonObject.toJSONString());			
+		} else {
+			// TODO(ionel): handle other job statuses.
 			LOG.info("DRON_ID: " + event.getJobInProgress().getDronJobInstanceId());
-			System.out.println("DRON_ID: " +
-				event.getJobInProgress().getDronJobInstanceId());
+		}
+	}
+
+	private void publish(String message) {
+		LOG.info("Publishing " + message);
+		try {
+			dron.publish(exchangeName, message);
+		} catch (IOException e) {
+			LOG.error("Could not publish " + message, e);
 		}
 	}
 

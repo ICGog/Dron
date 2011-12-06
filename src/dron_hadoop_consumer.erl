@@ -24,6 +24,7 @@ consume_events(Channel, ConsumerTag) ->
                           delivery_tag = DeliveryTag},
          #amqp_msg{payload = Payload}}->
             error_logger:info_msg("Received ~p", [Payload]),
+%            mochijson2:decode(binary_to_list(Payload)),
             amqp_channel:cast(Channel,
                               #'basic.ack'{delivery_tag = DeliveryTag}),
             consume_events(Channel, ConsumerTag)
