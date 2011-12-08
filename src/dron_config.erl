@@ -9,10 +9,9 @@ max_slots() ->
     20.
 
 dron_exchanges() ->
-    [{<<"dron_job_instances">>, <<"direct">>},
+    [{<<"dron_events">>, <<"fanout">>},
     {<<"hadoop_events">>, <<"fanout">>},
-    {<<"hadoop_dron">>, <<"fanout">>}].
+    {<<"spark_events">>, <<"fanout">>}].
 
 dron_consumers() ->
-    [{dron_hadoop_consumer, <<"hadoop_events">>, <<"">>},
-    {dron_hadoop_consumer, <<"hadoop_dron">>, <<"">>}].
+    [{dron_event_consumer, <<"dron_events">>, <<"">>}].
