@@ -44,7 +44,7 @@ public class MesosScheduler extends TaskScheduler {
       taskTrackerManager.addJobInProgressListener(eagerInitListener);
       // TODO(ionel): Remove hardcoded exchange name.
       taskTrackerManager.addJobInProgressListener(
-      		new JobStateChangeMonitor(new Dron(), "hadoop_events"));
+      		new JobStateChangeMonitor(new Dron(), "dron_events"));
       frameworkScheduler = new FrameworkScheduler(this); 
       driver = new MesosSchedulerDriver(frameworkScheduler,
           frameworkScheduler.getFrameworkName(),

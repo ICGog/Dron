@@ -34,15 +34,21 @@ public class JobStateChangeMonitor extends JobInProgressListener {
 		JobInProgress jobInProgress = event.getJobInProgress();
 		if (jobInProgress.getStatus().getRunState() == JobStatus.SUCCEEDED) {		
 			JSONObject jsonObject = new JSONObject();
-			jsonObject.put("hadoop", "succeeded");
+			jsonObject.put("job_instance",
+					jobInProgress.getJobConf().get("dronJobInstanceId", "-1"));
+			jsonObject.put("state", "succeeded");
 			publish(jsonObject.toJSONString());
 		} else if (jobInProgress.getStatus().getRunState() == JobStatus.FAILED) {
 			JSONObject jsonObject = new JSONObject();
-			jsonObject.put("hadoop", "failed");
+			jsonObject.put("job_instance",
+					jobInProgress.getJobConf().get("dronJobInstanceId", "-1"));
+			jsonObject.put("state", "failed");
 			publish(jsonObject.toJSONString());			
 		} else {
 			// TODO(ionel): handle other job statuses.
-			LOG.info("DRON_ID: " + event.getJobInProgress().getDronJobInstanceId());
+			LOG.info("Dron job instance " + 
+					jobInProgress.getJobConf().get("dronJobInstanceId", "-1") +
+					" is in state " + jobInProgress.getStatus().getRunState());
 		}
 	}
 
