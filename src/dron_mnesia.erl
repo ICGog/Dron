@@ -13,6 +13,7 @@ start(Nodes, Mode) ->
     create_jobs_table(Nodes, Mode),
     create_jobs_archive_table(Nodes, Mode),
     create_job_instances_table(Nodes, Mode),
+    create_job_instance_deps_table(Nodes, Mode),
     create_workers_table(Nodes),
     ok.
 
@@ -24,6 +25,8 @@ start_node(Node) ->
     {atomic, ok} = mnesia:change_table_frag(jobs, {add_node, Node}),
     {atomic, ok} = mnesia:change_table_frag(jobs_archive, {add_node, Node}),
     {atomic, ok} = mnesia:change_table_frag(job_instances, {add_node, Node}),
+    {atomic, ok} = mnesia:change_table_frag(job_instance_deps,
+                                            {add_node, Node}),
     ok.
 
 stop() ->
@@ -65,6 +68,16 @@ create_job_instances_table(Nodes, Mode) ->
           job_instances,
           [{record_name, job_instance},
            {attributes, record_info(fields, job_instance)},
+           {type, set},
+           {frag_properties, [{node_pool, Nodes},
+                              {n_fragments, length(Nodes)}] ++ Mode}]).
+
+create_job_instance_deps_table(Nodes, Mode) ->
+    {atomic, ok} =
+        mnesia:create_table(
+          job_instance_deps,
+          [{record_name, job_instance_deps},
+           {attributes, record_info(fields, job_instance_deps)},
            {type, set},
            {frag_properties, [{node_pool, Nodes},
                               {n_fragments, length(Nodes)}] ++ Mode}]).
