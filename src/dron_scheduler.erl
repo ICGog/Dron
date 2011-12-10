@@ -68,8 +68,8 @@ handle_cast({unschedule, JName}, #timers{timers = Timers}) ->
 handle_cast(_Request, _State) ->
     not_implemented.
 
-handle_info({finished, JId}, State) ->
-    ok = dron_db:set_job_instance_state(JId, finished),
+handle_info({succeeded, JId}, State) ->
+    ok = dron_db:set_job_instance_state(JId, succeeded),
     {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
     ok = dron_pool:release_worker_slot(WName),
     {noreply, State};

@@ -71,8 +71,10 @@ handle_call(_Request, _From, _State) ->
 handle_cast(_Request, _State) ->
     not_implemented.
 
-handle_info(_Message, _State) ->
-    not_implemented.
+handle_info({'EXIT', _Pid, normal}, State) ->
+    {noreply, State};
+handle_info(_Info, _State) ->
+    unexpected_request.
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.

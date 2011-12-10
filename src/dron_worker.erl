@@ -72,7 +72,7 @@ handle_info({JId, JPid, ok}, State = #wstate{jipids = JIPids,
                                             pidjis = PidJIs,
                                             jitimeout = JITimeout}) ->
     %% Notifies the scheduler that a job instance has finished.
-    dron_scheduler ! {finished, JId},
+    publish_state(JId, <<"succeeded">>),
     {noreply, State#wstate{jipids = dict:erase(JId, JIPids),
                           pidjis = dict:erase(JPid, PidJIs),
                           jitimeout = clear_timeout(JId, JITimeout)}};
@@ -84,14 +84,14 @@ handle_info({'EXIT', _Pid, {JId, Reason}}, State) ->
     error_logger:info_msg("~p has been killed", [JId]),
     %% Notify the scheduler why the job instance was killed.
     %% (timeout | killed).
-    dron_scheduler ! {Reason, JId},
+    publish_state(JId, list_to_binary(atom_to_list(Reason))),
     {noreply, State};
 handle_info({'EXIT', Pid, Reason}, State = #wstate{jipids = JIPids,
                                                   pidjis = PidJIs,
                                                   jitimeout = JITimeout}) ->
     error_logger:info_msg("Job instance exited: ~p ~p", [Pid, Reason]),
     case dict:find(Pid, PidJIs) of
-        {ok, JId} -> dron_scheduler ! {failed, JId, Reason},
+        {ok, JId} -> publish_state(JId, <<"failed">>, atom_to_list(Reason)),
                      {noreply,
                       State#wstate{jipids = dict:erase(JId, JIPids),
                                    pidjis = dict:erase(Pid, PidJIs),
@@ -108,7 +108,7 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 run_job_instance(JI = #job_instance{jid = JId, name = Name, cmd_line = Cmd}) ->
-    error_logger:info_msg("~p", [JI]),
+    error_logger:info_msg("Run ~p", [JI]),
     {_, {{Y, M, D}, {H, Min, Sec}}} = JId,
     WPid = receive
                {Pid, start} -> error_logger:info_msg(
@@ -131,3 +131,23 @@ clear_timeout(JId, JITimeout) ->
                                              [JId])
     end,
     dict:erase(JId, JITimeout).
+
+publish_state(JId, State) ->
+    dron_pubsub:publish_message(
+      <<"dron_events">>, <<"">>,
+      list_to_binary(mochijson2:encode({struct,
+                                        [{<<"job_instance">>,
+                                          job_instance_id_to_binary(JId)},
+                                         {<<"state">>, State}]}))).
+
+publish_state(JId, State, Reason) ->
+    dron_pubsub:publish_message(
+      <<"dron_events">>, <<"">>,
+      list_to_binary(mochijson2:encode({struct,
+                                        [{<<"job_instance">>,
+                                          job_instance_id_to_binary(JId)},
+                                         {<<"state">>, State},
+                                         {<<"reason">>, Reason}]}))).
+
+job_instance_id_to_binary({Host, {{Year, Month, Day}, {Hour, Min, Sec}}}) ->
+    [atom_to_binary(Host, utf8), Year, Month, Day, Hour, Min, Sec].
