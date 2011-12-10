@@ -4,11 +4,12 @@
 -behaviour(gen_server).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
-         code_change/3, run_instance_from_job/1, run_instance/1]).
+         code_change/3, run_instance_from_job/1, run_instance_from_job/2,
+         run_instance/1]).
 
 -export([start_link/0, schedule/1, unschedule/1]).
 
--record(timers, {timers = dict:new()}).
+-record(timers, {timers = dict:new(), start_timers = dict:new()}).
 
 %-------------------------------------------------------------------------------
 
@@ -25,10 +26,12 @@ unschedule(JName) ->
 % Internal API
 %-------------------------------------------------------------------------------
 
+run_instance_from_job(Job) ->
+    run_instance_from_job(Job, calendar:local_time()).
+
 run_instance_from_job(#job{name = Name, cmd_line = Cmd,
-                                 timeout = Timeout}) ->
-    Date = calendar:now_to_universal_time(erlang:now()),
-    run_instance(#job_instance{jid = {node(), Date}, name = Name,
+                                 timeout = Timeout}, Date) ->
+    run_instance(#job_instance{jid = {Name, Date}, name = Name,
                                cmd_line = Cmd, state = running,
                                timeout = Timeout, run_time = erlang:now(),
                                num_retry = 0, worker = undefined}).
@@ -52,22 +55,36 @@ init([]) ->
 handle_call(_Request, _From, _State) ->
     not_implemented.
 
-handle_cast({schedule, Job = #job{name = JName, start_time = STime,
-                                  frequency = Freq}},
-            #timers{timers = Timers}) ->
-    {ok, TRef} = timer:apply_interval(Freq, ?MODULE, run_instance_from_job,
-                                      [Job]),
-    {noreply, #timers{timers = dict:store(JName, TRef, Timers)}};
-    
-handle_cast({unschedule, JName}, #timers{timers = Timers}) ->
-    {ok, TRef} = dict:find(JName, Timers),
-    {ok, cancel} = timer:cancel(TRef),
+handle_cast({schedule, Job = #job{name = JName, start_time = STime}},
+            State = #timers{start_timers = STimers}) ->
+    AfterT = run_job_instances_up_to_now(
+               Job,
+               calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+               calendar:datetime_to_gregorian_seconds(STime)),
+    TRef = erlang:send_after(AfterT * 1000, self(), {schedule, Job}),
+    {noreply, State#timers{start_timers = dict:store(JName, TRef, STimers)}};
+handle_cast({unschedule, JName}, State = #timers{timers = Timers,
+                                                 start_timers = STimers}) ->
+    case dict:find(JName, STimers) of
+        {ok, STRef} -> erlang:cancel_timer(STRef);
+        error      -> ok
+    end,
+    case dict:find(JName, Timers) of
+        {ok, TRef} -> timer:cancel(TRef);
+        error      -> ok
+    end,
     ok = dron_db:archive_job(JName),
-    {noreply, #timers{timers = dict:erase(JName, Timers)}};
-
+    {noreply, State#timers{timers = dict:erase(JName, Timers),
+                           start_timers = dict:erase(JName, STimers)}};
 handle_cast(_Request, _State) ->
     not_implemented.
 
+handle_info({schedule, Job = #job{name = JName, frequency = Freq}},
+            State = #timers{timers = Timers, start_timers = STimers}) ->
+    {ok, TRef} = timer:apply_interval(Freq * 1000, ?MODULE,
+                                      run_instance_from_job, [Job]),
+    {noreply, State#timers{timers = dict:store(JName, TRef, Timers),
+                           start_timers = dict:erase(JName, STimers)}};
 handle_info({succeeded, JId}, State) ->
     ok = dron_db:set_job_instance_state(JId, succeeded),
     {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
@@ -108,3 +125,14 @@ code_change(_OldVsn, State, _Extra) ->
 
 terminate(_Reason, _State) ->
     ok.
+
+run_job_instances_up_to_now(Job = #job{frequency = Frequency}, Now, STime) ->
+    if STime < Now ->
+            run_instance_from_job(
+              Job, calendar:gregorian_seconds_to_datetime(STime)),
+            run_job_instances_up_to_now(
+              Job,
+              calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+              STime + Frequency);
+       true        -> STime - Now
+    end.

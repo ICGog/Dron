@@ -1,7 +1,7 @@
 -module(dron_config).
 -author("Ionel Corneliu Gog").
 
--export([max_slots/0, dron_exchanges/0, dron_consumers/0]).
+-export([max_slots/0, dron_exchanges/0, dron_exchange/0, dron_consumers/0]).
 
 %-------------------------------------------------------------------------------
 
@@ -15,3 +15,6 @@ dron_exchanges() ->
 
 dron_consumers() ->
     [{dron_event_consumer, <<"dron_events">>, <<"">>}].
+
+dron_exchange() ->
+    <<"dron_events">>.

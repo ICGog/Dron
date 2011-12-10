@@ -41,7 +41,7 @@ handle_call(_Request, _From, _State) ->
 handle_cast({run, JI = #job_instance{jid = JId, worker = WName}, Timeout},
             State = #wstate{jipids = JIPids, pidjis = PidJIs,
                            jitimeout = JITimeout}) ->
-    {ok, TRef} = timer:apply_after(Timeout, ?MODULE, kill_job_instance,
+    {ok, TRef} = timer:apply_after(Timeout * 1000, ?MODULE, kill_job_instance,
                                    [WName, JId, true]),
     NewJITimeout = dict:store(JId, TRef, JITimeout),
     JIPid = spawn_link(dron_worker, run_job_instance, [JI]),
@@ -117,11 +117,9 @@ run_job_instance(JI = #job_instance{jid = JId, name = Name, cmd_line = Cmd}) ->
            after 10000 ->
                    exit(no_start_timeout)
            end,
-    Output = os:cmd(Cmd),
-    error_logger:info_msg("Output:~s~n", [Output]),
     FileName = io_lib:format("~s_~p-~p-~p-~p:~p:~p", [Name, Y, M, D, H, Min,
                                                       Sec]),
-    file:write_file(FileName, io_lib:fwrite("~s", [Output]), [write]),
+    file:write_file(FileName, io_lib:fwrite("~s", [os:cmd(Cmd)]), [write]),
     WPid ! {JId, self(), ok}.
 
 clear_timeout(JId, JITimeout) ->
@@ -134,7 +132,7 @@ clear_timeout(JId, JITimeout) ->
 
 publish_state(JId, State) ->
     dron_pubsub:publish_message(
-      <<"dron_events">>, <<"">>,
+      dron_config:dron_exchange(), <<"">>,
       list_to_binary(mochijson2:encode({struct,
                                         [{<<"job_instance">>,
                                           job_instance_id_to_binary(JId)},
@@ -142,7 +140,7 @@ publish_state(JId, State) ->
 
 publish_state(JId, State, Reason) ->
     dron_pubsub:publish_message(
-      <<"dron_events">>, <<"">>,
+      dron_config:dron_exchange(), <<"">>,
       list_to_binary(mochijson2:encode({struct,
                                         [{<<"job_instance">>,
                                           job_instance_id_to_binary(JId)},
@@ -150,4 +148,4 @@ publish_state(JId, State, Reason) ->
                                          {<<"reason">>, Reason}]}))).
 
 job_instance_id_to_binary({Host, {{Year, Month, Day}, {Hour, Min, Sec}}}) ->
-    [atom_to_binary(Host, utf8), Year, Month, Day, Hour, Min, Sec].
+    [list_to_binary(Host), Year, Month, Day, Hour, Min, Sec].

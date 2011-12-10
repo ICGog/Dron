@@ -43,8 +43,7 @@ get_job_instance([]) ->
     not_found;
 get_job_instance([{<<"job_instance">>, [Host, Year, Month, Day, Hour, Min,
                                         Sec]}|_]) ->
-    {list_to_atom(binary_to_list(Host)), {{Year, Month, Day},
-                                          {Hour, Min, Sec}}};
+    {binary_to_list(Host), {{Year, Month, Day}, {Hour, Min, Sec}}};
 get_job_instance([_|Rest]) ->
     get_job_instance(Rest).
 
