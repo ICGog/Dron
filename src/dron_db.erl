@@ -6,7 +6,8 @@
 -export([store_job/1, get_job/1, store_job_instance/1, get_job_instance/1,
          get_job_instance/2, set_job_instance_state/2, archive_job/1,
          store_worker/1, delete_worker/1, get_workers/1,
-         get_job_instances_on_worker/1]).
+         get_job_instances_on_worker/1, get_dependants/1,
+         store_dependant/2]).
 
 %-------------------------------------------------------------------------------
 
@@ -131,5 +132,30 @@ get_job_instances_on_worker(WName) ->
             end,
     case mnesia:transaction(Trans) of
         {atomic, Return}  -> {ok, Return};
+        {aborted, Reason} -> {error, Reason}
+    end.
+
+get_dependants(RId) ->
+    Trans = fun() ->
+                    mnesia:read(resource_deps, RId, read)
+            end,
+    case mnesia:transaction(Trans) of
+        {atomic, Return}  -> {ok, Return};
+        {aborted, Reason} -> {error, Reason}
+    end.
+
+store_dependant(Dependants, RId) ->
+    Trans = fun() ->
+                    lists:map(fun(Dep) ->
+                                      ok = mnesia:write(
+                                             resource_deps,
+                                             #resource_deps{rid = Dep,
+                                                            dep = RId},
+                                             write)
+                              end, Dependants),
+                    ok
+            end,
+    case mnesia:transaction(Trans) of
+        {atomic, ok}      -> ok;
         {aborted, Reason} -> {error, Reason}
     end.

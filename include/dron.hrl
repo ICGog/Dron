@@ -2,12 +2,12 @@
              dependencies, deps_timeout}).
 
 -record(job_instance, {jid, name, cmd_line, state, timeout, run_time, num_retry,
-                       dependencies, deps_timeout, worker}).
+                       deps_timeout, dependencies, worker}).
 
 -record(archive_job, {name, version, cmd_line, start_time, frequency, timeout,
                      max_retries, dependencies, deps_timeout}).
 
--record(job_instance_deps, {jid, type, guid}).
+-record(resource_deps, {rid, dep}).
 
 -record(worker, {name, enabled, max_slots, used_slots}).
 
