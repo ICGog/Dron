@@ -108,14 +108,15 @@ handle_call({release_slot, WName}, _From, State) ->
 handle_call(get_worker, _From, State) ->
     case ets:first(slot_workers) of
         '$end_of_table' -> {reply, {error, no_workers}, State};
-        Slots -> error_logger:info_msg("Slots ~p", [Slots]),
-                 [{_, [WName|Aws]}] = ets:lookup(slot_workers, Slots),
-                 error_logger:info_msg("Aws ~p", [Aws]),
-                 add_worker_to_slot(WName, Slots + 1),
-                 [{_, Worker = #worker{used_slots = UsedSlots}}] =
-                     ets:lookup(worker_records, WName),
-                 error_logger:info_msg("Worker ~p", [Worker]),
-                 NewWorker = Worker#worker{used_slots = UsedSlots + 1},
+        Slots -> [{_, [WName|Aws]}] = ets:lookup(slot_workers, Slots),
+                 NSlots = Slots + 1,
+                 case ets:lookup(slot_workers, NSlots) of
+                     [{_, Ws}] -> ets:insert(slot_workers,
+                                             {NSlots, [WName|Ws]});
+                     []        -> ets:insert(slot_workers, {NSlots, [WName]})
+                 end,
+                 [{_, Worker}] = ets:lookup(worker_records, WName),
+                 NewWorker = Worker#worker{used_slots = NSlots},
                  ets:insert(worker_records, {WName, NewWorker}),
                  ok = dron_db:store_worker(NewWorker),
                  case Aws of
@@ -155,12 +156,6 @@ evict_worker(#worker{name = WName, used_slots = USlots}) ->
         Wls  -> ets:insert(slot_workers, {USlots, Wls})
     end.
    
-add_worker_to_slot(WName, Slot) ->
-    case ets:lookup(slot_workers, Slot) of
-        [{_, Ws}] -> ets:insert(slot_workers, {Slot, [WName|Ws]});
-        []        -> ets:insert(slot_workers, {Slot, [WName]})
-    end.
-
 disable_worker(WName) ->
     case ets:lookup(worker_records, WName) of
         [{WName, Worker}] -> ets:delete(worker_records, WName),
