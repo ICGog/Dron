@@ -62,7 +62,8 @@ handle_call({add, WName, Slots}, _From, State) ->
         [{WName, _}] -> {reply, {error, already_added}, State};
         []           ->
             case net_adm:ping(WName) of
-                pong -> dron_worker:start_link(WName),
+                pong -> erlang:spawn_link(WName, dron_worker, start_link,
+                                          [WName]),
                         monitor_node(WName, true),
                         SWorkers = case ets:lookup(slot_workers, 0) of
                                        [{0, CurSws}] -> CurSws;
@@ -133,11 +134,11 @@ handle_cast(_Request, _State) ->
 
 handle_info({nodedown, WName}, State) ->
     error_logger:error_msg("Node ~p failed!~n", [WName]),
-    disable_worker(WName),
-    [{_, W}] = ets:lookup(worker_records, WName),
-    evict_worker(W),
+    case disable_worker(WName) of
+        none   -> ok;
+        Worker -> evict_worker(Worker)
+    end,
     {noreply, State};
-
 handle_info(Request, _State) ->
     {unexpected_request, Request}.
 
@@ -157,13 +158,16 @@ evict_worker(#worker{name = WName, used_slots = USlots}) ->
     end.
    
 disable_worker(WName) ->
-    case ets:lookup(worker_records, WName) of
-        [{WName, Worker}] -> ets:delete(worker_records, WName),
-                             ok = dron_db:store_worker(Worker#worker{
-                                                         enabled = false});
-        []                -> error_logger:error_msg(
-                               "Worker ~p not in-memory", [WName])
-    end,
+    Ret = case ets:lookup(worker_records, WName) of
+              [{WName, Worker}] -> ets:delete(worker_records, WName),
+                                   ok = dron_db:store_worker(
+                                          Worker#worker{enabled = false}),
+                                   Worker;
+              []                -> error_logger:error_msg(
+                                     "Worker ~p not in-memory", [WName]),
+                                   none
+          end,
     % If these db writes fail then the whole worker is restarted.
     {ok, FailedJIs} = dron_db:get_job_instances_on_worker(WName),
-    lists:map(fun(JI) -> dron_scheduler:worker_disabled(JI) end, FailedJIs).
+    lists:map(fun(JI) -> dron_scheduler:worker_disabled(JI) end, FailedJIs),
+    Ret.
