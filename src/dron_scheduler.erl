@@ -9,9 +9,6 @@
 
 -export([start_link/0, schedule/1, unschedule/1]).
 
--record(state, {timers = dict:new(), start_timers = dict:new(),
-                wait_timers = dict:new(), jideps = dict:new()}).
-
 %-------------------------------------------------------------------------------
 
 start_link() ->
@@ -68,42 +65,46 @@ run_instance(JId) ->
 %-------------------------------------------------------------------------------
 
 init([]) ->
+    ets:new(schedule_timers, [named_table]),
+    ets:new(start_timers, [named_table]),
+    ets:new(wait_timers, [named_table]),
+    ets:new(ji_deps, [named_table]),
     register(dron_scheduler, self()),
-    {ok, #state{}}.
+    {ok, []}.
 
 handle_call(_Request, _From, _State) ->
     not_implemented.
 
-handle_cast({schedule, Job = #job{name = JName, start_time = STime}},
-            State = #state{start_timers = STimers}) ->
+handle_cast({schedule, Job = #job{name = JName, start_time = STime}}, State) ->
     AfterT = run_job_instances_up_to_now(
                Job,
                calendar:datetime_to_gregorian_seconds(calendar:local_time()),
                calendar:datetime_to_gregorian_seconds(STime)),
-    TRef = erlang:send_after(AfterT * 1000, self(), {schedule, Job}),
-    {noreply, State#state{start_timers = dict:store(JName, TRef, STimers)}};
-handle_cast({unschedule, JName}, State = #state{timers = Timers,
-                                                start_timers = STimers}) ->
-    case dict:find(JName, STimers) of
-        {ok, STRef} -> erlang:cancel_timer(STRef);
-        error      -> ok
+    ets:insert(start_timers, {JName, erlang:send_after(AfterT * 1000, self(),
+                                                       {schedule, Job})}),
+    {noreply, State};
+handle_cast({unschedule, JName}, State) ->
+    case ets:lookup(start_timers, JName) of
+        [{JName, STRef}] -> erlang:cancel_timer(STRef),
+                            ets:delete(start_timers, JName);
+        []               -> ok
     end,
-    case dict:find(JName, Timers) of
-        {ok, TRef} -> timer:cancel(TRef);
-        error      -> ok
+    case ets:lookup(schedule_timers, JName) of
+        [{JName, TRef}]  -> timer:cancel(TRef),
+                            ets:delete(schedule_timers, JName);
+        []               -> ok
     end,
     ok = dron_db:archive_job(JName),
-    {noreply, State#state{timers = dict:erase(JName, Timers),
-                          start_timers = dict:erase(JName, STimers)}};
+    {noreply, State};
 handle_cast(_Request, _State) ->
     not_implemented.
 
-handle_info({schedule, Job = #job{name = JName, frequency = Freq}},
-            State = #state{timers = Timers, start_timers = STimers}) ->
+handle_info({schedule, Job = #job{name = JName, frequency = Freq}}, State) ->
     {ok, TRef} = timer:apply_interval(Freq * 1000, ?MODULE,
                                       create_job_instance, [Job]),
-    {noreply, State#state{timers = dict:store(JName, TRef, Timers),
-                          start_timers = dict:erase(JName, STimers)}};
+    ets:insert(schedule_timers, {JName, TRef}),
+    ets:delete(start_timers, JName),
+    {noreply, State};
 handle_info({succeeded, JId}, State) ->
     ok = dron_db:set_job_instance_state(JId, succeeded),
     {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
@@ -116,7 +117,6 @@ handle_info({killed, JId}, State) ->
     ok = dron_db:set_job_instance_state(JId, killed),
     {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
     ok = dron_pool:release_worker_slot(WName),
-    dron_dep:reource_killed(JId),
     {noreply, State};
 handle_info({failed, JId, Reason}, State) ->
     {ok, JI = #job_instance{name = JName, worker = WName, num_retry = NumRet}} =
@@ -138,17 +138,19 @@ handle_info({timeout, JId}, State) ->
     {noreply, State};
 handle_info({satisfied, RId}, State) ->
     {ok, Dependants} = dron_db:get_dependants(RId),
-    {noreply, satisfied_dependencies(State, RId, Dependants)};
-handle_info({waiting_job_instance, JId, TRef, Dependencies},
-            State = #state{wait_timers = WTimers, jideps = JIDeps}) ->
-    {noreply, State#state{wait_timers = dict:store(JId, TRef, WTimers),
-                         jideps = dict:store(JId, Dependencies, JIDeps)}};
-handle_info({wait_timeout, JId}, State = #state{wait_timers = WTimers}) ->
-    case dict:find(JId, WTimers) of
-        {ok, TRef} -> erlang:cancel_timer(TRef);
-        error      -> ok
+    lists:map(fun(JId) -> satisfied_dependency(RId, JId) end, Dependants),
+    {noreply, State};
+handle_info({waiting_job_instance, JId, TRef, Dependencies}, State) ->
+    ets:store(wait_timers, {JId, TRef}),
+    ets:store(ji_deps, {JId, Dependencies}),
+    {noreply, State};
+handle_info({wait_timeout, JId}, State) ->
+    case ets:lookup(wait_timers, JId) of
+        [{JId, TRef}] -> erlang:cancel_timer(TRef),
+                         ets:delete(wait_timers, JId);
+        []            -> ok
     end,
-    {noreply, State#state{wait_timers = dict:erase(JId, WTimers)}};
+    {noreply, State};
 handle_info({worker_disabled, JI}, State) ->
     %% Check if it can be spawned in a new process.
     run_instance(JI),
@@ -173,26 +175,19 @@ run_job_instances_up_to_now(Job = #job{frequency = Frequency}, Now, STime) ->
        true        -> STime - Now
     end.
 
-satisfied_dependencies(State, RId, []) ->
-    State;
-satisfied_dependencies(State, RId, [#resource_deps{dep = JId}|JIds]) ->
-    satisfied_dependencies(satisfied_dependency(RId, JId, State), RId, JIds).
-
-satisfied_dependency(RId, JId, State = #state{jideps = JIDeps,
-                                              wait_timers = WTimers}) ->
-    case dict:find(JId, JIDeps) of
-        {ok, RIds} ->
+satisfied_dependency(RId, JId) ->
+    case ets:lookup(ji_deps, JId) of
+        [{JId, RIds}] ->
             case lists:delete(RId, RIds) of
-                []  -> NewWTimers = case dict:find(JId, WTimers) of
-                                        {ok, TRef} -> erlang:cancel_timer(TRef),
-                                                      dict:erase(JId, WTimers);
-                                        error      -> WTimers
-                                    end,
+                []  -> case ets:lookup(wait_timers, JId) of
+                           [{JId, TRef}] -> erlang:cancel_timer(TRef),
+                                            ets:delete(wait_timers, JId);
+                           []            -> ok 
+                       end,
                        run_instance(JId),
-                       State#state{jideps = dict:erase(JId, JIDeps),
-                                   wait_timers = NewWTimers};
-                Val -> State#state{jideps = dict:store(JId, Val, JIDeps)}
+                       ets:delete(ji_deps, JId);
+                Val -> ets:insert(ji_deps, {JId, Val})
             end;
-        error      ->
-            State
+        []            ->
+            ok
     end.
