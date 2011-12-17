@@ -193,5 +193,5 @@ disable_worker(WName, Ws) ->
             end,
     % If these db writes fail then the whole worker is restarted.
     {ok, FailedJIs} = dron_db:get_job_instances_on_worker(WName),
-    lists:map(fun(JI) -> dron_scheduler ! {worker_disabled, JI} end, FailedJIs),
+    lists:map(fun(JI) -> dron_scheduler:worker_disabled(JI) end, FailedJIs),
     NewWs.

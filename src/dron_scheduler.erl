@@ -5,9 +5,15 @@
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3, create_job_instance/1, create_job_instance/2,
-         run_instance/1]).
+         run_instance/1, ji_succeeded/1, ji_killed/1, ji_timeout/1,
+         ji_failed/1]).
 
 -export([start_link/0, schedule/1, unschedule/1]).
+
+-export([job_instance_succeeded/1, job_instance_failed/2,
+         job_instance_timeout/1, job_instance_killed/1,
+         dependency_satisfied/1, worker_disabled/1,
+         create_waiting_job_instance/3]).
 
 %-------------------------------------------------------------------------------
 
@@ -19,6 +25,27 @@ schedule(Job) ->
 
 unschedule(JName) ->
     gen_server:cast(?NAME, {unschedule, JName}).
+
+job_instance_succeeded(JId) ->
+    gen_server:cast(?NAME, {succeeded, JId}).
+
+job_instance_failed(JId, Reason) ->
+    gen_server:cast(?NAME, {failed, JId, Reason}).
+
+job_instance_timeout(JId) ->
+    gen_server:cast(?NAME, {timeout, JId}).
+
+job_instance_killed(JId) ->
+    gen_server:cast(?NAME, {killed, JId}).
+
+dependency_satisfied(RId) ->
+    gen_server:cast(?NAME, {satisfied, RId}).
+
+worker_disabled(JI) ->
+    gen_server:cast(?NAME, {worker_disabled, JI}).
+
+create_waiting_job_instance(JId, TRef, Dependencies) ->
+    gen_server:cast(?NAME, {waiting_job_instance, JId, TRef, Dependencies}).
 
 %-------------------------------------------------------------------------------
 % Internal API
@@ -49,7 +76,8 @@ create_job_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout,
         [] -> run_instance(JId);
         _  -> TRef = erlang:send_after(DepsTimeout * 1000, self(),
                                        {wait_timeout, JId}),
-              dron_scheduler ! {waiting_job_instance, JId, TRef, Dependencies}
+              dron_scheduler:create_waiting_job_instance(
+                JId, TRef, Dependencies)
     end.
 
 run_instance(JId) ->
@@ -96,6 +124,30 @@ handle_cast({unschedule, JName}, State) ->
     end,
     ok = dron_db:archive_job(JName),
     {noreply, State};
+handle_cast({succeeded, JId}, State) ->
+    erlang:spawn_link(?MODULE, ji_succeeded, [JId]),
+    {noreply, State};
+handle_cast({failed, JId, Reason}, State) ->
+    error_logger:error_msg("Job instance ~p failed with ~p", [JId, Reason]),
+    erlang:spawn_link(?MODULE, ji_failed, [JId]),
+    {noreply, State};
+handle_cast({timeout, JId}, State) ->
+    erlang:spawn_link(?MODULE, ji_timeout, [JId]),
+    {noreply, State};
+handle_cast({killed, JId}, State) ->
+    erlang:spawn_link(?MODULE, ji_killed, [JId]),
+    {noreply, State};
+handle_cast({satisfied, RId}, State) ->
+    {ok, Dependants} = dron_db:get_dependants(RId),
+    lists:map(fun(JId) -> satisfied_dependency(RId, JId) end, Dependants),
+    {noreply, State};
+handle_cast({worker_disabled, JI}, State) ->
+    erlang:spawn_link(?MODULE, run_instance, [JI]),
+    {noreply, State};
+handle_cast({waiting_job_instance, JId, TRef, Dependencies}, State) ->
+    ets:store(wait_timers, {JId, TRef}),
+    ets:store(ji_deps, {JId, Dependencies}),
+    {noreply, State};
 handle_cast(_Request, _State) ->
     not_implemented.
 
@@ -105,45 +157,6 @@ handle_info({schedule, Job = #job{name = JName, frequency = Freq}}, State) ->
     ets:insert(schedule_timers, {JName, TRef}),
     ets:delete(start_timers, JName),
     {noreply, State};
-handle_info({succeeded, JId}, State) ->
-    ok = dron_db:set_job_instance_state(JId, succeeded),
-    {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
-    ok = dron_pool:release_worker_slot(WName),
-    % TODO(ionel): Move this out to consumer. (Think about satisfing various
-    % resources)
-    dron_scheduler ! {satisfied, JId},
-    {noreply, State};
-handle_info({killed, JId}, State) ->
-    ok = dron_db:set_job_instance_state(JId, killed),
-    {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
-    ok = dron_pool:release_worker_slot(WName),
-    {noreply, State};
-handle_info({failed, JId, Reason}, State) ->
-    {ok, JI = #job_instance{name = JName, worker = WName, num_retry = NumRet}} =
-        dron_db:get_job_instance(JId),
-    ok = dron_pool:release_worker_slot(WName),
-    {ok, #job{max_retries = MaxRet}} = dron_db:get_job(JName),
-    %% Check if possible to run in a new process.
-    if
-        NumRet < MaxRet ->
-            run_instance(JI#job_instance{num_retry = NumRet + 1});
-        true            ->
-            ok
-    end,
-    {noreply, State};
-handle_info({timeout, JId}, State) ->
-    ok = dron_db:set_job_instance_state(JId, timeout),
-    {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
-    ok = dron_pool:release_worker_slot(WName),
-    {noreply, State};
-handle_info({satisfied, RId}, State) ->
-    {ok, Dependants} = dron_db:get_dependants(RId),
-    lists:map(fun(JId) -> satisfied_dependency(RId, JId) end, Dependants),
-    {noreply, State};
-handle_info({waiting_job_instance, JId, TRef, Dependencies}, State) ->
-    ets:store(wait_timers, {JId, TRef}),
-    ets:store(ji_deps, {JId, Dependencies}),
-    {noreply, State};
 handle_info({wait_timeout, JId}, State) ->
     case ets:lookup(wait_timers, JId) of
         [{JId, TRef}] -> erlang:cancel_timer(TRef),
@@ -151,9 +164,12 @@ handle_info({wait_timeout, JId}, State) ->
         []            -> ok
     end,
     {noreply, State};
-handle_info({worker_disabled, JI}, State) ->
-    %% Check if it can be spawned in a new process.
-    run_instance(JI),
+handle_info({'EXIT', _Pid, normal}, State) ->
+    % Linked process finished normally. Ignore the message.
+    {noreply, State};
+handle_info({'EXIT', Pid, Reason}, State) ->
+    % TODO(ionel) Handle child processes failures.
+    error_logger:error_msg("~p anormaly finished with ~p", [Pid, Reason]),
     {noreply, State};
 handle_info(_Request, _State) ->
     not_implemented.
@@ -189,5 +205,35 @@ satisfied_dependency(RId, JId) ->
                 Val -> ets:insert(ji_deps, {JId, Val})
             end;
         []            ->
+            ok
+    end.
+
+ji_succeeded(JId) ->
+    ok = dron_db:set_job_instance_state(JId, succeeded),
+    {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
+    ok = dron_pool:release_worker_slot(WName),
+    % TODO(ionel): Move this out to consumer. (Think about satisfing various
+    % resources)
+    dependency_satisfied(JId).
+
+ji_killed(JId) ->
+    ok = dron_db:set_job_instance_state(JId, killed),
+    {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
+    ok = dron_pool:release_worker_slot(WName).
+
+ji_timeout(JId) ->
+    ok = dron_db:set_job_instance_state(JId, timeout),
+    {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
+    ok = dron_pool:release_worker_slot(WName).
+
+ji_failed(JId) ->
+    {ok, JI = #job_instance{name = JName, worker = WName, num_retry = NumRet}} =
+        dron_db:get_job_instance(JId),
+    ok = dron_pool:release_worker_slot(WName),
+    {ok, #job{max_retries = MaxRet}} = dron_db:get_job(JName),
+    if
+        NumRet < MaxRet ->
+            run_instance(JI#job_instance{num_retry = NumRet + 1});
+        true            ->
             ok
     end.
