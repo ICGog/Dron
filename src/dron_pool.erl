@@ -55,6 +55,7 @@ release_worker_slot(WName) ->
 init([]) ->
     ets:new(worker_records, [named_table]),
     ets:new(slot_workers, [ordered_set, named_table]),
+    reconstruct_state(),
     {ok, []}.
 
 handle_call({add, WName, Slots}, _From, State) ->
@@ -170,3 +171,15 @@ disable_worker(WName) ->
     {ok, FailedJIs} = dron_db:get_job_instances_on_worker(WName),
     lists:map(fun(JI) -> dron_scheduler:worker_disabled(JI) end, FailedJIs),
     Ret.
+
+% TODO(ionel): Implement worker monitoring.
+reconstruct_state() ->
+    {ok, Workers} = dron_db:get_workers(true),
+    lists:map(fun(Worker = #worker{name = WName, used_slots = Slots}) ->
+                      ets:insert(worker_records, {WName, Worker}),
+                      Ws = case ets:lookup(slot_workers, Slots) of
+                               [{Slots, Wls}] -> [WName|Wls];
+                               []             -> [WName]
+                      end,                                   
+                      ets:insert(slot_workers, {Slots, Ws})
+              end, Workers).

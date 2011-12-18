@@ -20,9 +20,10 @@ stop() ->
 
 start(_Type, _Args) ->
     ok = error_logger:logfile({open, "log/dron.log"}),
+    dron_mnesia:start([node()], [{n_ram_copies, 1}]),
+    error_logger:info_msg("~nMnesia is running!~n", []),
     error_logger:info_msg("~nDron Scheduler is starting...~n", []),
     {ok, Sup} = dron_sup:start(),
-    dron_mnesia:start([node()], [{n_ram_copies, 1}]),
     error_logger:info_msg("~nDron Scheduler is running!~n", []),
     AutoWorkers = dron_pool:auto_add_workers(),
     error_logger:info_msg("Auto attaching workers: ~w~n", [AutoWorkers]),
