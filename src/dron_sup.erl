@@ -19,5 +19,7 @@ init(_Args) ->
     {ok, {{one_for_one, 0, 1},
          [{pool, {dron_pool, start_link, []}, permanent, 60, worker,
            [dron_pool]},
-         {scheduler, {dron_scheduler, start_link, []}, permanent, 60, worker,
-          [dron_scheduler]}]}}.
+          {scheduler, {dron_scheduler, start_link, []}, permanent, 60, worker,
+           [dron_scheduler]},
+          {pubsub, {dron_pubsub, start_link, []}, permanent, 60, worker,
+           [dron_pubsub]}]}}.

@@ -43,17 +43,15 @@ handle_cast({run, JI = #job_instance{jid = JId, worker = WName}, Timeout},
                            jitimeout = JITimeout}) ->
     {ok, TRef} = timer:apply_after(Timeout * 1000, ?MODULE, kill_job_instance,
                                    [WName, JId, true]),
-    NewJITimeout = dict:store(JId, TRef, JITimeout),
     JIPid = spawn_link(dron_worker, run_job_instance, [JI]),
-    NewJIPids = dict:store(JId, JIPid, JIPids),
-    NewPidJIs = dict:store(JIPid, JId, PidJIs),
     JIPid ! {self(), start},
-    {noreply, State#wstate{jipids = NewJIPids, pidjis = NewPidJIs,
-                          jitimeout = NewJITimeout}};
-handle_cast({kill, JId, Timeout}, State = #wstate{jipids = JIPids,
-                                                 pidjis = PidJIs,
-                                                 jitimeout = JITimeout}) ->
-    Reason = case Timeout of
+    {noreply, State#wstate{jipids = dict:store(JId, JIPid, JIPids),
+                           pidjis = dict:store(JIPid, JId, PidJIs),
+                           jitimeout = dict:store(JId, TRef, JITimeout)}};
+handle_cast({kill, JId, TimeoutReason},
+            State = #wstate{jipids = JIPids, pidjis = PidJIs,
+                            jitimeout = JITimeout}) ->
+    Reason = case TimeoutReason of
                  false -> killed;
                  true  -> timeout
              end,

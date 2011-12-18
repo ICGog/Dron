@@ -1,7 +1,8 @@
 -module(dron_config).
 -author("Ionel Corneliu Gog").
 
--export([max_slots/0, dron_exchanges/0, dron_exchange/0, dron_consumers/0]).
+-export([max_slots/0, dron_exchanges/0, dron_exchange/0, dron_consumers/0,
+        dron_log_dir/0]).
 
 %-------------------------------------------------------------------------------
 
@@ -18,3 +19,6 @@ dron_consumers() ->
 
 dron_exchange() ->
     <<"dron_events">>.
+
+dron_log_dir() ->
+    "/var/log/dron/".

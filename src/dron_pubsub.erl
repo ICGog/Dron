@@ -10,7 +10,7 @@
 -export([start_link/0, start_consumer/3, publish_message/3, setup_exchange/2,
          stop_exchange/1]).
 
--record(state, {connection, channel, consumers = dict:new()}).
+-record(state, {connection, channel}).
 
 %-------------------------------------------------------------------------------
 
@@ -38,20 +38,22 @@ stop_exchange(Exchange) ->
 init([]) ->
     {ok, Connection} = amqp_connection:start(#amqp_params_network{}),
     {ok, Channel} = amqp_connection:open_channel(Connection),
+    lists:map(fun({Exchange, Type}) ->
+                      setup_exchange_intern(Channel, Exchange, Type) end,
+              dron_config:dron_exchanges()),
+    lists:map(fun({Module, Exchange, RoutingKey}) ->
+                      start_consumer_intern(Channel, Module, Exchange,
+                                            RoutingKey)
+              end, dron_config:dron_consumers()),
     {ok, #state{connection = Connection, channel = Channel}}.
 
 handle_call({start_consumer, Module, Exchange, RoutingKey}, _From,
             State = #state{channel = Channel}) ->
-    Queue = create_queue(Channel, Exchange, RoutingKey),
-    proc_lib:start_link(Module, init, [self(), Channel, Queue]),
+    start_consumer_intern(Channel, Module, Exchange, RoutingKey),
     {reply, ok, State};
 handle_call({setup_exchange, Name, Type}, _From,
             State = #state{channel = Channel}) ->
-    Exchange = #'exchange.declare'{exchange = Name, type = Type},
-    case amqp_channel:call(Channel, Exchange) of
-        #'exchange.declare_ok'{} -> {reply, ok, State};
-        _                        -> {reply, error, State}
-    end;
+    {reply, setup_exchange_intern(Channel, Name, Type), State};
 handle_call({stop_exchange, Exchange}, _From,
             State = #state{channel = Channel}) ->
     case amqp_channel:call(Channel, #'exchange.delete'{exchange = Exchange}) of
@@ -84,11 +86,18 @@ terminate(_Reason, #state{channel = Channel, connection = Connection}) ->
     amqp_connection:close(Connection),
     ok.
 
-create_queue(Channel, Exchange, RoutingKey) ->
+start_consumer_intern(Channel, Module, Exchange, RoutingKey) ->
     #'queue.declare_ok'{queue = Queue} =
         amqp_channel:call(Channel, #'queue.declare'{}),
     Binding = #'queue.bind'{queue = Queue,
                             exchange = Exchange,
                             routing_key = RoutingKey},
     #'queue.bind_ok'{} = amqp_channel:call(Channel, Binding),
-    Queue.
+    proc_lib:start_link(Module, init, [self(), Channel, Queue]).
+
+setup_exchange_intern(Channel, Name, Type) ->
+    Exchange = #'exchange.declare'{exchange = Name, type = Type},
+    case amqp_channel:call(Channel, Exchange) of
+        #'exchange.declare_ok'{} -> ok;
+        _                        -> error
+    end.
