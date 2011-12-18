@@ -16,7 +16,7 @@ start() ->
 % for an exit signal back.
 % TODO: Check what it must be done on restart.
 init(_Args) ->
-    {ok, {{one_for_one, 0, 1},
+    {ok, {{one_for_one, 1, 60},
          [{pool, {dron_pool, start_link, []}, permanent, 60, worker,
            [dron_pool]},
           {scheduler, {dron_scheduler, start_link, []}, permanent, 60, worker,

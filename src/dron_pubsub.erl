@@ -38,6 +38,7 @@ stop_exchange(Exchange) ->
 init([]) ->
     {ok, Connection} = amqp_connection:start(#amqp_params_network{}),
     {ok, Channel} = amqp_connection:open_channel(Connection),
+    % It does not matter whether the exchanges were already declared or not.
     lists:map(fun({Exchange, Type}) ->
                       setup_exchange_intern(Channel, Exchange, Type) end,
               dron_config:dron_exchanges()),
@@ -56,10 +57,7 @@ handle_call({setup_exchange, Name, Type}, _From,
     {reply, setup_exchange_intern(Channel, Name, Type), State};
 handle_call({stop_exchange, Exchange}, _From,
             State = #state{channel = Channel}) ->
-    case amqp_channel:call(Channel, #'exchange.delete'{exchange = Exchange}) of
-        #'exchange.delete_ok'{} -> {reply, ok, State};
-        _                       -> {reply, error, State}
-    end;
+    {reply, stop_exchange_intern(Channel, Exchange), State};
 handle_call({publish_message, Exchange, RoutingKey, Payload}, _From,
             State = #state{channel = Channel}) ->
     ok = amqp_channel:cast(Channel,
@@ -82,6 +80,7 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 terminate(_Reason, #state{channel = Channel, connection = Connection}) ->
+    % The exchange is not stopped to that frameworks can still publish messages.
     amqp_channel:close(Channel),
     amqp_connection:close(Connection),
     ok.
@@ -100,4 +99,10 @@ setup_exchange_intern(Channel, Name, Type) ->
     case amqp_channel:call(Channel, Exchange) of
         #'exchange.declare_ok'{} -> ok;
         _                        -> error
+    end.
+
+stop_exchange_intern(Channel, Exchange) ->
+    case amqp_channel:call(Channel, #'exchange.delete'{exchange = Exchange}) of
+        #'exchange.delete_ok'{} -> ok;
+        _                       -> error
     end.
