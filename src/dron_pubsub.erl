@@ -41,11 +41,11 @@ init([]) ->
     % It does not matter whether the exchanges were already declared or not.
     lists:map(fun({Exchange, Type}) ->
                       setup_exchange_intern(Channel, Exchange, Type) end,
-              dron_config:dron_exchanges()),
+              dron_config:exchanges()),
     lists:map(fun({Module, Exchange, RoutingKey}) ->
                       start_consumer_intern(Channel, Module, Exchange,
                                             RoutingKey)
-              end, dron_config:dron_consumers()),
+              end, dron_config:consumers()),
     {ok, #state{connection = Connection, channel = Channel}}.
 
 handle_call({start_consumer, Module, Exchange, RoutingKey}, _From,
@@ -65,16 +65,19 @@ handle_call({publish_message, Exchange, RoutingKey, Payload}, _From,
                                             routing_key = RoutingKey},
                            #amqp_msg{payload = Payload}),
     {reply, ok, State};
-handle_call(_Request, _From, _State) ->
-    not_implemented.
+handle_call(Request, _From, State) ->
+    error_logger:error_msg("Got unexpected call ~p", [Request]),
+    {stop, not_supported, State}.
 
-handle_cast(_Request, _State) ->
-    not_implemented.
+handle_cast(Request, State) ->
+    error_logger:error_msg("Got unexpected cast ~p", [Request]),
+    {stop, not_supported, State}.
 
 handle_info({'EXIT', _Pid, normal}, State) ->
     {noreply, State};
-handle_info(_Info, _State) ->
-    unexpected_request.
+handle_info(Info, State) ->
+    error_logger:error_msg("Got unexpected message ~p", [Info]),
+    {stop, not_supported, State}.
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.

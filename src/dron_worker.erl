@@ -79,7 +79,6 @@ handle_info({'EXIT', _Pid, normal}, State) ->
     %% the worker is informed that the job instance finished.
     {noreply, State};
 handle_info({'EXIT', _Pid, {JId, Reason}}, State) ->
-    error_logger:info_msg("~p has been killed", [JId]),
     %% Notify the scheduler why the job instance was killed.
     %% (timeout | killed).
     publish_state(JId, list_to_binary(atom_to_list(Reason))),

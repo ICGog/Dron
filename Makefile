@@ -14,21 +14,23 @@ SOURCES=$(wildcard $(SOURCE_DIR)/*.erl)
 TARGETS=$(patsubst $(SOURCE_DIR)/%.erl, $(EBIN_DIR)/%.beam, $(SOURCES)) $(ADDITIONAL_ERL_TARGETS)
 TEST_SOURCES=$(wildcard $(TEST_DIR)/*.erl)
 TEST_TARGETS=$(patsubst $(TEST_DIR)/%.erl, $(TEST_DIR)/%.beam, $(TEST_SOURCES))
-ADDITIONAL_ERL_SOURCES=$(LIB_DIR)/mochijson2/mochijson2.erl
-ADDITIONAL_ERL_TARGETS=$(EBIN_DIR)/mochijson2.beam
+ADDITIONAL_ERL_SOURCES=$(LIB_DIR)/mochijson2/mochijson2.erl $(LIB_DIR)/gen_leader.erl
+ADDITIONAL_ERL_TARGETS=$(EBIN_DIR)/mochijson2.beam $(EBIN_DIR)/gen_leader.beam
+DIALYZER=dialyzer
+DIALYZER_OPTS=-Wno_return -Wrace_conditions -Wunderspecs
 
-ERLC_OPTS=-I $(INCLUDE_DIR) -o $(EBIN_DIR) -Wall -v
+ERLC_OPTS=-I $(INCLUDE_DIR) -o $(EBIN_DIR) -pa $(EBIN_DIR) -Wall -v +debug_info
 ERL_OPTS=-pa $(EBIN_DIR) -pa $(TEST_DIR) -I $(INCLUDE_DIR) -sname $(DRON_NODE) -s dron
 WORKER_ERL_OPTS=-pa $(EBIN_DIR) -pa $(TEST_DIR)
 
 .PHONY: all
 all: compile
 
-compile: $(TARGETS)
+compile: $(ADDITIONAL_ERL_TARGETS) $(TARGETS)
 
 compile_tests: $(TEST_TARGETS)
 
-run: $(TARGETS)
+run: $(ADDITIONAL_ERL_TARGETS) $(TARGETS)
 	$(MAKE) start_workers
 	mkdir -p $(LOG_DIR)
 	DRON_WORKERS="$(DRON_WORKERS)" WORKER_ERL_OPTS="$(WORKER_ERL_OPTS)" \
@@ -57,6 +59,9 @@ stop_workers: $(TARGETS)
 		echo "Stopping worker $$worker" ; \
 		erl_call -sname $$worker -q ; \
 	done
+
+analyze: compile
+	$(DIALYZER) $(DIALYZER_OPTS) -r ebin/
 
 ################################################################################
 # Internal

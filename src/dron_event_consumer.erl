@@ -2,7 +2,8 @@
 -author("Ionel Corneliu Gog").
 -include_lib("amqp_client/include/amqp_client.hrl").
 
--export([init/3, consume_events/2, get_job_instance/1, get_job_instance_state/1]).
+-export([init/3, consume_events/2, get_job_instance/1,
+         get_job_instance_state/1]).
 
 %-------------------------------------------------------------------------------
 
