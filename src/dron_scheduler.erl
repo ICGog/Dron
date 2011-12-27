@@ -7,7 +7,8 @@
          handle_leader_call/4, handle_leader_cast/3, handle_DOWN/3,
          elected/3, surrendered/3, from_leader/3, code_change/4, terminate/2,
          create_job_instance/2, create_job_instance/3, run_instance/2,
-         ji_succeeded/1, ji_killed/1, ji_timeout/1, ji_failed/2]).
+         ji_succeeded/1, ji_killed/1, ji_timeout/1, ji_failed/2,
+         run_job_instance/2]).
 
 -export([start_link/1, schedule/1, unschedule/1]).
 
@@ -131,12 +132,11 @@ handle_leader_cast({killed, JId}, State, _Election) ->
     erlang:spawn_link(?MODULE, ji_killed, [JId]),
     {noreply, State};
 handle_leader_cast({satisfied, RId}, State, _Election) ->
-    error_logger:error_msg("Satisfied ~p", [RId]),
     {ok, Dependants} = dron_db:get_dependants(RId),
     lists:map(fun(JId) -> satisfied_dependency(RId, JId, true) end, Dependants),
     {ok, {satisfied, RId}, State};
 handle_leader_cast({worker_disabled, JI}, State, _Election) ->
-    erlang:spawn_link(?MODULE, run_instance, [JI, true]),
+    erlang:spawn_link(?MODULE, run_job_instance, [JI, true]),
     {ok, {worker_disabled, JI}, State};
 handle_leader_cast(Request, State, _Election) ->
     error_logger:error_msg("Unexpected leader cast ~p", [Request]),
@@ -166,7 +166,7 @@ from_leader({satisfied, RId}, State, _Election) ->
               Dependants),
     {ok, State};
 from_leader({worker_disabled, JI}, State, _Election) ->
-    erlang:spawn_link(?MODULE, run_instance, [JI, false]),
+    erlang:spawn_link(?MODULE, run_job_instance, [JI, false]),
     {ok, State};
 from_leader(_Request, State, _Election) ->
     {stop, not_supported, State}.
@@ -278,6 +278,14 @@ run_instance(JId, true) ->
     JI = NoWorkerJI#job_instance{worker = WName},
     ok = dron_db:store_job_instance(JI),
     dron_worker:run(WName, JI, Timeout).
+
+run_job_instance(_JI, false) ->
+    ok;
+run_job_instance(JobInstance = #job_instance{timeout = Timeout}, true) ->
+    #worker{name = WName} = dron_pool:get_worker(),
+    RetryJI = JobInstance#job_instance{worker = WName},
+    ok = dron_db:store_job_instance(RetryJI),
+    dron_worker:run(WName, RetryJI, Timeout).
         
 run_job_instances_up_to_now(Job = #job{frequency = Frequency}, Now, STime) ->
     if STime < Now ->
@@ -330,10 +338,9 @@ ji_failed(JId, Leader) ->
         dron_db:get_job_instance(JId),
     ok = dron_pool:release_worker_slot(WName),
     {ok, #job{max_retries = MaxRet}} = dron_db:get_job(JName),
-    % TODO(ionel): The JI does not have a timer on rerun.
     if
         NumRet < MaxRet ->
-            run_instance(JI#job_instance{num_retry = NumRet + 1}, Leader);
+            run_job_instance(JI#job_instance{num_retry = NumRet + 1}, Leader);
         true            ->
             ok
     end.

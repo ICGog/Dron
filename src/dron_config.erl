@@ -24,4 +24,4 @@ log_dir() ->
     "/var/log/dron/".
 
 master_nodes() ->
-    [node(), w1@icg].
+    [node()].
