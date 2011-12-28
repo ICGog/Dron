@@ -63,8 +63,8 @@ handle_call({add, WName, Slots}, _From, State) ->
         [{WName, _}] -> {reply, {error, already_added}, State};
         []           ->
             case net_adm:ping(WName) of
-                pong -> % rpc:call(WName, dron_worker, start_link, [WName]),
-                    dron_worker:start_link(WName),
+                pong -> rpc:call(WName, dron_worker, start_link, [WName]),
+%                    dron_worker:start_link(WName),
                         monitor_node(WName, true),
                         SWorkers = case ets:lookup(slot_workers, 0) of
                                        [{0, CurSws}] -> CurSws;

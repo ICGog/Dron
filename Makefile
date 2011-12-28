@@ -20,8 +20,8 @@ DIALYZER=dialyzer
 DIALYZER_OPTS=-Wno_return -Wrace_conditions -Wunderspecs
 
 ERLC_OPTS=-I $(INCLUDE_DIR) -o $(EBIN_DIR) -pa $(EBIN_DIR) -Wall -v +debug_info
-ERL_OPTS=-pa $(EBIN_DIR) -pa $(TEST_DIR) -I $(INCLUDE_DIR) -sname $(DRON_NODE) -s dron
-WORKER_ERL_OPTS=-pa $(EBIN_DIR) -pa $(TEST_DIR)
+ERL_OPTS=-pa $(EBIN_DIR) -pa $(TEST_DIR) -I $(INCLUDE_DIR) -sname $(DRON_NODE) -s dron -boot start_sasl -config dron
+WORKER_ERL_OPTS=-pa $(EBIN_DIR) -pa $(TEST_DIR) -boot start_sasl -config dron
 
 .PHONY: all
 all: compile

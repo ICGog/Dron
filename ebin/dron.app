@@ -9,4 +9,4 @@
                                dron_worker]},
                     {env, []},
                     {mod, {dron, []}},
-                    {applications, [kernel, stdlib]}]}.
+                    {applications, [kernel, stdlib, sasl]}]}.
