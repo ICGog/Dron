@@ -44,7 +44,7 @@ clean:
 start_workers:
 	for worker in $(DRON_WORKERS) ; do \
 		echo "Starting worker $$worker" ; \
-		echo 'code:add_pathsa(["$(realpath $(EBIN_DIR))"]).' | \
+		echo 'code:add_pathsa(["$(realpath $(EBIN_DIR))","$(realpath $(LIB_DIR))/gen_leader/ebin","$(realpath $(LIB_DIR))/mochiweb/ebin"]).' | \
 		erl_call -sname $$worker -s -e ; \
 	done
 

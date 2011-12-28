@@ -3,7 +3,8 @@
 -include("dron.hrl").
 -behaviour(gen_server).
 
--export([start_link/1, run/3, kill_job_instance/2, kill_job_instance/3]).
+-export([start/1, start_link/1, run/3, kill_job_instance/2,
+         kill_job_instance/3]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3, run_job_instance/1]).
@@ -13,6 +14,9 @@
                  jitimeout = dict:new()}).
 
 %-------------------------------------------------------------------------------
+
+start(WName) ->
+    gen_server:start({global, WName}, ?MODULE, [], []).
 
 start_link(WName) ->
     gen_server:start_link({global, WName}, ?MODULE, [], []).
@@ -35,8 +39,9 @@ init([]) ->
     process_flag(trap_exit, true),
     {ok, #wstate{}}.
 
-handle_call(_Request, _From, _State) ->
-    unexpected_request.
+handle_call(Request, _From, State) ->
+    error_logger:error_msg("Got unexpected call ~p", [Request]),
+    {stop, not_supported, State}.
 
 handle_cast({run, JI = #job_instance{jid = JId, worker = WName}, Timeout},
             State = #wstate{jipids = JIPids, pidjis = PidJIs,
@@ -63,8 +68,10 @@ handle_cast({kill, JId, TimeoutReason},
                                    jitimeout = clear_timeout(JId, JITimeout)}};
         error     -> {noreply, State}
     end;
-handle_cast(_Request, _State) ->
-    unexpected_request.
+handle_cast(Request, State) ->
+    error_logger:errog_msg("Got unexpected cast ~p", [Request]),
+    {stop, not_supported, State}.
+
 
 handle_info({JId, JPid, ok}, State = #wstate{jipids = JIPids,
                                             pidjis = PidJIs,
@@ -95,8 +102,9 @@ handle_info({'EXIT', Pid, Reason}, State = #wstate{jipids = JIPids,
                                    jitimeout = clear_timeout(JId, JITimeout)}};
         error     -> {noreply, State}
     end;
-handle_info(_Info, _State) ->
-    unexpected_request.
+handle_info(Info, State) ->
+    error_logger:error_msg("Got unexpected message ~p", [Info]),
+    {stop, not_supported, State}.
 
 terminate(_Reason, _State) ->
     ok.
