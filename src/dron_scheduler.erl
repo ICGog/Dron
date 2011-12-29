@@ -60,6 +60,7 @@ init([]) ->
     ets:new(start_timers, [named_table]),
     ets:new(wait_timers, [named_table]),
     ets:new(ji_deps, [named_table]),
+    ets:new(delay, [public, named_table]),
     {ok, #state{}}.
 
 %% @doc
@@ -191,8 +192,10 @@ handle_call(Request, _From, State, _Election) ->
 
 handle_cast({waiting_job_instance, JId, TRef, Dependencies}, State,
                   _Election) ->
-    ets:store(wait_timers, {JId, TRef}),
-    ets:store(ji_deps, {JId, Dependencies}),
+    % TODO(ionel): Check if this code is reached. It had a typo (store instead
+    % of insert).
+    ets:insert(wait_timers, {JId, TRef}),
+    ets:insert(ji_deps, {JId, Dependencies}),
     {noreply, State};
 handle_cast(Msg, State, _Election) ->
     error_logger:errog_msg("Got unexpected cast ~p", [Msg]),
@@ -253,9 +256,20 @@ create_job_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout,
                          deps_timeout = DepsTimeout,
                          dependencies = Dependencies}, Date, true) ->
     JId = {Name, Date},
+    RunTime = calendar:local_time(),
+    Delay = calendar:datetime_to_gregorian_seconds(RunTime) -
+        calendar:datetime_to_gregorian_seconds(Date),
+    MaxDelay = case ets:lookup(delay, delay) of
+                   [{delay, MDelay}] -> MDelay;
+                   []                -> 0
+               end,
+    if Delay > MaxDelay -> ets:insert(delay, {delay, Delay}),
+                           error_logger:info_msg("Max Delay ~p", [Delay]);
+       true             -> ok
+    end,
     JI =  #job_instance{jid = JId, name = Name, cmd_line = Cmd,
                         state = waiting, timeout = Timeout,
-                        run_time = calendar:local_time(),
+                        run_time = RunTime,
                         num_retry = 0,
                         dependencies = instanciate_dependencies(
                                          JId, Dependencies),
