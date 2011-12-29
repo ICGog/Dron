@@ -11,7 +11,8 @@
                                dron_sup,
                                dron_mnesia,
                                dron_pool,
-                               dron_worker]},
+                               dron_worker,
+                               dron_test]},
                     {env, []},
                     {mod, {dron, []}},
                     {applications, [kernel, stdlib, sasl]}]}.

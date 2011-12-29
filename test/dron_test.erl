@@ -4,63 +4,74 @@
 -include_lib("stdlib/include/qlc.hrl").
 
 -export([register_long_jobs/1, register_long_jobs/2, register_short_jobs/1,
-        register_short_jobs/2, populate_db/4, count_jobs_and_instances/0,
-        generate_node_names/1]).
+         register_short_jobs/2, populate_db/4, count_jobs_and_instances/0,
+         generate_node_names/1]).
 
 %-------------------------------------------------------------------------------
 
 register_long_jobs(NumJobs) ->
-    register_long_jobs(NumJobs, 0).
+    register_long_jobs(1, NumJobs).
 
-register_long_jobs(NumJobs, StartTime) ->
+register_long_jobs(NumStartJob, NumEndJob) ->
+    StartTime = calendar:local_time(),
     lists:map(fun(Num) ->
                       dron_api:register_job(#job{name = "long" ++
                                                      integer_to_list(Num),
                                                  cmd_line = "sleep 6000",
                                                  start_time = StartTime,
-                                                 frequency = 6010000,
-                                                 timeout = 7000000,
-                                                 max_retries = 3})
-              end, lists:seq(1, NumJobs)).
+                                                 frequency = 6010,
+                                                 timeout = 7000,
+                                                 max_retries = 3,
+                                                 dependencies = [],
+                                                 deps_timeout = 10})
+              end, lists:seq(NumStartJob, NumEndJob)).    
 
 register_short_jobs(NumJobs) ->
-    register_short_jobs(NumJobs, 0).
+    register_short_jobs(1, NumJobs).
 
-register_short_jobs(NumJobs, StartTime) ->
+register_short_jobs(NumStartJob, NumEndJob) ->
+    StartTime = calendar:local_time(),
     lists:map(fun(Num) ->
                       dron_api:register_job(#job{name = "short" ++
                                                      integer_to_list(Num),
                                                  cmd_line = "sleep 60",
                                                  start_time = StartTime,
-                                                 frequency = 61000,
-                                                 timeout = 70000,
-                                                 max_retries = 1})
-              end, lists:seq(1, NumJobs)).
+                                                 frequency = 61,
+                                                 timeout = 70,
+                                                 max_retries = 1,
+                                                 dependencies = [],
+                                                 deps_timeout = 10})
+              end, lists:seq(NumStartJob, NumEndJob)).
 
 populate_db(NumJobs, Name, State, Worker) ->
     lists:map(fun(Num) ->
                       JName = Name ++ integer_to_list(Num),
                       dron_db:store_job(
                         #job{name = JName, cmd_line = "ls", start_time = 0,
-                             frequency = 1000, timeout = 1000,
-                             max_retries = 3}),
+                             frequency = 1, timeout = 1,
+                             max_retries = 3, dependencies = [],
+                             deps_timeout = 10}),
                       lists:map(fun(_JINum) ->
                                         dron_db:store_job_instance(
                                           #job_instance{
                                              jid = {node(), now()},
                                              name = JName, cmd_line = "ls",
-                                             state = State, timeout = 1000,
-                                             run_time = 1000, num_retry = 1,
+                                             state = State, timeout = 1,
+                                             run_time = 1, num_retry = 1,
+                                             deps_timeout = 10,
+                                             dependencies = [],
                                              worker = Worker})
                                 end, lists:seq(1, 10))
               end, lists:seq(1, NumJobs)).
 
 count_jobs_and_instances() ->
     Trans = fun() ->
-                    {lists:sum(qlc:eval(qlc:q([1 || J <- mnesia:table(jobs)]))),
-                     lists:sum(qlc:eval(
-                                 qlc:q([1 || JI <- mnesia:table(job_instances)])
-                                ))}
+                    {lists:sum(qlc:eval(
+                                 qlc:q([1 || _J <- mnesia:table(jobs)]))),
+                     lists:sum(
+                       qlc:eval(
+                         qlc:q([1 || _JI <- mnesia:table(job_instances)])
+                        ))}
             end,
     mnesia:transaction(Trans).
 
