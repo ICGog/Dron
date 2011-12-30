@@ -21,33 +21,87 @@
 
 %===============================================================================
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% Starts the the scheduler on a list of nodes. One node will be elected as
+%% leader.
+%%
+%% @spec start_link(Nodes) -> ok
+%% @end
+%%------------------------------------------------------------------------------
 start_link(Nodes) ->
     gen_leader:start_link(?MODULE, Nodes, [], ?MODULE, [], []).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec schedule(Job) -> ok
+%% @end
+%%------------------------------------------------------------------------------
 schedule(Job) ->
     gen_leader:leader_cast(?MODULE, {schedule, Job}).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec unschedule(JobName) -> ok
+%% @end
+%%------------------------------------------------------------------------------
 unschedule(JName) ->
     gen_leader:leader_cast(?MODULE, {unschedule, JName}).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec job_instance_succeeded(JobInstanceId) -> ok
+%% @end
+%%------------------------------------------------------------------------------
 job_instance_succeeded(JId) ->
     gen_leader:leader_cast(?MODULE, {succeeded, JId}).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec job_instance_failed(JobInstanceId, Reason) -> ok
+%% @end
+%%------------------------------------------------------------------------------
 job_instance_failed(JId, Reason) ->
     gen_leader:leader_cast(?MODULE, {failed, JId, Reason}).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec job_instance_timeout(JobInstanceId) -> ok
+%% @end
+%%------------------------------------------------------------------------------
 job_instance_timeout(JId) ->
     gen_leader:leader_cast(?MODULE, {timeout, JId}).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec job_instance_killed(JobInstanceId) -> ok
+%% @end
+%%------------------------------------------------------------------------------
 job_instance_killed(JId) ->
     gen_leader:leader_cast(?MODULE, {killed, JId}).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec dependency_satisfied(ResourceId) -> ok
+%% @end
+%%------------------------------------------------------------------------------
 dependency_satisfied(RId) ->
     gen_leader:leader_cast(?MODULE, {satisfied, RId}).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec worker_disabled(JobInstance) -> ok
+%% @end
+%%------------------------------------------------------------------------------
 worker_disabled(JI) ->
     gen_leader:leader_cast(?MODULE, {worker_disabled, JI}).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec create_waiting_job_instance(JobInstanceId, WaitTimerRef, Dependencies)
+%%        -> ok
+%% @end
+%%------------------------------------------------------------------------------
 create_waiting_job_instance(JId, TRef, Dependencies) ->
     gen_leader:cast(?MODULE, {waiting_job_instance, JId, TRef, Dependencies}).
 
@@ -55,6 +109,9 @@ create_waiting_job_instance(JId, TRef, Dependencies) ->
 % Internal
 %===============================================================================
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 init([]) ->
     ets:new(schedule_timers, [named_table]),
     ets:new(start_timers, [named_table]),
@@ -63,6 +120,8 @@ init([]) ->
     ets:new(delay, [public, named_table]),
     {ok, #state{}}.
 
+%%------------------------------------------------------------------------------
+%% @private
 %% @doc
 %% Called only in the leader process when it is elected. Sync will be
 %% broadcasted to all the nodes in the cluster.
@@ -98,10 +157,16 @@ elected(State, _Election, _Node) ->
 surrendered(State, _Sync, _Election) ->
     {ok, State#state{leader = false}}.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 handle_leader_call(Request, _From, State, _Election) ->
     error_logger:error_msg("Unexpected leader call ~p", [Request]),
     {stop, not_supported, State}.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 handle_leader_cast({schedule, Job = #job{name = JName, start_time = STime}},
                    State, _Election) ->
     % TODO(ionel): If the process fails while running old instances then
@@ -186,10 +251,16 @@ handle_DOWN(Node, State, _Election) ->
     error_logger:error_msg("Master node ~p went down", [Node]),
     {ok, State}.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 handle_call(Request, _From, State, _Election) ->
     error_logger:error_msg("Got unexpected call ~p", [Request]),
     {stop, not_supported, not_supported, State}.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 handle_cast({waiting_job_instance, JId, TRef, Dependencies}, State,
                   _Election) ->
     % TODO(ionel): Check if this code is reached. It had a typo (store instead
@@ -201,6 +272,9 @@ handle_cast(Msg, State, _Election) ->
     error_logger:errog_msg("Got unexpected cast ~p", [Msg]),
     {stop, not_supported, State}.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 handle_info({schedule, Job = #job{name = JName, frequency = Freq}},
             State = #state{leader = Leader}) ->
     {ok, TRef} = timer:apply_interval(Freq * 1000, ?MODULE,
@@ -226,9 +300,15 @@ handle_info(Info, State) ->
     error_logger:error_msg("Got unexpected message ~p", [Info]),
     {stop, not_supported, State}.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 terminate(_Reason, _State) ->
     ok.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 code_change(_OldVsn, State, _Election, _Extra) ->
     {ok, State}.
 
@@ -239,9 +319,15 @@ instanciate_dependencies(RId, Dependencies) ->
     ok = dron_db:store_dependant(Dependencies, RId),
     Dependencies.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 create_job_instance(Job, Leader) ->
     create_job_instance(Job, calendar:local_time(), Leader).
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 create_job_instance(#job{name = Name, deps_timeout = DepsTimeout,
                          dependencies = Dependencies}, Date, false) ->
     JId = {Name, Date},
@@ -283,6 +369,9 @@ create_job_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout,
                 JId, TRef, Dependencies)
     end.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 run_instance(_JId, false) ->
     ok;
 run_instance(JId, true) ->
@@ -293,6 +382,9 @@ run_instance(JId, true) ->
     ok = dron_db:store_job_instance(JI),
     dron_worker:run(WName, JI, Timeout).
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 run_job_instance(_JI, false) ->
     ok;
 run_job_instance(JobInstance = #job_instance{timeout = Timeout}, true) ->
@@ -312,6 +404,9 @@ run_job_instances_up_to_now(Job = #job{frequency = Frequency}, Now, STime) ->
        true        -> STime - Now
     end.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 satisfied_dependency(RId, JId, Leader) ->
     case ets:lookup(ji_deps, JId) of
         [{JId, RIds}] ->
@@ -329,6 +424,9 @@ satisfied_dependency(RId, JId, Leader) ->
             ok
     end.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 ji_succeeded(JId) ->
     ok = dron_db:set_job_instance_state(JId, succeeded),
     {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
@@ -337,16 +435,25 @@ ji_succeeded(JId) ->
     % resources)
     dependency_satisfied(JId).
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 ji_killed(JId) ->
     ok = dron_db:set_job_instance_state(JId, killed),
     {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
     ok = dron_pool:release_worker_slot(WName).
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 ji_timeout(JId) ->
     ok = dron_db:set_job_instance_state(JId, timeout),
     {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
     ok = dron_pool:release_worker_slot(WName).
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 ji_failed(JId, Leader) ->
     {ok, JI = #job_instance{name = JName, worker = WName, num_retry = NumRet}} =
         dron_db:get_job_instance(JId),

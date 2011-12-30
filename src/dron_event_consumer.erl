@@ -5,8 +5,15 @@
 -export([init/3, consume_events/2, get_job_instance/1,
          get_job_instance_state/1]).
 
-%-------------------------------------------------------------------------------
+%===============================================================================
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% Initialize dron_events consumer. It does not return.
+%%
+%% @spec init(ParentPid, Channel, Queue) -> no
+%% @end
+%%------------------------------------------------------------------------------
 init(ParentPid, Channel, Queue) ->
     #'basic.consume_ok'{consumer_tag = ConsumerTag} =
         amqp_channel:subscribe(Channel, #'basic.consume'{queue = Queue},
@@ -14,6 +21,9 @@ init(ParentPid, Channel, Queue) ->
     proc_lib:init_ack(ParentPid, self()),
     consume_events(Channel, ConsumerTag).
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 consume_events(Channel, ConsumerTag) ->
     receive
         #'basic.consume_ok'{consumer_tag = ConsumerTag} ->

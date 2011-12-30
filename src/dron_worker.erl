@@ -30,7 +30,7 @@ start_link(WName) ->
 
 %%------------------------------------------------------------------------------
 %% @doc
-%% Run a job instance on a given worker.
+%% Run a job instance on a given worker. The call does not block.
 %%
 %% @spec run(WorkerName, JobInstance, Timeout) -> ok
 %% @end
@@ -40,7 +40,7 @@ run(WName, JobInstance, Timeout) ->
 
 %%------------------------------------------------------------------------------
 %% @doc
-%% Kills a job instance.
+%% Kills a job instance. The call does not block.
 %%
 %% @spec kill_job_instance(WorkerName, JId) -> ok
 %% @end
@@ -51,6 +51,7 @@ kill_job_instance(WName, JId) ->
 %%------------------------------------------------------------------------------
 %% @doc
 %% Kills a job instance. Timeout = true if the job is killed because of timeout.
+%% The call does not block.
 %%
 %% @spec kill_job_instance(WorkerName, JId, Timeout) -> ok
 %% @end

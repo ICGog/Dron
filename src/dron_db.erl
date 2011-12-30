@@ -9,8 +9,13 @@
          get_job_instances_on_worker/1, get_dependants/1,
          store_dependant/2]).
 
-%-------------------------------------------------------------------------------
+%===============================================================================
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec store_job(Job) -> ok | {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
 store_job(Job) ->
     Trans = fun() ->
                     case mnesia:wread({jobs, Job#job.name}) of
@@ -23,7 +28,13 @@ store_job(Job) ->
         {atomic, ok}      -> ok;
         {aborted, Reason} -> {error, Reason}
     end.
-            
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec get_job(Name) -> {ok, Job} | {error, no_job} | {error, multiple_jobs} |
+%%        {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
 get_job(Name) ->
     Trans = fun() ->
                     mnesia:read(jobs, Name, read)
@@ -35,6 +46,11 @@ get_job(Name) ->
         {aborted, Reason}       -> {error, Reason}
     end.
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec store_job_instance(JobInstance) -> ok | {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
 store_job_instance(JobInstance) ->
     Trans = fun() ->
                     mnesia:write(job_instances, JobInstance, write)
@@ -44,6 +60,13 @@ store_job_instance(JobInstance) ->
         {aborted, Reason} -> {error, Reason}
     end.
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec get_job_instance(JobInstanceId) -> {ok, JobInstance} |
+%%        {error, no_job_instance} | {error, multiple_job_instances} |
+%%        {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
 get_job_instance(Jid) ->
     Trans = fun() ->
                     mnesia:read(job_instances, Jid, read)
@@ -55,6 +78,13 @@ get_job_instance(Jid) ->
         {aborted, Reason}       -> {error, Reason}
     end.
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec get_job_instance(JobName, RunTime) -> {ok, JobInstance} |
+%%        {error, no_job_instance} | {error, multiple_job_instances} |
+%%        {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
 get_job_instance(JName, RTime) ->
     Trans = fun() ->
                     qlc:eval(qlc:q([JI || JI <- mnesia:table(job_instances),
@@ -68,6 +98,12 @@ get_job_instance(JName, RTime) ->
         {aborted, Reason}       -> {error, Reason}
     end.
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec set_job_instance_state(JobInstanceId, State) -> ok |
+%%        {error, no_such_job_instance} | {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
 set_job_instance_state(JId, State) ->
     Trans = fun() ->
                     case mnesia:wread({job_instances, JId}) of
@@ -82,7 +118,12 @@ set_job_instance_state(JId, State) ->
         {atomic, Return}  -> {error, Return};
         {aborted, Reason} -> {error, Reason}
     end.
-        
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec archive_job(JobName) -> ok | {error, no_such_job} | {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
 archive_job(Name) ->
     Trans = fun() ->
                     case mnesia:wread({jobs, Name}) of
@@ -97,6 +138,11 @@ archive_job(Name) ->
         {aborted, Reason} -> {error, Reason}
     end.
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec store_worker(Worker) -> ok | {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
 store_worker(Worker) ->
     Trans = fun() ->
                     mnesia:write(workers, Worker, write)
@@ -106,6 +152,11 @@ store_worker(Worker) ->
         {aborted, Reason} -> {error, Reason}
     end.
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec delete_worker(WorkerName) -> ok | {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
 delete_worker(WName) ->
     Trans = fun() ->
                     mnesia:delete({workers, WName})
@@ -115,6 +166,11 @@ delete_worker(WName) ->
         {aborted, Reason} -> {error, Reason}
     end.
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec get_workers(Enabled) -> {ok, [Workers]} | {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
 get_workers(Enabled) ->
     Trans = fun() ->
                     qlc:eval(qlc:q([W || W <- mnesia:table(workers),
@@ -125,6 +181,12 @@ get_workers(Enabled) ->
         {aborted, Reason} -> {error, Reason}
     end.
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec get_job_instances_on_worker(WorkerName) -> {ok, [JobInstances]} |
+%%      {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
 get_job_instances_on_worker(WName) ->
     Trans = fun() ->
                     qlc:eval(qlc:q([JI || JI <- mnesia:table(job_instances),
@@ -135,6 +197,11 @@ get_job_instances_on_worker(WName) ->
         {aborted, Reason} -> {error, Reason}
     end.
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec get_dependants(ResourceId) -> {ok, [JobInstancesId]} | {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
 get_dependants(RId) ->
     Trans = fun() ->
                     mnesia:read(resource_deps, RId, read)
@@ -144,6 +211,11 @@ get_dependants(RId) ->
         {aborted, Reason} -> {error, Reason}
     end.
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec store_dependant(Dependants, ResourceId) -> ok | {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
 store_dependant(Dependants, RId) ->
     Trans = fun() ->
                     lists:map(fun(Dep) ->

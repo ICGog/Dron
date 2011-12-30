@@ -5,8 +5,16 @@
 
 -export([init/3, consume_events/2]).
 
-%-------------------------------------------------------------------------------
+%===============================================================================
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% Initializes the consumer. The consumer sits in a continous loop and processes
+%% events. It does not return.
+%%
+%% @spec init(ParentPid, Channel, Queue) -> no
+%% @end
+%%------------------------------------------------------------------------------
 init(ParentPid, Channel, Queue) ->
     #'basic.consume_ok'{consumer_tag = ConsumerTag} =
         amqp_channel:subscribe(Channel, #'basic.consume'{queue = Queue},
@@ -14,6 +22,15 @@ init(ParentPid, Channel, Queue) ->
     proc_lib:init_ack(ParentPid, self()),
     consume_events(Channel, ConsumerTag).
 
+%%------------------------------------------------------------------------------
+%% @private
+%% @doc
+%% Processes the events that are published on a given channel with a given
+%% tag. It does not return.
+%%
+%% @spec consume_events(Channel, ConsumerTag) -> no
+%% @end
+%%------------------------------------------------------------------------------
 consume_events(Channel, ConsumerTag) ->
     receive
         #'basic.consume_ok'{consumer_tag = ConsumerTag} ->

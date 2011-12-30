@@ -12,29 +12,52 @@
 
 -record(state, {connection, channel}).
 
-%-------------------------------------------------------------------------------
+%===============================================================================
 
 start_link() ->
     gen_server:start_link(?NAME, ?MODULE, [], []).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec start_consumer(Module, Exchange, RoutingKey) -> ok
+%% @end
+%%------------------------------------------------------------------------------
 start_consumer(Module, Exchange, RoutingKey) ->
     gen_server:call(?NAME, {start_consumer, Module, Exchange, RoutingKey}).
-    
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec publish_message(Exchange, RoutingKey, Message) -> ok
+%% @end
+%%------------------------------------------------------------------------------
 publish_message(Exchange, RoutingKey, Payload) ->
     gen_server:call(?NAME, {publish_message, Exchange, RoutingKey, Payload}).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec setup_exchange(ExchangeName, Type) -> ok | error
+%% @end
+%%------------------------------------------------------------------------------
 setup_exchange(Name, Type) ->
     gen_server:call(?NAME, {setup_exchange, Name, Type}).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec stop_exchange(ExchangeName) -> ok | error
+%% @end
+%%------------------------------------------------------------------------------
 stop_exchange(Exchange) ->
     gen_server:call(?NAME, {stop_exchange, Exchange}).
 
-%-------------------------------------------------------------------------------
+%===============================================================================
 % Internal
-%-------------------------------------------------------------------------------
+%===============================================================================
 
 %% IMPORTANT: At the moment it only uses a connection and a channel for all
 %% the messages. Check how this affects the perfomance.
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 init([]) ->
     {ok, Connection} = amqp_connection:start(#amqp_params_network{}),
     {ok, Channel} = amqp_connection:open_channel(Connection),
@@ -48,6 +71,9 @@ init([]) ->
               end, dron_config:consumers()),
     {ok, #state{connection = Connection, channel = Channel}}.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 handle_call({start_consumer, Module, Exchange, RoutingKey}, _From,
             State = #state{channel = Channel}) ->
     start_consumer_intern(Channel, Module, Exchange, RoutingKey),
@@ -69,19 +95,31 @@ handle_call(Request, _From, State) ->
     error_logger:error_msg("Got unexpected call ~p", [Request]),
     {stop, not_supported, State}.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 handle_cast(Request, State) ->
     error_logger:error_msg("Got unexpected cast ~p", [Request]),
     {stop, not_supported, State}.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 handle_info({'EXIT', _Pid, normal}, State) ->
     {noreply, State};
 handle_info(Info, State) ->
     error_logger:error_msg("Got unexpected message ~p", [Info]),
     {stop, not_supported, State}.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 terminate(_Reason, #state{channel = Channel, connection = Connection}) ->
     % The exchange is not stopped to that frameworks can still publish messages.
     amqp_channel:close(Channel),
