@@ -13,36 +13,72 @@
 -record(wstate, {jipids = dict:new(), pidjis = dict:new(),
                  jitimeout = dict:new()}).
 
-%-------------------------------------------------------------------------------
+%===============================================================================
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% Start a worker server.
+%%
+%% @spec start(WorkerName) -> {ok, Pid} | ignore | {error, Error}
+%% @end
+%%------------------------------------------------------------------------------
 start(WName) ->
     gen_server:start({global, WName}, ?MODULE, [], []).
 
 start_link(WName) ->
     gen_server:start_link({global, WName}, ?MODULE, [], []).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% Run a job instance on a given worker.
+%%
+%% @spec run(WorkerName, JobInstance, Timeout) -> ok
+%% @end
+%%------------------------------------------------------------------------------
 run(WName, JobInstance, Timeout) ->
     gen_server:cast({global, WName}, {run, JobInstance, Timeout}).
 
-%% @doc Kills a job instance.
+%%------------------------------------------------------------------------------
+%% @doc
+%% Kills a job instance.
+%%
+%% @spec kill_job_instance(WorkerName, JId) -> ok
+%% @end
+%%------------------------------------------------------------------------------
 kill_job_instance(WName, JId) ->
     kill_job_instance(WName, JId, false).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% Kills a job instance. Timeout = true if the job is killed because of timeout.
+%%
+%% @spec kill_job_instance(WorkerName, JId, Timeout) -> ok
+%% @end
+%%------------------------------------------------------------------------------
 kill_job_instance(WName, JId, Timeout) ->
     gen_server:cast({global, WName}, {kill, JId, Timeout}).
 
-%-------------------------------------------------------------------------------
+%===============================================================================
 % Internal
-%-------------------------------------------------------------------------------
+%===============================================================================
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 init([]) ->
     process_flag(trap_exit, true),
     {ok, #wstate{}}.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 handle_call(Request, _From, State) ->
     error_logger:error_msg("Got unexpected call ~p", [Request]),
     {stop, not_supported, State}.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 handle_cast({run, JI = #job_instance{jid = JId, worker = WName}, Timeout},
             State = #wstate{jipids = JIPids, pidjis = PidJIs,
                            jitimeout = JITimeout}) ->
@@ -72,7 +108,9 @@ handle_cast(Request, State) ->
     error_logger:errog_msg("Got unexpected cast ~p", [Request]),
     {stop, not_supported, State}.
 
-
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 handle_info({JId, JPid, ok}, State = #wstate{jipids = JIPids,
                                             pidjis = PidJIs,
                                             jitimeout = JITimeout}) ->
@@ -106,12 +144,26 @@ handle_info(Info, State) ->
     error_logger:error_msg("Got unexpected message ~p", [Info]),
     {stop, not_supported, State}.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 terminate(_Reason, _State) ->
     ok.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
+%%------------------------------------------------------------------------------
+%% @private
+%% @doc
+%% Run a job instance. It writes the output in a file.
+%%
+%% @spec run_job_instance(JobInstance) -> ok
+%% @end
+%%------------------------------------------------------------------------------
 run_job_instance(JI = #job_instance{jid = JId, name = Name, cmd_line = Cmd}) ->
     error_logger:info_msg("Run ~p", [JI]),
     {_, {{Y, M, D}, {H, Min, Sec}}} = JId,

@@ -179,7 +179,7 @@ from_leader(_Request, State, _Election) ->
 %%
 %% @spec handle_DOWN(Node, State, Election) ->
 %%                                  {ok, State} |
-%%                                  {ok, Broadcast, State} |
+%%                                  {ok, Broadcast, State}
 %% @end
 %%------------------------------------------------------------------------------
 handle_DOWN(Node, State, _Election) ->

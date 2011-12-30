@@ -4,3 +4,4 @@
 thrift/gen-erl/
 dron_scheduler_*
 lib/*
+doc/*

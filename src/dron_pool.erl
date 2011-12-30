@@ -9,18 +9,39 @@
 -export([start_link/0, add_worker/1, add_worker/2, auto_add_workers/0,
          remove_worker/1, get_worker/0, release_worker_slot/1]).
 
-%-------------------------------------------------------------------------------
+%===============================================================================
 
 start_link() ->
     gen_server:start_link(?NAME, ?MODULE, [], []).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% Add a new worker to the pool. The worker will have the number of slots
+%% defined in dron_config.
+%%
+%% @spec add_worker(WorkerName) -> ok | {error, no_connection} | Error
+%% @end
+%%------------------------------------------------------------------------------
 add_worker(WName) ->
     gen_server:call(?NAME, {add, WName, dron_config:max_slots()}).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% Add a new worker to the pool.
+%%
+%% @spec add_worker(WorkerName, MaxSlots) -> ok | {error, no_connection} | Error
+%% @end
+%%------------------------------------------------------------------------------
 add_worker(WName, MaxSlots) ->
     gen_server:call(?NAME, {add, WName, MaxSlots}).
 
-% Returns a list of (worker, result).
+%%------------------------------------------------------------------------------
+%% @doc
+%% Adds the workers defined in DRON_WORKERS env variable.
+%%
+%% @spec auto_add_workers() -> [{WorkerName, Result}]
+%% @end
+%%------------------------------------------------------------------------------
 auto_add_workers() ->
     [_, Host] = string:tokens(atom_to_list(node()), "@"),
     case os:getenv("DRON_WORKERS") of
@@ -38,26 +59,56 @@ auto_add_workers() ->
             Result = lists:map(fun add_worker/1, Workers),
             lists:zip(Workers, Result)
     end.
-            
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% Removes a worker from the pool.
+%%
+%% @spec remove_worker(WorkerName) -> ok | {error, unknown_worker} | Error
+%% @end
+%%------------------------------------------------------------------------------
 remove_worker(WName) ->
     gen_server:call(?NAME, {remove, WName}).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% Get a worker with at least a free slot.
+%%
+%% @spec get_worker() -> WorkerName
+%% @end
+%%------------------------------------------------------------------------------
+%% TODO(ionel): Check how scheduler's failure can affect the state of slots. I
+%% think there may be a leak here if the scheduler fails after it has acquire
+%% a slot and before it started running the job instance on it.
 get_worker() ->
     gen_server:call(?NAME, get_worker).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% Releases a slot on a given worker.
+%%
+%% @spec release_worker_slot(WorkerName) -> ok | {error, unknown_worker}
+%% @end
+%%------------------------------------------------------------------------------
 release_worker_slot(WName) ->
     gen_server:call(?NAME, {release_slot, WName}).
 
-%-------------------------------------------------------------------------------
+%===============================================================================
 % Internal
-%-------------------------------------------------------------------------------
+%===============================================================================
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 init([]) ->
     ets:new(worker_records, [named_table]),
     ets:new(slot_workers, [ordered_set, named_table]),
     reconstruct_state(),
     {ok, []}.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 handle_call({add, WName, Slots}, _From, State) ->
     case ets:lookup(worker_records, WName) of
         [{WName, _}] -> {reply, {error, already_added}, State};
@@ -129,9 +180,15 @@ handle_call(get_worker, _From, State) ->
 handle_call(Request, _From, _State) ->
     {unexpected_request, Request}.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 handle_cast(_Request, _State) ->
     not_implemented.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 handle_info({nodedown, WName}, State) ->
     error_logger:error_msg("Node ~p failed!~n", [WName]),
     case disable_worker(WName) of
@@ -142,9 +199,15 @@ handle_info({nodedown, WName}, State) ->
 handle_info(Request, _State) ->
     {unexpected_request, Request}.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 terminate(_Reason, _State) ->
     ok.
 
