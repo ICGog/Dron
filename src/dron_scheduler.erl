@@ -6,7 +6,7 @@
 -export([init/1, handle_call/4, handle_cast/3, handle_info/2,
          handle_leader_call/4, handle_leader_cast/3, handle_DOWN/3,
          elected/3, surrendered/3, from_leader/3, code_change/4, terminate/2,
-         create_job_instance/2, create_job_instance/3, run_instance/2,
+         create_job_instance/3, create_job_instance/4, run_instance/2,
          ji_succeeded/1, ji_killed/1, ji_timeout/1, ji_failed/2,
          run_job_instance/2]).
 
@@ -173,6 +173,7 @@ handle_leader_cast({schedule, Job = #job{name = JName, start_time = STime}},
     % some of them may be re-run. Fix it.
     AfterT = run_job_instances_up_to_now(
                Job,
+               self(),
                calendar:datetime_to_gregorian_seconds(calendar:local_time()),
                calendar:datetime_to_gregorian_seconds(STime)),
     ets:insert(start_timers, {JName, erlang:send_after(AfterT * 1000, self(),
@@ -199,7 +200,8 @@ handle_leader_cast({killed, JId}, State, _Election) ->
     {noreply, State};
 handle_leader_cast({satisfied, RId}, State, _Election) ->
     {ok, Dependants} = dron_db:get_dependants(RId),
-    lists:map(fun(JId) -> satisfied_dependency(RId, JId, true) end, Dependants),
+    lists:map(fun(#resource_deps{dep = JId}) ->
+                      satisfied_dependency(RId, JId, true) end, Dependants),
     {ok, {satisfied, RId}, State};
 handle_leader_cast({worker_disabled, JI}, State, _Election) ->
     erlang:spawn_link(?MODULE, run_job_instance, [JI, true]),
@@ -263,8 +265,7 @@ handle_call(Request, _From, State, _Election) ->
 %%------------------------------------------------------------------------------
 handle_cast({waiting_job_instance, JId, TRef, Dependencies}, State,
                   _Election) ->
-    % TODO(ionel): Check if this code is reached. It had a typo (store instead
-    % of insert).
+    %% TODO(ionel): Remove satisfied dependencies.
     ets:insert(wait_timers, {JId, TRef}),
     ets:insert(ji_deps, {JId, Dependencies}),
     {noreply, State};
@@ -277,8 +278,8 @@ handle_cast(Msg, State, _Election) ->
 %%------------------------------------------------------------------------------
 handle_info({schedule, Job = #job{name = JName, frequency = Freq}},
             State = #state{leader = Leader}) ->
-    {ok, TRef} = timer:apply_interval(Freq * 1000, ?MODULE,
-                                      create_job_instance, [Job, Leader]),
+    {ok, TRef} = timer:apply_interval(Freq * 1000, ?MODULE, create_job_instance,
+                                      [Job, self(), Leader]),
     ets:insert(schedule_timers, {JName, TRef}),
     ets:delete(start_timers, JName),
     {noreply, State};
@@ -322,25 +323,27 @@ instanciate_dependencies(RId, Dependencies) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-create_job_instance(Job, Leader) ->
-    create_job_instance(Job, calendar:local_time(), Leader).
+create_job_instance(Job, SchedulerPid, Leader) ->
+    create_job_instance(Job, calendar:local_time(), SchedulerPid, Leader).
 
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
 create_job_instance(#job{name = Name, deps_timeout = DepsTimeout,
-                         dependencies = Dependencies}, Date, false) ->
+                         dependencies = Dependencies},
+                    Date, SchedulerPid, false) ->
     JId = {Name, Date},
     case Dependencies of
         [] -> ok;
-        _  -> TRef = erlang:send_after(DepsTimeout * 1000, self(),
+        _  -> TRef = erlang:send_after(DepsTimeout * 1000, SchedulerPid,
                                        {wait_timeout, JId}),
               dron_scheduler:create_waiting_job_instance(
                 JId, TRef, Dependencies)
     end;
 create_job_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout,
                          deps_timeout = DepsTimeout,
-                         dependencies = Dependencies}, Date, true) ->
+                         dependencies = Dependencies},
+                    Date, SchedulerPid, true) ->
     JId = {Name, Date},
     RunTime = calendar:local_time(),
     Delay = calendar:datetime_to_gregorian_seconds(RunTime) -
@@ -363,7 +366,7 @@ create_job_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout,
     ok = dron_db:store_job_instance(JI),
     case Dependencies of 
         [] -> run_instance(JId, true);
-        _  -> TRef = erlang:send_after(DepsTimeout * 1000, self(),
+        _  -> TRef = erlang:send_after(DepsTimeout * 1000, SchedulerPid,
                                        {wait_timeout, JId}),
               dron_scheduler:create_waiting_job_instance(
                 JId, TRef, Dependencies)
@@ -393,12 +396,15 @@ run_job_instance(JobInstance = #job_instance{timeout = Timeout}, true) ->
     ok = dron_db:store_job_instance(RetryJI),
     dron_worker:run(WName, RetryJI, Timeout).
         
-run_job_instances_up_to_now(Job = #job{frequency = Frequency}, Now, STime) ->
+run_job_instances_up_to_now(Job = #job{frequency = Frequency}, SchedulerPid,
+                            Now, STime) ->
     if STime < Now ->
             create_job_instance(
-              Job, calendar:gregorian_seconds_to_datetime(STime), true),
+              Job, calendar:gregorian_seconds_to_datetime(STime),
+              SchedulerPid, true),
             run_job_instances_up_to_now(
               Job,
+              SchedulerPid,
               calendar:datetime_to_gregorian_seconds(calendar:local_time()),
               STime + Frequency);
        true        -> STime - Now
