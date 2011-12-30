@@ -7,7 +7,7 @@
          get_job_instance/2, set_job_instance_state/2, archive_job/1,
          store_worker/1, delete_worker/1, get_workers/1,
          get_job_instances_on_worker/1, get_dependants/1,
-         store_dependant/2]).
+         store_dependant/2, set_resource_state/2]).
 
 %===============================================================================
 
@@ -213,21 +213,63 @@ get_dependants(RId) ->
 
 %%------------------------------------------------------------------------------
 %% @doc
-%% @spec store_dependant(Dependants, ResourceId) -> ok | {error, Reason}
+%% @spec store_dependant(Dependencies, JobInstanceId) ->
+%%        [UnsatisfiedDependencies] | {error, Reason}
 %% @end
 %%------------------------------------------------------------------------------
-store_dependant(Dependants, RId) ->
+store_dependant(Dependencies, JId) ->
+    Trans = fun() -> write_deps(Dependencies, JId, []) end,
+    case mnesia:transaction(Trans) of
+        {atomic, UnsatisfiedDeps} -> UnsatisfiedDeps;
+        {aborted, Reason}         -> {error, Reason}
+    end.
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec set_resource_state(ResourceId, State) -> ok | {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
+set_resource_state(RId, State) ->
+    % TODO(ionel): Check if can improve this. It may have some race conditions
+    % because first I read all the res_deps with a given RId, then I remove
+    % them and finally I add them back. I am forced to do this because the
+    % table is of type bag. I may solve the problem with an additional set
+    % table.
     Trans = fun() ->
-                    lists:map(fun(Dep) ->
-                                      ok = mnesia:write(
-                                             resource_deps,
-                                             #resource_deps{rid = Dep,
-                                                            dep = RId},
-                                             write)
-                              end, Dependants),
+                    ResDeps = mnesia:wread({resource_deps, RId}),
+                    mnesia:delete({resource_deps, RId}),
+                    lists:map(fun(ResDep) ->
+                              mnesia:write(resource_deps,
+                                           ResDep#resource_deps{state = State},
+                                           write)
+                              end, ResDeps),
                     ok
             end,
     case mnesia:transaction(Trans) of
         {atomic, ok}      -> ok;
         {aborted, Reason} -> {error, Reason}
+    end.
+
+%%------------------------------------------------------------------------------
+%% @private
+%% @doc
+%% Writes dependencies to the database and returns the list of unsatisfied ones.
+%%
+%% @spec write_deps(Dependencies, JobInstanceId, UnsatisfiedDependencies) ->
+%%        [ResourceIds]
+%% @end
+%%------------------------------------------------------------------------------
+write_deps([], _JId, UnsatisfiedDeps) ->
+    UnsatisfiedDeps;
+write_deps([Dep|Dependencies], JId, UnsatisfiedDeps) ->
+    State = case mnesia:wread({resource_deps, Dep}) of
+                [#resource_deps{state = RState}|_] -> RState;
+                []                                 -> unsatisfied
+            end,
+    ok = mnesia:write(resource_deps,
+                      #resource_deps{rid = Dep, state = State, dep = JId},
+                      write),
+    case State of
+        satisfied -> write_deps(Dependencies, JId, UnsatisfiedDeps);
+        _         -> write_deps(Dependencies, JId, [Dep|UnsatisfiedDeps])
     end.

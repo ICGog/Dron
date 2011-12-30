@@ -7,7 +7,7 @@
 -record(archive_job, {name, version, cmd_line, start_time, frequency, timeout,
                      max_retries, dependencies, deps_timeout}).
 
--record(resource_deps, {rid, dep}).
+-record(resource_deps, {rid, state, dep}).
 
 -record(worker, {name, enabled, max_slots, used_slots}).
 

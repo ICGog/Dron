@@ -15,7 +15,8 @@
 -export([job_instance_succeeded/1, job_instance_failed/2,
          job_instance_timeout/1, job_instance_killed/1,
          dependency_satisfied/1, worker_disabled/1,
-         create_waiting_job_instance/3]).
+         store_waiting_job_instance_timer/2,
+         store_waiting_job_instance_deps/2]).
 
 -record(state, {leader}).
 
@@ -98,12 +99,21 @@ worker_disabled(JI) ->
 
 %%------------------------------------------------------------------------------
 %% @doc
-%% @spec create_waiting_job_instance(JobInstanceId, WaitTimerRef, Dependencies)
-%%        -> ok
+%% @spec store_waiting_job_instance_timer(JobInstanceId, WaitTimerRef) -> ok
 %% @end
 %%------------------------------------------------------------------------------
-create_waiting_job_instance(JId, TRef, Dependencies) ->
-    gen_leader:cast(?MODULE, {waiting_job_instance, JId, TRef, Dependencies}).
+store_waiting_job_instance_timer(JId, TRef) ->
+    gen_leader:cast(?MODULE, {waiting_job_instance_timer, JId, TRef}).
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec store_waiting_job_instance_deps(JobInstanceId,
+%%        UnsatisfiedDependencies) -> ok
+%% @end
+%%------------------------------------------------------------------------------
+store_waiting_job_instance_deps(JId, UnsatisfiedDeps) ->
+    gen_leader:leader_cast(?MODULE, {waiting_job_instance_deps, JId,
+                                     UnsatisfiedDeps}).
 
 %===============================================================================
 % Internal
@@ -199,6 +209,7 @@ handle_leader_cast({killed, JId}, State, _Election) ->
     erlang:spawn_link(?MODULE, ji_killed, [JId]),
     {noreply, State};
 handle_leader_cast({satisfied, RId}, State, _Election) ->
+    ok = dron_db:set_resource_state(RId, satisfied),
     {ok, Dependants} = dron_db:get_dependants(RId),
     lists:map(fun(#resource_deps{dep = JId}) ->
                       satisfied_dependency(RId, JId, true) end, Dependants),
@@ -206,6 +217,10 @@ handle_leader_cast({satisfied, RId}, State, _Election) ->
 handle_leader_cast({worker_disabled, JI}, State, _Election) ->
     erlang:spawn_link(?MODULE, run_job_instance, [JI, true]),
     {ok, {worker_disabled, JI}, State};
+handle_leader_cast({waiting_job_instance_deps, JId, UnsatisfiedDeps}, State,
+                   _Election) ->
+    ets:insert(ji_deps, {JId, UnsatisfiedDeps}),
+    {ok, {waiting_job_instance_deps, UnsatisfiedDeps}, State};
 handle_leader_cast(Request, State, _Election) ->
     error_logger:error_msg("Unexpected leader cast ~p", [Request]),
     {stop, not_supported, State}.
@@ -236,6 +251,10 @@ from_leader({satisfied, RId}, State, _Election) ->
 from_leader({worker_disabled, JI}, State, _Election) ->
     erlang:spawn_link(?MODULE, run_job_instance, [JI, false]),
     {ok, State};
+from_leader({waiting_job_instance_deps, JId, UnsatisfiedDeps}, State,
+            _Election) ->
+    ets:insert(ji_deps, {JId, UnsatisfiedDeps}),
+    {ok, State};
 from_leader(_Request, State, _Election) ->
     {stop, not_supported, State}.
 
@@ -263,11 +282,8 @@ handle_call(Request, _From, State, _Election) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-handle_cast({waiting_job_instance, JId, TRef, Dependencies}, State,
-                  _Election) ->
-    %% TODO(ionel): Remove satisfied dependencies.
+handle_cast({waiting_job_instance_timer, JId, TRef}, State, _Election) ->
     ets:insert(wait_timers, {JId, TRef}),
-    ets:insert(ji_deps, {JId, Dependencies}),
     {noreply, State};
 handle_cast(Msg, State, _Election) ->
     error_logger:errog_msg("Got unexpected cast ~p", [Msg]),
@@ -313,12 +329,11 @@ terminate(_Reason, _State) ->
 code_change(_OldVsn, State, _Election, _Extra) ->
     {ok, State}.
 
-instanciate_dependencies(_RId, []) ->
-    [];
-instanciate_dependencies(RId, Dependencies) ->
+instanciate_dependencies(_JId, []) ->
+    {[], []};
+instanciate_dependencies(JId, Dependencies) ->
     % TODO(ionel): Handle dependencies instanciation.
-    ok = dron_db:store_dependant(Dependencies, RId),
-    Dependencies.
+    {Dependencies, dron_db:store_dependant(Dependencies, JId)}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -337,8 +352,7 @@ create_job_instance(#job{name = Name, deps_timeout = DepsTimeout,
         [] -> ok;
         _  -> TRef = erlang:send_after(DepsTimeout * 1000, SchedulerPid,
                                        {wait_timeout, JId}),
-              dron_scheduler:create_waiting_job_instance(
-                JId, TRef, Dependencies)
+              dron_scheduler:store_waiting_job_instance_timer(JId, TRef)
     end;
 create_job_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout,
                          deps_timeout = DepsTimeout,
@@ -356,20 +370,21 @@ create_job_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout,
                            error_logger:info_msg("Max Delay ~p", [Delay]);
        true             -> ok
     end,
+    {Deps, UnsatisfiedDeps} = instanciate_dependencies(JId, Dependencies),
     JI =  #job_instance{jid = JId, name = Name, cmd_line = Cmd,
                         state = waiting, timeout = Timeout,
                         run_time = RunTime,
                         num_retry = 0,
-                        dependencies = instanciate_dependencies(
-                                         JId, Dependencies),
+                        dependencies = Deps,
                         worker = undefined},
     ok = dron_db:store_job_instance(JI),
-    case Dependencies of 
+    case UnsatisfiedDeps of 
         [] -> run_instance(JId, true);
         _  -> TRef = erlang:send_after(DepsTimeout * 1000, SchedulerPid,
                                        {wait_timeout, JId}),
-              dron_scheduler:create_waiting_job_instance(
-                JId, TRef, Dependencies)
+              dron_scheduler:store_waiting_job_instance_timer(JId, TRef),
+              dron_scheduler:store_waiting_job_instance_deps(
+                JId, UnsatisfiedDeps)
     end.
 
 %%------------------------------------------------------------------------------
