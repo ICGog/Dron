@@ -56,7 +56,6 @@ run: compile
 .PHONY: clean
 clean:
 	rm -rf $(LOG_DIR)
-	rm -f instances
 	$(REBAR) clean
 	rm -rf Mnesia.*
 

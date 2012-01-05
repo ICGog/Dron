@@ -2,6 +2,7 @@ import boto
 import boto.ec2
 from boto.ec2.connection import EC2Connection
 import time
+import string
 import sys
 import os
 
@@ -10,7 +11,7 @@ def get_connection():
 
 def start_cluster(imageId, n):
     conn = get_connection()
-    f = open('instances', 'w')
+    workers = ''
     reservation = conn.run_instances(image_id=imageId,
                                      security_groups=["Dron"],
                                      min_count=n, max_count=n,
@@ -24,11 +25,12 @@ su - ubuntu -c "erl -detached -sname dron"
             time.sleep(5)
             instance.update()
         if instance.state == u'running':
-            print 'Starting: ', instance
-            f.write('dron@' + instance.private_dns_name + ' ')
+            print 'Started: ', instance
+            workers = (workers + 'dron@' +
+                       string.split(instance.private_dns_name, '.')[0] + ' ')
         else:
             print 'Could not start: ', instance
-    f.close()
+    print 'Workers: ', workers
     master = conn.run_instances(image_id=imageId,
                                 security_groups=["Dron"],
                                 min_count=1, max_count=1,
@@ -41,10 +43,6 @@ su - ubuntu -c "erl -detached -sname dron"
         print 'Could not start master: ', master
         return
     print 'Master Address: ', master.public_dns_name
-    os.system("scp instances ubuntu@" + master.public_dns_name + ":")
-    os.system("ssh ubuntu@" + master.public_dns_name + """mv instances Dron\ ;
-cd Dron ;
-make DRON_WORKERS=`cat instances` run""")
 
 def stop_cluster():
     conn = get_connection()
