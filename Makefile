@@ -12,6 +12,25 @@ DIALYZER_OPTS=-Wno_return -Wrace_conditions -Wunderspecs
 
 ERL_OPTS=-pa $(EBIN_DIR) -I $(INCLUDE_DIR) -sname $(DRON_NODE) -boot start_sasl -config dron -s dron -pa $(LIB_DIR)/gen_leader/ebin -pa $(LIB_DIR)/mochiweb/ebin
 
+ifdef EC2_WORKERS
+	START_WORKERS=python ec2.py start $(EC2_WORKERS)
+	RUN=
+	STOP=
+	STOP_WORKERS=python ec2.py stop
+else
+	START_WORKERS=for worker in $(DRON_WORKERS) ; do \
+			echo "Starting worker $$worker" ; \
+			echo 'code:add_pathsa(["$(realpath $(EBIN_DIR))","$(realpath $(LIB_DIR))/gen_leader/ebin","$(realpath $(LIB_DIR))/mochiweb/ebin"]).' | \
+			erl_call -sname $$worker -s -e ; \
+		      done
+	RUN=erl $(ERL_OPTS)
+	STOP=$(MAKE) stop_workers
+	STOP_WORKERS=for worker in $(DRON_WORKERS) ; do \
+			echo "Stopping worker $$worker" ; \
+			erl_call -sname $$worker -q ; \
+	             done
+endif
+
 .PHONY: all
 all: deps compile
 
@@ -31,29 +50,23 @@ run: compile
 	mkdir -p $(LOG_DIR)
 	$(MAKE) start_workers
 	DRON_WORKERS="$(DRON_WORKERS)" \
-	erl $(ERL_OPTS)
-	$(MAKE) stop_workers
+	$(RUN)
+	$(STOP)
 
 .PHONY: clean
 clean:
 	rm -rf $(LOG_DIR)
+	rm instances
 	$(REBAR) clean
 	rm -rf Mnesia.*
 
 .PHONY: start_workers
 start_workers:
-	for worker in $(DRON_WORKERS) ; do \
-		echo "Starting worker $$worker" ; \
-		echo 'code:add_pathsa(["$(realpath $(EBIN_DIR))","$(realpath $(LIB_DIR))/gen_leader/ebin","$(realpath $(LIB_DIR))/mochiweb/ebin"]).' | \
-		erl_call -sname $$worker -s -e ; \
-	done
+	$(START_WORKERS)
 
 .PHONY: stop_workers
 stop_workers:
-	for worker in $(DRON_WORKERS) ; do \
-		echo "Stopping worker $$worker" ; \
-		erl_call -sname $$worker -q ; \
-	done
+	$(STOP_WORKERS)
 
 analyze: compile
 	$(DIALYZER) $(DIALYZER_OPTS) -r ebin/
