@@ -8,10 +8,10 @@ import os
 def get_connection():
     return boto.ec2.regions()[0].connect()
 
-def start_cluster(n):
+def start_cluster(imageId, n):
     conn = get_connection()
     f = open('instances', 'w')
-    reservation = conn.run_instances(image_id="ami-771d2203",
+    reservation = conn.run_instances(image_id=imageId,
                                      security_groups=["Dron"],
                                      min_count=n, max_count=n,
                                      instance_type="t1.micro",
@@ -29,7 +29,7 @@ su - ubuntu -c "erl -detached -sname dron"
         else:
             print 'Could not start: ', instance
     f.close()
-    master = conn.run_instances(image_id="ami-771d2203",
+    master = conn.run_instances(image_id=imageId,
                                 security_groups=["Dron"],
                                 min_count=1, max_count=1,
                                 instance_type="t1.micro").instances[0]
@@ -56,7 +56,7 @@ def stop_cluster():
 
 def main():
     if sys.argv[1] == "start":        
-        start_cluster(int(sys.argv[2]))
+        start_cluster(sys.argv[2], int(sys.argv[3]))
     elif sys.argv[1] == "stop":
         stop_cluster()
     else:

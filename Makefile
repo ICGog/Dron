@@ -13,7 +13,7 @@ DIALYZER_OPTS=-Wno_return -Wrace_conditions -Wunderspecs
 ERL_OPTS=-pa $(EBIN_DIR) -I $(INCLUDE_DIR) -sname $(DRON_NODE) -boot start_sasl -config dron -s dron -pa $(LIB_DIR)/gen_leader/ebin -pa $(LIB_DIR)/mochiweb/ebin
 
 ifdef EC2_WORKERS
-	START_WORKERS=python ec2.py start $(EC2_WORKERS)
+	START_WORKERS=python ec2.py start $(IMAGE_ID) $(EC2_WORKERS)
 	RUN=
 	STOP=
 	STOP_WORKERS=python ec2.py stop
@@ -56,7 +56,7 @@ run: compile
 .PHONY: clean
 clean:
 	rm -rf $(LOG_DIR)
-	rm instances
+	rm -f instances
 	$(REBAR) clean
 	rm -rf Mnesia.*
 
