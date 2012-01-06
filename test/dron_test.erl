@@ -17,10 +17,10 @@ register_long_jobs(NumStartJob, NumEndJob) ->
     lists:map(fun(Num) ->
                       dron_api:register_job(#job{name = "long" ++
                                                      integer_to_list(Num),
-                                                 cmd_line = "sleep 6000",
+                                                 cmd_line = "sleep 600",
                                                  start_time = StartTime,
-                                                 frequency = 6010,
-                                                 timeout = 7000,
+                                                 frequency = 601,
+                                                 timeout = 700,
                                                  max_retries = 3,
                                                  dependencies = [],
                                                  deps_timeout = 10})
@@ -34,10 +34,10 @@ register_short_jobs(NumStartJob, NumEndJob) ->
     lists:map(fun(Num) ->
                       dron_api:register_job(#job{name = "short" ++
                                                      integer_to_list(Num),
-                                                 cmd_line = "sleep 60",
+                                                 cmd_line = "sleep 0",
                                                  start_time = StartTime,
-                                                 frequency = 61,
-                                                 timeout = 70,
+                                                 frequency = 10,
+                                                 timeout = 10,
                                                  max_retries = 1,
                                                  dependencies = [],
                                                  deps_timeout = 10})
