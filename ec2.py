@@ -9,7 +9,7 @@ import os
 def get_connection():
     return boto.ec2.regions()[0].connect()
 
-def start_cluster(imageId, n, wNum):
+def start_cluster(imageId, n, wPerNode):
     conn = get_connection()
     workers = ''
     reservation = conn.run_instances(image_id=imageId,
@@ -27,7 +27,7 @@ su - ubuntu -c "erl -detached -sname dron -pa Dron/ebin Dron/lib/gen_leader/ebin
         if instance.state == u'running':
             print 'Started: ', instance
             for wNum in range(1, wPerNode):
-                workers = (workers + 'dron' + str(WNum) + '@' +
+                workers = (workers + 'dron' + str(wNum) + '@' +
                            string.split(instance.private_dns_name, '.')[0] +
                            ' ')
         else:
