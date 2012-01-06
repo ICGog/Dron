@@ -17,7 +17,7 @@ def start_cluster(imageId, n):
                                      min_count=n, max_count=n,
                                      instance_type="t1.micro",
                                      user_data="""#!/bin/bash
-su - ubuntu -c "erl -detached -sname dron"
+su - ubuntu -c "erl -detached -sname dron -pa Dron/ebin Dron/lib/gen_leader/ebin Dron/lib/mochiweb/ebin"
 """)
     for instance in reservation.instances:
         instance.update()

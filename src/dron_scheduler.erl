@@ -379,7 +379,7 @@ create_job_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout,
                         worker = undefined},
     ok = dron_db:store_job_instance(JI),
     case UnsatisfiedDeps of 
-        [] -> run_instance(JId, true);
+        [] -> run_job_instance(JI, true);
         _  -> TRef = erlang:send_after(DepsTimeout * 1000, SchedulerPid,
                                        {wait_timeout, JId}),
               dron_scheduler:store_waiting_job_instance_timer(JId, TRef),
@@ -407,9 +407,9 @@ run_job_instance(_JI, false) ->
     ok;
 run_job_instance(JobInstance = #job_instance{timeout = Timeout}, true) ->
     #worker{name = WName} = dron_pool:get_worker(),
-    RetryJI = JobInstance#job_instance{worker = WName},
-    ok = dron_db:store_job_instance(RetryJI),
-    dron_worker:run(WName, RetryJI, Timeout).
+    WorkerJI = JobInstance#job_instance{worker = WName},
+    ok = dron_db:store_job_instance(WorkerJI),
+    dron_worker:run(WName, WorkerJI, Timeout).
         
 run_job_instances_up_to_now(Job = #job{frequency = Frequency}, SchedulerPid,
                             Now, STime) ->
