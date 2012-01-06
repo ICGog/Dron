@@ -166,11 +166,11 @@ code_change(_OldVsn, State, _Extra) ->
 %% @end
 %%------------------------------------------------------------------------------
 run_job_instance(JI = #job_instance{jid = JId, name = Name, cmd_line = Cmd}) ->
-    error_logger:info_msg("Run ~p", [JI]),
+%%    error_logger:info_msg("Run ~p", [JI]),
     {_, {{Y, M, D}, {H, Min, Sec}}} = JId,
     WPid = receive
-               {Pid, start} -> error_logger:info_msg(
-                                 "Started job instance ~p~n", [JId]),
+               {Pid, start} -> %error_logger:info_msg(
+                                % "Started job instance ~p~n", [JId]),
                                Pid
            after 10000 ->
                    exit(no_start_timeout)

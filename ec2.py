@@ -12,13 +12,19 @@ def get_connection():
 def start_cluster(imageId, n, wPerNode):
     conn = get_connection()
     workers = ''
+    boot_script = """#!/bin/bash
+cd Dron
+git pull origin master
+"""
+    for wNum in range(1, wPerNode + 1):
+        boot_script = boot_script + """
+su - ubuntu -c "erl -detached -sname dron""" + str(wNum) + """ -pa ebin lib/gen_leader/ebin lib/mochiweb/ebin -I include"
+"""
     reservation = conn.run_instances(image_id=imageId,
                                      security_groups=["Dron"],
                                      min_count=n, max_count=n,
                                      instance_type="m1.large",
-                                     user_data="""#!/bin/bash
-su - ubuntu -c "erl -detached -sname dron -pa Dron/ebin Dron/lib/gen_leader/ebin Dron/lib/mochiweb/ebin -I Dron/include"
-""")
+                                     user_data=boot_script)
     for instance in reservation.instances:
         instance.update()
         while instance.state == u'pending':
@@ -26,10 +32,11 @@ su - ubuntu -c "erl -detached -sname dron -pa Dron/ebin Dron/lib/gen_leader/ebin
             instance.update()
         if instance.state == u'running':
             print 'Started: ', instance
-            for wNum in range(1, wPerNode):
-                workers = (workers + 'dron' + str(wNum) + '@' +
+            for wNum in range(1, wPerNode + 1):
+                workers = (workers + 'dron_pool:add_worker(\'dron' + str(wNum) +
+                           '@' +
                            string.split(instance.private_dns_name, '.')[0] +
-                           ' ')
+                           '\'), ')
         else:
             print 'Could not start: ', instance
     print 'Workers: ', workers

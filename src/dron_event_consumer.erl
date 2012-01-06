@@ -35,7 +35,7 @@ consume_events(Channel, ConsumerTag) ->
                           delivery_tag = DeliveryTag},
          #amqp_msg{payload = Payload}}->
             {struct, Content} = mochijson2:decode(binary_to_list(Payload)),
-            error_logger:info_msg("~p", [Content]),
+%            error_logger:info_msg("~p", [Content]),
             JId = get_job_instance(Content),
             case get_job_instance_state(Content) of
                 succeeded -> dron_scheduler:job_instance_succeeded(JId);
