@@ -13,12 +13,11 @@ def start_cluster(imageId, n, wPerNode):
     conn = get_connection()
     workers = ''
     boot_script = """#!/bin/bash
-cd Dron
-git pull origin master
+su - ubuntu -c "cd Dron; git pull origin master"
 """
     for wNum in range(1, wPerNode + 1):
         boot_script = boot_script + """
-su - ubuntu -c "erl -detached -sname dron""" + str(wNum) + """ -pa ebin lib/gen_leader/ebin lib/mochiweb/ebin -I include"
+su - ubuntu -c "erl -detached -sname dron""" + str(wNum) + """ -pa Dron/ebin Dron/lib/gen_leader/ebin Dron/lib/mochiweb/ebin -I Dron/include"
 """
     reservation = conn.run_instances(image_id=imageId,
                                      security_groups=["Dron"],
