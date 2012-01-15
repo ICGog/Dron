@@ -3,11 +3,11 @@
 -include("dron.hrl").
 -include_lib("stdlib/include/qlc.hrl").
 
--export([store_job/1, get_job/1, store_job_instance/1, get_job_instance/1,
-         get_job_instance/2, set_job_instance_state/2, archive_job/1,
-         store_worker/1, delete_worker/1, get_workers/1,
-         get_job_instances_on_worker/1, get_dependants/1,
-         store_dependant/2, set_resource_state/2]).
+-export([store_job/1, get_job/1, get_job_unsync/1, store_job_instance/1,
+         get_job_instance/1, get_job_instance_unsync/1, get_job_instance/2,
+         set_job_instance_state/2, archive_job/1, store_worker/1,
+         delete_worker/1, get_workers/1, get_job_instances_on_worker/1,
+         get_dependants/1, store_dependant/2, set_resource_state/2]).
 
 %===============================================================================
 
@@ -48,6 +48,21 @@ get_job(Name) ->
 
 %%------------------------------------------------------------------------------
 %% @doc
+%% Get the job. The method performs a dirty read.
+%%
+%% @spec get_job(Name) -> {ok, Job} | {error, no_job} | {error, multiple_jobs} |
+%%        {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
+get_job_unsync(Name) ->
+    case (catch mnesia:dirty_read(jobs, Name)) of
+        [Job]  -> {ok, Job};
+        []     -> {error, no_job};
+        Reason -> {error, Reason}
+    end.
+    
+%%------------------------------------------------------------------------------
+%% @doc
 %% @spec store_job_instance(JobInstance) -> ok | {error, Reason}
 %% @end
 %%------------------------------------------------------------------------------
@@ -67,15 +82,22 @@ store_job_instance(JobInstance) ->
 %%        {error, Reason}
 %% @end
 %%------------------------------------------------------------------------------
-get_job_instance(Jid) ->
+get_job_instance(JId) ->
     Trans = fun() ->
-                    mnesia:read(job_instances, Jid, read)
+                    mnesia:read(job_instances, JId, read)
             end,
     case mnesia:transaction(Trans) of
         {atomic, [JobInstance]} -> {ok, JobInstance};
         {atomic, []}            -> {error, no_job_instance};
         {atomic, _JobInstances} -> {error, multiple_job_instances};
         {aborted, Reason}       -> {error, Reason}
+    end.
+
+get_job_instance_unsync(JId) ->
+    case (catch mnesia:dirty_read(job_instances, JId)) of
+        [JobInstance] -> {ok, JobInstance};
+        []            -> {error, no_job_instance};
+        Reason        -> {error, Reason}
     end.
 
 %%------------------------------------------------------------------------------

@@ -394,7 +394,7 @@ run_instance(_JId, false) ->
     ok;
 run_instance(JId, true) ->
     {ok, NoWorkerJI = #job_instance{timeout = Timeout}} =
-        dron_db:get_job_instance(JId),
+        dron_db:get_job_instance_unsync(JId),
     #worker{name = WName} = dron_pool:get_worker(),
     JI = NoWorkerJI#job_instance{worker = WName},
     ok = dron_db:store_job_instance(JI),
@@ -450,7 +450,7 @@ satisfied_dependency(RId, JId, Leader) ->
 %%------------------------------------------------------------------------------
 ji_succeeded(JId) ->
     ok = dron_db:set_job_instance_state(JId, succeeded),
-    {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
+    {ok, #job_instance{worker = WName}} = dron_db:get_job_instance_unsync(JId),
     ok = dron_pool:release_worker_slot(WName),
     % TODO(ionel): Move this out to consumer. (Think about satisfing various
     % resources)
@@ -461,7 +461,7 @@ ji_succeeded(JId) ->
 %%------------------------------------------------------------------------------
 ji_killed(JId) ->
     ok = dron_db:set_job_instance_state(JId, killed),
-    {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
+    {ok, #job_instance{worker = WName}} = dron_db:get_job_instance_unsync(JId),
     ok = dron_pool:release_worker_slot(WName).
 
 %%------------------------------------------------------------------------------
@@ -469,7 +469,7 @@ ji_killed(JId) ->
 %%------------------------------------------------------------------------------
 ji_timeout(JId) ->
     ok = dron_db:set_job_instance_state(JId, timeout),
-    {ok, #job_instance{worker = WName}} = dron_db:get_job_instance(JId),
+    {ok, #job_instance{worker = WName}} = dron_db:get_job_instance_unsync(JId),
     ok = dron_pool:release_worker_slot(WName).
 
 %%------------------------------------------------------------------------------
@@ -477,9 +477,9 @@ ji_timeout(JId) ->
 %%------------------------------------------------------------------------------
 ji_failed(JId, Leader) ->
     {ok, JI = #job_instance{name = JName, worker = WName, num_retry = NumRet}} =
-        dron_db:get_job_instance(JId),
+        dron_db:get_job_instance_unsync(JId),
     ok = dron_pool:release_worker_slot(WName),
-    {ok, #job{max_retries = MaxRet}} = dron_db:get_job(JName),
+    {ok, #job{max_retries = MaxRet}} = dron_db:get_job_unsync(JName),
     if
         NumRet < MaxRet ->
             run_job_instance(JI#job_instance{num_retry = NumRet + 1}, Leader);
