@@ -175,9 +175,9 @@ run_job_instance(JI = #job_instance{jid = JId, name = Name, cmd_line = Cmd}) ->
            after 10000 ->
                    exit(no_start_timeout)
            end,
-    FileName = io_lib:format("~s_~p-~p-~p-~p:~p:~p", [Name, Y, M, D, H, Min,
-                                                      Sec]),
-    file:write_file(FileName, io_lib:fwrite("~s", [os:cmd(Cmd)]), [write]),
+%    FileName = io_lib:format("~s_~p-~p-~p-~p:~p:~p", [Name, Y, M, D, H, Min,
+%                                                      Sec]),
+%    file:write_file(FileName, io_lib:fwrite("~s", [os:cmd(Cmd)]), [write]),
     WPid ! {JId, self(), ok}.
 
 clear_timeout(JId, JITimeout) ->

@@ -10,7 +10,7 @@ REBAR=./rebar
 DIALYZER=dialyzer
 DIALYZER_OPTS=-Wno_return -Wrace_conditions -Wunderspecs
 
-ERL_OPTS=-pa $(EBIN_DIR) -I $(INCLUDE_DIR) -sname $(DRON_NODE) -boot start_sasl -config dron -s dron -pa $(LIB_DIR)/gen_leader/ebin -pa $(LIB_DIR)/mochiweb/ebin
+ERL_OPTS=-pa $(EBIN_DIR) -I $(INCLUDE_DIR) -sname $(DRON_NODE) -boot start_sasl -config dron -s dron -pa $(LIB_DIR)/gen_leader/ebin -pa $(LIB_DIR)/mochiweb/ebin -env ERL_MAX_ETS_TABLES 65536 -env ERL_MAX_PORTS 16384 +P256000
 
 ifdef EC2_WORKERS
 	START_WORKERS=python ec2.py start $(IMAGE_ID) $(EC2_WORKERS) $(WORKERS_PER_NODE)
