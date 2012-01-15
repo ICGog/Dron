@@ -108,4 +108,8 @@ create_workers_table(Nodes) ->
           [{record_name, worker},
            {attributes, record_info(fields, worker)},
            {type, set},
-           {disc_copies, Nodes}]).
+           {frag_properties, [{node_pool, Nodes},
+                              {n_fragments, length(Nodes)}] ++
+                [{n_ram_copies, 1}]}]).
+
+%           {disc_copies, Nodes}]).
