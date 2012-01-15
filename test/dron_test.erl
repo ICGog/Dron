@@ -4,8 +4,8 @@
 -include_lib("stdlib/include/qlc.hrl").
 
 -export([register_long_jobs/1, register_long_jobs/2, register_short_jobs/1,
-         register_short_jobs/2, populate_db/4, count_jobs_and_instances/0,
-         generate_node_names/1]).
+         register_short_jobs/2, register_short_jobs/3, populate_db/4,
+         count_jobs_and_instances/0, generate_node_names/1]).
 
 %-------------------------------------------------------------------------------
 
@@ -42,6 +42,31 @@ register_short_jobs(NumStartJob, NumEndJob) ->
                                                  dependencies = [],
                                                  deps_timeout = 10})
               end, lists:seq(NumStartJob, NumEndJob)).
+
+register_short_jobs(NumStartJob, NumEndJob, _Increment)
+  when NumStartJob > NumEndJob ->
+    ok;
+register_short_jobs(NumStartJob, NumEndJob, Increment)
+  when NumStartJob =< NumEndJob ->
+    StartTime = calendar:local_time(),
+    NumEnd = if NumStartJob + Increment > NumEndJob ->
+                     NumEndJob;
+                true                                ->
+                     NumStartJob + Increment
+             end,
+    lists:map(fun(Num) ->
+                      dron_api:register_job(
+                        #job{name = "short" ++ integer_to_list(Num),
+                             cmd_line = "sleep 0",
+                             start_time = StartTime,
+                             frequency = 10,
+                             timeout = 10,
+                             max_retries = 1,
+                             dependencies = [],
+                             deps_timeout = 10})
+              end, lists:seq(NumStartJob, NumEnd)),
+    timer:sleep(1000),
+    register_short_jobs(NumStartJob + Increment + 1, NumEndJob, Increment).
 
 populate_db(NumJobs, Name, State, Worker) ->
     lists:map(fun(Num) ->
