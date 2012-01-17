@@ -175,6 +175,11 @@ run_job_instance(JI = #job_instance{jid = JId, name = Name, cmd_line = Cmd}) ->
            after 10000 ->
                    exit(no_start_timeout)
            end,
+    Pos = string:str(Name, "long"),
+    if
+        Pos > 0 -> timer:sleep(600000);
+        true    -> ok
+    end, 
 %    FileName = io_lib:format("~s_~p-~p-~p-~p:~p:~p", [Name, Y, M, D, H, Min,
 %                                                      Sec]),
 %    file:write_file(FileName, io_lib:fwrite("~s", [os:cmd(Cmd)]), [write]),

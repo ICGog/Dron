@@ -408,7 +408,7 @@ run_job_instance(_JI, false) ->
     ok;
 run_job_instance(JobInstance = #job_instance{timeout = Timeout}, true) ->
     #worker{name = WName} = dron_pool:get_worker(),
-    WorkerJI = JobInstance#job_instance{worker = WName},
+    WorkerJI = JobInstance#job_instance{worker = WName, state = running},
     ok = dron_db:store_job_instance(WorkerJI),
     dron_worker:run(WName, WorkerJI, Timeout).
         

@@ -19,7 +19,7 @@ register_long_jobs(NumStartJob, NumEndJob) ->
                                                      integer_to_list(Num),
                                                  cmd_line = "sleep 600",
                                                  start_time = StartTime,
-                                                 frequency = 601,
+                                                 frequency = 120,
                                                  timeout = 700,
                                                  max_retries = 3,
                                                  dependencies = [],
