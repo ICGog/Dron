@@ -32,7 +32,7 @@ stop() ->
 %% @private
 %%------------------------------------------------------------------------------
 start(_Type, _Args) ->
-    dron_mnesia:start([node()], [{n_ram_copies, 1}]),
+    dron_mnesia:start(dron_config:db_nodes(), [{n_ram_copies, 1}]),
     error_logger:info_msg("~nMnesia is running!~n", []),
     error_logger:info_msg("~nDron Scheduler is starting...~n", []),
     {ok, Sup} = dron_sup:start(),

@@ -6,6 +6,7 @@
                                dron_consumer,
                                dron_db,
                                dron_event_consumer,
+                               dron_frag,
                                dron_pubsub,
                                dron,
                                dron_sup,

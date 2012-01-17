@@ -43,22 +43,8 @@ add_worker(WName, MaxSlots) ->
 %% @end
 %%------------------------------------------------------------------------------
 auto_add_workers() ->
-    [_, Host] = string:tokens(atom_to_list(node()), "@"),
-    case os:getenv("DRON_WORKERS") of
-        false ->
-            [];
-        WorkersEnv ->
-            Workers = lists:map(
-                        fun(Worker) ->
-                                list_to_atom(
-                                  case lists:member($@, Worker) of
-                                      true  -> Worker;
-                                      false -> Worker ++ "@" ++ Host
-                                  end)
-                        end, string:tokens(WorkersEnv, " \n\t")),
-            Result = lists:map(fun add_worker/1, Workers),
-            lists:zip(Workers, Result)
-    end.
+    Workers = dron_config:expand_node_names("DRON_WORKERS"),
+    lists:zip(Workers, lists:map(fun add_worker/1, Workers)).
 
 %%------------------------------------------------------------------------------
 %% @doc

@@ -69,7 +69,8 @@ create_jobs_table(Nodes, Mode) ->
            {attributes, record_info(fields, job)},
            {type, set},
            {frag_properties, [{node_pool, Nodes},
-                              {n_fragments, length(Nodes)}] ++ Mode}]).
+                              {n_fragments, length(Nodes)},
+                              {hash_module, dron_frag}] ++ Mode}]).
 
 create_jobs_archive_table(Nodes, Mode) ->
     {atomic, ok} =
@@ -79,7 +80,8 @@ create_jobs_archive_table(Nodes, Mode) ->
            {attributes, record_info(fields, job)},
            {type, set},
            {frag_properties, [{node_pool, Nodes},
-                              {n_fragments, length(Nodes)}] ++ Mode}]).
+                              {n_fragments, length(Nodes)},
+                              {hash_module, dron_frag}] ++ Mode}]).
 
 create_job_instances_table(Nodes, Mode) ->
     {atomic, ok} =
@@ -89,7 +91,8 @@ create_job_instances_table(Nodes, Mode) ->
            {attributes, record_info(fields, job_instance)},
            {type, set},
            {frag_properties, [{node_pool, Nodes},
-                              {n_fragments, length(Nodes)}] ++ Mode}]).
+                              {n_fragments, length(Nodes)},
+                              {hash_module, dron_frag}] ++ Mode}]).
 
 create_job_instance_deps_table(Nodes, Mode) ->
     {atomic, ok} =
@@ -99,7 +102,8 @@ create_job_instance_deps_table(Nodes, Mode) ->
            {attributes, record_info(fields, resource_deps)},
            {type, bag},
            {frag_properties, [{node_pool, Nodes},
-                              {n_fragments, length(Nodes)}] ++ Mode}]).
+                              {n_fragments, length(Nodes)},
+                              {hash_module, dron_frag}] ++ Mode}]).
 
 create_workers_table(Nodes) ->
     {atomic, ok} =
