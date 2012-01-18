@@ -131,8 +131,6 @@ handle_leader_call(Request, _From, State, _Election) ->
 %%------------------------------------------------------------------------------
 handle_leader_cast({schedule, Job = #job{name = Name}},
                    State = #state{schedulers = Schedulers}, _Election) ->
-    error_logger:info_msg("~p ~p ~p", [Name, Schedulers, dron_hash:hash(Name,
-                                                                        Schedulers)]),
     rpc:call(dron_hash:hash(Name, Schedulers), dron_scheduler, schedule, [Job]),
     {ok, State};
 handle_leader_cast({unschedule, JName},

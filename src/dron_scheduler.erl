@@ -362,16 +362,16 @@ create_job_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout,
                     Date, SchedulerPid, true) ->
     JId = {Name, Date},
     RunTime = calendar:local_time(),
-    Delay = calendar:datetime_to_gregorian_seconds(RunTime) -
-        calendar:datetime_to_gregorian_seconds(Date),
-    MaxDelay = case ets:lookup(delay, delay) of
-                   [{delay, MDelay}] -> MDelay;
-                   []                -> 0
-               end,
-    if Delay > MaxDelay -> ets:insert(delay, {delay, Delay}),
-                           error_logger:info_msg("Max Delay ~p", [Delay]);
-       true             -> ok
-    end,
+%    Delay = calendar:datetime_to_gregorian_seconds(RunTime) -
+%        calendar:datetime_to_gregorian_seconds(Date),
+%    MaxDelay = case ets:lookup(delay, delay) of
+%                   [{delay, MDelay}] -> MDelay;
+%                   []                -> 0
+%               end,
+%    if Delay > MaxDelay -> ets:insert(delay, {delay, Delay}),
+%                           error_logger:info_msg("Max Delay ~p", [Delay]);
+%       true             -> ok
+%    end,
     {Deps, UnsatisfiedDeps} = instanciate_dependencies(JId, Dependencies),
     JI =  #job_instance{jid = JId, name = Name, cmd_line = Cmd,
                         state = waiting, timeout = Timeout,
