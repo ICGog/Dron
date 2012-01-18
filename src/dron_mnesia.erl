@@ -2,16 +2,16 @@
 -author("Ionel Corneliu Gog").
 -include("dron.hrl").
 
--export([start/2, start_node/1, stop/0, stop_node/1]).
+-export([start/3, start_node/1, stop/0, stop_node/1]).
 
 %===============================================================================
 
 %%------------------------------------------------------------------------------
 %% @doc
-%% @spec start(Nodes, Mode) -> ok
+%% @spec start(MasterNodes, Nodes, Mode) -> ok
 %% @end
 %%------------------------------------------------------------------------------
-start(Nodes, Mode) ->
+start(MasterNodes, Nodes, Mode) ->
     ok = mnesia:create_schema(Nodes),
     lists:map(fun(Node) ->
                 ok = rpc:call(Node, mnesia, start, []) end, Nodes),
@@ -19,7 +19,7 @@ start(Nodes, Mode) ->
     create_jobs_archive_table(Nodes, Mode),
     create_job_instances_table(Nodes, Mode),
     create_job_instance_deps_table(Nodes, Mode),
-    create_workers_table(Nodes),
+    create_workers_table(MasterNodes),
     ok.
 
 %%------------------------------------------------------------------------------
@@ -69,8 +69,7 @@ create_jobs_table(Nodes, Mode) ->
            {attributes, record_info(fields, job)},
            {type, set},
            {frag_properties, [{node_pool, Nodes},
-                              {n_fragments, length(Nodes)},
-                              {hash_module, dron_frag}] ++ Mode}]).
+                              {n_fragments, length(Nodes)}] ++ Mode}]).
 
 create_jobs_archive_table(Nodes, Mode) ->
     {atomic, ok} =
@@ -80,8 +79,7 @@ create_jobs_archive_table(Nodes, Mode) ->
            {attributes, record_info(fields, job)},
            {type, set},
            {frag_properties, [{node_pool, Nodes},
-                              {n_fragments, length(Nodes)},
-                              {hash_module, dron_frag}] ++ Mode}]).
+                              {n_fragments, length(Nodes)}] ++ Mode}]).
 
 create_job_instances_table(Nodes, Mode) ->
     {atomic, ok} =
@@ -91,8 +89,7 @@ create_job_instances_table(Nodes, Mode) ->
            {attributes, record_info(fields, job_instance)},
            {type, set},
            {frag_properties, [{node_pool, Nodes},
-                              {n_fragments, length(Nodes)},
-                              {hash_module, dron_frag}] ++ Mode}]).
+                              {n_fragments, length(Nodes)}] ++ Mode}]).
 
 create_job_instance_deps_table(Nodes, Mode) ->
     {atomic, ok} =
@@ -102,8 +99,7 @@ create_job_instance_deps_table(Nodes, Mode) ->
            {attributes, record_info(fields, resource_deps)},
            {type, bag},
            {frag_properties, [{node_pool, Nodes},
-                              {n_fragments, length(Nodes)},
-                              {hash_module, dron_frag}] ++ Mode}]).
+                              {n_fragments, length(Nodes)}] ++ Mode}]).
 
 create_workers_table(Nodes) ->
     {atomic, ok} =
@@ -112,4 +108,4 @@ create_workers_table(Nodes) ->
           [{record_name, worker},
            {attributes, record_info(fields, worker)},
            {type, set},
-           {disc_copies, Nodes}]).
+           {ram_copies, Nodes}]).

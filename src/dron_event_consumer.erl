@@ -38,11 +38,11 @@ consume_events(Channel, ConsumerTag) ->
 %            error_logger:info_msg("~p", [Content]),
             JId = get_job_instance(Content),
             case get_job_instance_state(Content) of
-                succeeded -> dron_scheduler:job_instance_succeeded(JId);
-                failed    -> dron_scheduler:job_instance_failed(
+                succeeded -> dron_coordinator:job_instance_succeeded(JId);
+                failed    -> dron_coordinator:job_instance_failed(
                                JId, get_job_instance_reason(Content));
-                timeout   -> dron_scheduler:job_instance_timeout(JId);
-                killed    -> dron_scheduler:job_instance_killed(JId)
+                timeout   -> dron_coordinator:job_instance_timeout(JId);
+                killed    -> dron_coordinator:job_instance_killed(JId)
             end,
             amqp_channel:cast(Channel,
                               #'basic.ack'{delivery_tag = DeliveryTag}),

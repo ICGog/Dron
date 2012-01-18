@@ -1,18 +1,26 @@
 -module(dron_config).
 -author("Ionel Corneliu Gog").
 
--export([db_nodes/0, max_slots/0, exchanges/0, dron_exchange/0, consumers/0,
-         log_dir/0, master_nodes/0, expand_node_names/1]).
+-export([scheduler_nodes/0, db_nodes/0, max_slots/0, exchanges/0,
+         dron_exchange/0, consumers/0, log_dir/0, master_nodes/0,
+         expand_node_names/1]).
 
 %-------------------------------------------------------------------------------
 
-db_nodes() ->
-    DbNodes = expand_node_names("DRON_DB_NODES"),
-    case DbNodes of
+scheduler_nodes() ->
+    Nodes = expand_node_names("DRON_SCHEDULERS"),
+    case Nodes of
         [] -> [node()];
-        _  -> DbNodes
+        _  -> Nodes
     end.
-            
+
+db_nodes() ->
+    Nodes = expand_node_names("DRON_DB"),
+    case Nodes of
+        [] -> [node()];
+        _  -> Nodes
+    end.    
+
 max_slots() ->
     500.
 
@@ -31,12 +39,15 @@ log_dir() ->
     "/var/log/dron/".
 
 master_nodes() ->
-    [node()].
+    Nodes = expand_node_names("DRON_MASTERS"),
+    case Nodes of
+        [] -> [node()];
+        _  -> Nodes
+    end.
 
 %===============================================================================
 % Internal
 %===============================================================================
-
 
 %%------------------------------------------------------------------------------
 %% @private

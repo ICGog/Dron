@@ -32,11 +32,23 @@ stop() ->
 %% @private
 %%------------------------------------------------------------------------------
 start(_Type, _Args) ->
-    dron_mnesia:start(dron_config:db_nodes(), [{n_ram_copies, 1}]),
+    dron_mnesia:start(dron_config:master_nodes(),
+                      dron_config:db_nodes(), [{n_ram_copies, 2}]),
     error_logger:info_msg("~nMnesia is running!~n", []),
-    error_logger:info_msg("~nDron Scheduler is starting...~n", []),
-    {ok, Sup} = dron_sup:start(),
-    error_logger:info_msg("~nDron Scheduler is running!~n", []),
+    error_logger:info_msg("~nDron Schedulers are starting...~n", []),
+    Schedulers = lists:map(fun(Node) ->
+                                   {Node,
+                                    rpc:call(Node, dron_scheduler, start,
+                                             [[Node]])}
+                           end, dron_config:scheduler_nodes()),
+    error_logger:info_msg("~nDron Schedulers ~p", [Schedulers]),
+    OkSchedulers = lists:filter(fun(Result) ->
+                                        case Result of
+                                            {ok, _Pid} -> true;
+                                            _          -> false
+                                        end
+                                end, Schedulers),
+    {ok, Sup} = dron_sup:start(dron_config:scheduler_nodes()),
     AutoWorkers = dron_pool:auto_add_workers(),
     error_logger:info_msg("Auto attaching workers: ~w~n", [AutoWorkers]),
     {ok, Sup}.

@@ -10,7 +10,7 @@
          ji_succeeded/1, ji_killed/1, ji_timeout/1, ji_failed/2,
          run_job_instance/2]).
 
--export([start_link/1, schedule/1, unschedule/1]).
+-export([start/1, schedule/1, unschedule/1]).
 
 -export([job_instance_succeeded/1, job_instance_failed/2,
          job_instance_timeout/1, job_instance_killed/1,
@@ -27,11 +27,11 @@
 %% Starts the the scheduler on a list of nodes. One node will be elected as
 %% leader.
 %%
-%% @spec start_link(Nodes) -> ok
+%% @spec start(Nodes) -> ok
 %% @end
 %%------------------------------------------------------------------------------
-start_link(Nodes) ->
-    gen_leader:start_link(?MODULE, Nodes, [], ?MODULE, [], []).
+start(Nodes) ->
+    gen_leader:start(?MODULE, Nodes, [], ?MODULE, [], []).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -141,7 +141,6 @@ init([]) ->
 %%------------------------------------------------------------------------------
 elected(State, _Election, undefined) ->
     error_logger:info_msg("~p elected as master", [node()]),
-    dron_pool:start_link(),
     {ok, [], State#state{leader = true}};
 %%------------------------------------------------------------------------------
 %% @private
@@ -208,15 +207,18 @@ handle_leader_cast({timeout, JId}, State, _Election) ->
 handle_leader_cast({killed, JId}, State, _Election) ->
     erlang:spawn_link(?MODULE, ji_killed, [JId]),
     {noreply, State};
+%% TODO(ionel): Adapt this for multi-schedulers. 
 handle_leader_cast({satisfied, RId}, State, _Election) ->
     ok = dron_db:set_resource_state(RId, satisfied),
     {ok, Dependants} = dron_db:get_dependants(RId),
     lists:map(fun(#resource_deps{dep = JId}) ->
                       satisfied_dependency(RId, JId, true) end, Dependants),
     {ok, {satisfied, RId}, State};
+%% TODO(ionel): Adapt this for multi-schedulers. 
 handle_leader_cast({worker_disabled, JI}, State, _Election) ->
     erlang:spawn_link(?MODULE, run_job_instance, [JI, true]),
     {ok, {worker_disabled, JI}, State};
+%% TODO(ionel): Adapt this for multi-schedulers. 
 handle_leader_cast({waiting_job_instance_deps, JId, UnsatisfiedDeps}, State,
                    _Election) ->
     ets:insert(ji_deps, {JId, UnsatisfiedDeps}),
@@ -286,7 +288,7 @@ handle_cast({waiting_job_instance_timer, JId, TRef}, State, _Election) ->
     ets:insert(wait_timers, {JId, TRef}),
     {noreply, State};
 handle_cast(Msg, State, _Election) ->
-    error_logger:errog_msg("Got unexpected cast ~p", [Msg]),
+    error_logger:error_msg("Got unexpected cast ~p", [Msg]),
     {stop, not_supported, State}.
 
 %%------------------------------------------------------------------------------

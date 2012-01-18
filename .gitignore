@@ -3,5 +3,6 @@
 *TAGS
 thrift/gen-erl/
 dron_scheduler_*
+dron_coordinator_*
 lib/*
 doc/*

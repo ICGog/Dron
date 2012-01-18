@@ -12,7 +12,7 @@
 %===============================================================================
 
 start_link() ->
-    gen_server:start_link(?NAME, ?MODULE, [], []).
+    gen_server:start_link({global, ?NAME}, ?MODULE, [], []).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -23,7 +23,7 @@ start_link() ->
 %% @end
 %%------------------------------------------------------------------------------
 add_worker(WName) ->
-    gen_server:call(?NAME, {add, WName, dron_config:max_slots()}).
+    gen_server:call({global, ?NAME}, {add, WName, dron_config:max_slots()}).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -33,7 +33,7 @@ add_worker(WName) ->
 %% @end
 %%------------------------------------------------------------------------------
 add_worker(WName, MaxSlots) ->
-    gen_server:call(?NAME, {add, WName, MaxSlots}).
+    gen_server:call({global, ?NAME}, {add, WName, MaxSlots}).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -54,7 +54,7 @@ auto_add_workers() ->
 %% @end
 %%------------------------------------------------------------------------------
 remove_worker(WName) ->
-    gen_server:call(?NAME, {remove, WName}).
+    gen_server:call({global, ?NAME}, {remove, WName}).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -67,7 +67,7 @@ remove_worker(WName) ->
 %% think there may be a leak here if the scheduler fails after it has acquire
 %% a slot and before it started running the job instance on it.
 get_worker() ->
-    gen_server:call(?NAME, get_worker).
+    gen_server:call({global, ?NAME}, get_worker).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -77,7 +77,7 @@ get_worker() ->
 %% @end
 %%------------------------------------------------------------------------------
 release_worker_slot(WName) ->
-    gen_server:call(?NAME, {release_slot, WName}).
+    gen_server:call({global, ?NAME}, {release_slot, WName}).
 
 %===============================================================================
 % Internal
@@ -220,7 +220,8 @@ disable_worker(WName) ->
           end,
     % If these db writes fail then the whole worker is restarted.
     {ok, FailedJIs} = dron_db:get_job_instances_on_worker(WName),
-    lists:map(fun(JI) -> dron_scheduler:worker_disabled(JI) end, FailedJIs),
+    % TODO(ionel): Check if the proper coordinator/scheduler is called.
+    lists:map(fun(JI) -> dron_coordinator:worker_disabled(JI) end, FailedJIs),
     Ret.
 
 % TODO(ionel): Implement worker monitoring.

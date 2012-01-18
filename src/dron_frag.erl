@@ -4,7 +4,7 @@
 -behaviour(mnesia_frag_hash).
 
 -export([init_state/2, add_frag/1, del_frag/1, key_to_frag_number/2,
-         match_spec_to_frag_numbers/2]).
+         match_spec_to_frag_numbers/2, hash/2]).
 
 -record(hash_state, {n_fragments}).
 
@@ -44,8 +44,8 @@ del_frag(#hash_state{n_fragments = NumFrag} = State) ->
 %% @spec key_to_frag_number(State, Key) -> FragNum | abort(Reason)
 %% @end
 %%------------------------------------------------------------------------------
-key_to_frag_number(_State , Key) ->
-    1.
+key_to_frag_number(#hash_state{n_fragments = NumFrag} , Key) ->
+    hash(Key, NumFrag).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -58,3 +58,13 @@ key_to_frag_number(_State , Key) ->
 %%------------------------------------------------------------------------------
 match_spec_to_frag_numbers(State, MatchSpec) ->
     [1].
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% Hash a key to a fragment.
+%%
+%% @spec hash(Key, NumFrag) -> FragNumber
+%% @end
+%%------------------------------------------------------------------------------
+hash(Key, NumFrag) ->
+    1.

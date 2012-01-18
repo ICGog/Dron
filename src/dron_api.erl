@@ -14,16 +14,16 @@
 %%------------------------------------------------------------------------------
 register_job(Job) ->
     ok = dron_db:store_job(Job),
-    dron_scheduler:schedule(Job).
+    dron_coordinator:schedule(Job).
 
 %%------------------------------------------------------------------------------
 %% @doc
-%% @spec unregister_job(Job) -> ok
+%% @spec unregister_job(JName) -> ok
 %% @end
 %%------------------------------------------------------------------------------
-unregister_job(Job) ->
-    dron_scheduler:unschedule(Job),
-    ok = dron_db:archive_job(Job#job.name).
+unregister_job(JName) ->
+    dron_coordinator:unschedule(JName),
+    ok = dron_db:archive_job(JName).
 
 %%------------------------------------------------------------------------------
 %% @doc
