@@ -56,6 +56,8 @@ run: compile
 .PHONY: clean
 clean:
 	rm -rf $(LOG_DIR)
+	rm -rf dron_coordinator_*
+	rm -rf dron_scheduler_*
 	$(REBAR) clean
 	rm -rf Mnesia.*
 
