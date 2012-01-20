@@ -31,7 +31,6 @@ register_long_jobs(NumStartJob, NumEndJob, _Increment)
     ok;
 register_long_jobs(NumStartJob, NumEndJob, Increment)
   when NumStartJob =< NumEndJob ->
-    StartTime = calendar:local_time(),
     NumEnd = if NumStartJob + Increment > NumEndJob ->
                      NumEndJob;
                 true                                ->
@@ -63,7 +62,6 @@ register_short_jobs(NumStartJob, NumEndJob, _Increment)
     ok;
 register_short_jobs(NumStartJob, NumEndJob, Increment)
   when NumStartJob =< NumEndJob ->
-    StartTime = calendar:local_time(),
     NumEnd = if NumStartJob + Increment > NumEndJob ->
                      NumEndJob;
                 true                                ->

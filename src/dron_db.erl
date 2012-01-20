@@ -6,8 +6,9 @@
 -export([store_job/1, get_job/1, get_job_unsync/1, store_job_instance/1,
          get_job_instance/1, get_job_instance_unsync/1, get_job_instance/2,
          set_job_instance_state/2, archive_job/1, store_worker/1,
-         delete_worker/1, get_workers/1, get_job_instances_on_worker/1,
-         get_dependants/1, store_dependant/2, set_resource_state/2]).
+         delete_worker/1, get_worker/1, get_workers/1,
+         get_job_instances_on_worker/1, get_dependants/1, store_dependant/2,
+         set_resource_state/2]).
 
 %===============================================================================
 
@@ -185,6 +186,20 @@ delete_worker(WName) ->
             end,
     case mnesia:transaction(Trans) of
         {atomic, ok}      -> ok;
+        {aborted, Reason} -> {error, Reason}
+    end.
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec get_worker(WorkerName) -> ok | {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
+get_worker(WName) ->
+    Trans = fun() ->
+                    mnesia:read({workers, WName})
+            end,
+    case mnesia:transaction(Trans) of
+        {atomic, Worker}  -> {ok, Worker};
         {aborted, Reason} -> {error, Reason}
     end.
 

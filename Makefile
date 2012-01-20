@@ -4,7 +4,7 @@ export LOG_DIR=log
 export LIB_DIR=lib
 export DRON_NODE=dron
 
-DRON_WORKERS=w1 w2 w3
+DRON_NODES=w1 w2 w3
 REBAR=./rebar
 
 DIALYZER=dialyzer
@@ -18,14 +18,14 @@ ifdef EC2_WORKERS
 	STOP=
 	STOP_WORKERS=python ec2.py stop
 else
-	START_WORKERS=for worker in $(DRON_WORKERS) ; do \
+	START_WORKERS=for worker in $(DRON_NODES) ; do \
 			echo "Starting worker $$worker" ; \
 			echo 'code:add_pathsa(["$(realpath $(EBIN_DIR))","$(realpath $(LIB_DIR))/gen_leader/ebin","$(realpath $(LIB_DIR))/mochiweb/ebin"]).' | \
 			erl_call -sname $$worker -s -e ; \
 		      done
 	RUN=erl $(ERL_OPTS)
 	STOP=$(MAKE) stop_workers
-	STOP_WORKERS=for worker in $(DRON_WORKERS) ; do \
+	STOP_WORKERS=for worker in $(DRON_NODES) ; do \
 			echo "Stopping worker $$worker" ; \
 			erl_call -sname $$worker -q ; \
 	             done

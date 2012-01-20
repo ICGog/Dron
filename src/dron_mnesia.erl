@@ -2,16 +2,16 @@
 -author("Ionel Corneliu Gog").
 -include("dron.hrl").
 
--export([start/3, start_node/1, stop/0, stop_node/1]).
+-export([start/2, start_node/1, stop/0, stop_node/1]).
 
 %===============================================================================
 
 %%------------------------------------------------------------------------------
 %% @doc
-%% @spec start(MasterNodes, Nodes, Mode) -> ok
+%% @spec start(Nodes, Mode) -> ok
 %% @end
 %%------------------------------------------------------------------------------
-start(MasterNodes, Nodes, Mode) ->
+start(Nodes, Mode) ->
     ok = mnesia:create_schema(Nodes),
     lists:map(fun(Node) ->
                 ok = rpc:call(Node, mnesia, start, []) end, Nodes),
@@ -19,7 +19,7 @@ start(MasterNodes, Nodes, Mode) ->
     create_jobs_archive_table(Nodes, Mode),
     create_job_instances_table(Nodes, Mode),
     create_job_instance_deps_table(Nodes, Mode),
-    create_workers_table(MasterNodes),
+    create_workers_table(Nodes, Mode),
     ok.
 
 %%------------------------------------------------------------------------------
@@ -36,6 +36,7 @@ start_node(Node) ->
     {atomic, ok} = mnesia:change_table_frag(jobs_archive, {add_node, Node}),
     {atomic, ok} = mnesia:change_table_frag(job_instances, {add_node, Node}),
     {atomic, ok} = mnesia:change_table_frag(resource_deps, {add_node, Node}),
+    {atomic, ok} = mnesia:change_table_frag(workers, {add_node, Node}),
     ok.
 
 %%------------------------------------------------------------------------------
@@ -101,11 +102,12 @@ create_job_instance_deps_table(Nodes, Mode) ->
            {frag_properties, [{node_pool, Nodes},
                               {n_fragments, length(Nodes)}] ++ Mode}]).
 
-create_workers_table(Nodes) ->
+create_workers_table(Nodes, Mode) ->
     {atomic, ok} =
         mnesia:create_table(
           workers,
           [{record_name, worker},
            {attributes, record_info(fields, worker)},
            {type, set},
-           {ram_copies, Nodes}]).
+           {frag_properties, [{node_pool, Nodes},
+                              {n_fragments, length(Nodes)}] ++ Mode}]).

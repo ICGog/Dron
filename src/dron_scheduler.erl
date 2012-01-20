@@ -141,6 +141,7 @@ init([]) ->
 %%------------------------------------------------------------------------------
 elected(State, _Election, undefined) ->
     error_logger:info_msg("~p elected as master", [node()]),
+    dron_pool:start_link(),
     {ok, [], State#state{leader = true}};
 %%------------------------------------------------------------------------------
 %% @private

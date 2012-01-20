@@ -6,13 +6,14 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3]).
 
--export([start_link/0, add_worker/1, add_worker/2, auto_add_workers/0,
-         remove_worker/1, get_worker/0, release_worker_slot/1]).
+-export([start_link/0, add_worker/1, add_worker/2, add_workers/1,
+         auto_add_workers/0, offer_worker/1, take_worker/1, remove_worker/1,
+         get_worker/0, release_worker_slot/1, get_all_workers/0]).
 
 %===============================================================================
 
 start_link() ->
-    gen_server:start_link({global, ?NAME}, ?MODULE, [], []).
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -23,7 +24,7 @@ start_link() ->
 %% @end
 %%------------------------------------------------------------------------------
 add_worker(WName) ->
-    gen_server:call({global, ?NAME}, {add, WName, dron_config:max_slots()}).
+    gen_server:call(?MODULE, {add, WName, dron_config:max_slots()}).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -33,7 +34,10 @@ add_worker(WName) ->
 %% @end
 %%------------------------------------------------------------------------------
 add_worker(WName, MaxSlots) ->
-    gen_server:call({global, ?NAME}, {add, WName, MaxSlots}).
+    gen_server:call(?MODULE, {add, WName, MaxSlots}).
+
+add_workers(Workers) ->
+    lists:map(fun add_worker/1, Workers).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -48,13 +52,34 @@ auto_add_workers() ->
 
 %%------------------------------------------------------------------------------
 %% @doc
+%% Adds a worker to the pool. It does not try to start a dron_worker on the
+%% given node.
+%%
+%% @spec offer_worker(WorkerName) -> ok | {error, unknown_worker}
+%% @end
+%%------------------------------------------------------------------------------
+offer_worker(WName) ->
+    gen_server:call(?MODULE, {offer_worker, WName}).
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% Removes a worker from the pool. It does not disable it.
+%%
+%% @spec take_worker(WorkerName) -> ok | {error, unknown_worker}
+%% @end
+%%------------------------------------------------------------------------------
+take_worker(WName) ->
+    gen_server:call(?MODULE, {take_worker, WName}).
+
+%%------------------------------------------------------------------------------
+%% @doc
 %% Removes a worker from the pool.
 %%
 %% @spec remove_worker(WorkerName) -> ok | {error, unknown_worker} | Error
 %% @end
 %%------------------------------------------------------------------------------
 remove_worker(WName) ->
-    gen_server:call({global, ?NAME}, {remove, WName}).
+    gen_server:call(?MODULE, {remove, WName}).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -67,7 +92,7 @@ remove_worker(WName) ->
 %% think there may be a leak here if the scheduler fails after it has acquire
 %% a slot and before it started running the job instance on it.
 get_worker() ->
-    gen_server:call({global, ?NAME}, get_worker).
+    gen_server:call(?MODULE, get_worker).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -77,7 +102,10 @@ get_worker() ->
 %% @end
 %%------------------------------------------------------------------------------
 release_worker_slot(WName) ->
-    gen_server:call({global, ?NAME}, {release_slot, WName}).
+    gen_server:call(?MODULE, {release_slot, WName}).
+
+get_all_workers() ->
+    gen_server:call(?MODULE, get_all_workers).
 
 %===============================================================================
 % Internal
@@ -118,6 +146,26 @@ handle_call({add, WName, Slots}, _From, State) ->
                         end;
                 _    -> {reply, {error, no_connection}, State}
             end
+    end;
+handle_call({offer_worker, WName}, _From, State) ->
+    case dron_db:get_worker(WName) of
+        {error, Reason} ->
+            {reply, {error, Reason}, State};
+        {ok, Worker = #worker{used_slots = UsedSlots}} ->
+            ets:insert(worker_records, {WName, Worker}),
+            SWorkers = case ets:lookup(slot_workers, UsedSlots) of
+                           []     -> [WName];
+                           CurSWs -> [WName|CurSWs]
+                       end,
+            ets:insert(slot_workers, {UsedSlots, SWorkers}),
+            {reply, ok, State}
+    end;
+handle_call({take_worker, WName}, _From, State) ->
+    case ets:lookup(worker_records, WName) of
+        []                -> {reply, {error, unknown_worker}, State};
+        [{WName, Worker}] -> evict_worker(Worker),
+                             ets:delete(worker_records, WName),
+                             {reply, ok, State}
     end;
 handle_call({remove, WName}, _From, State) ->
     case ets:lookup(worker_records, WName) of
@@ -165,6 +213,8 @@ handle_call(get_worker, _From, State) ->
                  end,
                  {reply, NewWorker, State}
     end;
+handle_call(get_all_workers, _From, State) ->
+    {reply, ets:tab2list(worker_records), State};
 handle_call(Request, _From, _State) ->
     {unexpected_request, Request}.
 

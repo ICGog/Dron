@@ -56,7 +56,7 @@ key_to_frag_number(#hash_state{n_fragments = NumFrag} , Key) ->
 %%                                                       abort(Reason)
 %% @end
 %%------------------------------------------------------------------------------
-match_spec_to_frag_numbers(State, MatchSpec) ->
+match_spec_to_frag_numbers(_State, _MatchSpec) ->
     [1].
 
 %%------------------------------------------------------------------------------
@@ -66,5 +66,5 @@ match_spec_to_frag_numbers(State, MatchSpec) ->
 %% @spec hash(Key, NumFrag) -> FragNumber
 %% @end
 %%------------------------------------------------------------------------------
-hash(Key, NumFrag) ->
+hash(_Key, _NumFrag) ->
     1.
