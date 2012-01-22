@@ -9,6 +9,7 @@
                                dron_event_consumer,
                                dron_frag,
                                dron_hash,
+                               dron_monitor,
                                dron_pubsub,
                                dron,
                                dron_sup,

@@ -10,28 +10,28 @@
          ji_succeeded/1, ji_killed/1, ji_timeout/1, ji_failed/2,
          run_job_instance/2]).
 
--export([start/1, schedule/1, unschedule/1]).
+-export([start/2, schedule/1, unschedule/1]).
 
 -export([job_instance_succeeded/1, job_instance_failed/2,
          job_instance_timeout/1, job_instance_killed/1,
          dependency_satisfied/1, worker_disabled/1,
          store_waiting_job_instance_timer/2,
-         store_waiting_job_instance_deps/2]).
+         store_waiting_job_instance_deps/2, master_coordinator/1]).
 
--record(state, {leader}).
+-record(state, {leader, leader_node, master_coordinator}).
 
 %===============================================================================
 
 %%------------------------------------------------------------------------------
 %% @doc
 %% Starts the the scheduler on a list of nodes. One node will be elected as
-%% leader.
+%% leader. It also receives the name of the master coordinator node.
 %%
-%% @spec start(Nodes) -> ok
+%% @spec start(Nodes, Master) -> ok
 %% @end
 %%------------------------------------------------------------------------------
-start(Nodes) ->
-    gen_leader:start(?MODULE, Nodes, [], ?MODULE, [], []).
+start(Nodes, Master) ->
+    gen_leader:start(?MODULE, Nodes, [], ?MODULE, [Master], []).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -115,6 +115,14 @@ store_waiting_job_instance_deps(JId, UnsatisfiedDeps) ->
     gen_leader:leader_cast(?MODULE, {waiting_job_instance_deps, JId,
                                      UnsatisfiedDeps}).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec master_coordinator(Node) -> ok
+%% @end
+%%------------------------------------------------------------------------------
+master_coordinator(Node) ->
+    gen_leader:leader_cast(?MODULE, {master_coordinator, Node}).
+
 %===============================================================================
 % Internal
 %===============================================================================
@@ -122,13 +130,13 @@ store_waiting_job_instance_deps(JId, UnsatisfiedDeps) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-init([]) ->
+init([Master]) ->
     ets:new(schedule_timers, [named_table]),
     ets:new(start_timers, [named_table]),
     ets:new(wait_timers, [named_table]),
     ets:new(ji_deps, [named_table]),
     ets:new(delay, [public, named_table]),
-    {ok, #state{}}.
+    {ok, #state{leader_node = undefined, master_coordinator = Master}}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -139,10 +147,19 @@ init([]) ->
 %% @spec elected(State, Election, undefined) -> {ok, Synch, State}
 %% @end
 %%------------------------------------------------------------------------------
-elected(State, _Election, undefined) ->
+elected(State = #state{master_coordinator = Master, leader_node = LeaderNode},
+        _Election, undefined) ->
     error_logger:info_msg("~p elected as master", [node()]),
-    dron_pool:start_link(),
-    {ok, [], State#state{leader = true}};
+    dron_pool:start_link(Master),
+    case LeaderNode of
+        undefined ->
+            ok;
+        _         -> 
+            rpc:call(Master, dron_coordinator, new_scheduler_leader,
+                     [LeaderNode, node()])
+    end,
+    {ok, {node(), Master}, State#state{leader = true, leader_node = node()}};
+
 %%------------------------------------------------------------------------------
 %% @private
 %% @doc
@@ -164,8 +181,9 @@ elected(State, _Election, _Node) ->
 %% @spec surrendered(State, Synch, Election) -> {ok, State}
 %% @end
 %%------------------------------------------------------------------------------
-surrendered(State, _Sync, _Election) ->
-    {ok, State#state{leader = false}}.
+surrendered(State, {LeaderNode, Master}, _Election) ->
+    {ok, State#state{leader = false, leader_node = LeaderNode,
+                    master_coordinator = Master}}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -224,6 +242,10 @@ handle_leader_cast({waiting_job_instance_deps, JId, UnsatisfiedDeps}, State,
                    _Election) ->
     ets:insert(ji_deps, {JId, UnsatisfiedDeps}),
     {ok, {waiting_job_instance_deps, UnsatisfiedDeps}, State};
+handle_leader_cast({master_coordinator, Master}, State, _Election) ->
+    dron_pool:master_coordinator(Master),
+    {ok, {master_coordinator, Master},
+     State#state{master_coordinator = Master}};
 handle_leader_cast(Request, State, _Election) ->
     error_logger:error_msg("Unexpected leader cast ~p", [Request]),
     {stop, not_supported, State}.
@@ -258,6 +280,8 @@ from_leader({waiting_job_instance_deps, JId, UnsatisfiedDeps}, State,
             _Election) ->
     ets:insert(ji_deps, {JId, UnsatisfiedDeps}),
     {ok, State};
+from_leader({master_coordinator, Master}, State, _Election) ->
+    {ok, State#state{master_coordinator = Master}};
 from_leader(_Request, State, _Election) ->
     {stop, not_supported, State}.
 

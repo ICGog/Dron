@@ -6,14 +6,17 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3]).
 
--export([start_link/0, add_worker/1, add_worker/2, add_workers/1,
+-export([start_link/1, add_worker/1, add_worker/2, add_workers/1,
          auto_add_workers/0, offer_worker/1, take_worker/1, remove_worker/1,
-         get_worker/0, release_worker_slot/1, get_all_workers/0]).
+         get_worker/0, release_worker_slot/1, get_all_workers/0,
+         master_coordinator/1]).
+
+-record(state, {master_coordinator}).
 
 %===============================================================================
 
-start_link() ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+start_link(Master) ->
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [Master], []).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -107,6 +110,16 @@ release_worker_slot(WName) ->
 get_all_workers() ->
     gen_server:call(?MODULE, get_all_workers).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% Informs the pool about the name of the master coordinator.
+%%
+%% @spec master_coordinator(MasterName) -> ok
+%% @end
+%%------------------------------------------------------------------------------
+master_coordinator(Master) ->
+    gen_server:cast(?MODULE, {master_coordinator, Master}).
+
 %===============================================================================
 % Internal
 %===============================================================================
@@ -114,11 +127,14 @@ get_all_workers() ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-init([]) ->
+init([Master]) ->
     ets:new(worker_records, [named_table]),
     ets:new(slot_workers, [ordered_set, named_table]),
+    %% TODO(ionel): Fix reconstruct state.
     reconstruct_state(),
-    {ok, []}.
+    erlang:send_after(dron_config:scheduler_load_interval(),
+                      self(), send_load),
+    {ok, #state{master_coordinator = Master}}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -155,7 +171,7 @@ handle_call({offer_worker, WName}, _From, State) ->
             ets:insert(worker_records, {WName, Worker}),
             SWorkers = case ets:lookup(slot_workers, UsedSlots) of
                            []     -> [WName];
-                           CurSWs -> [WName|CurSWs]
+                           CurSWs -> [WName | CurSWs]
                        end,
             ets:insert(slot_workers, {UsedSlots, SWorkers}),
             {reply, ok, State}
@@ -215,24 +231,35 @@ handle_call(get_worker, _From, State) ->
     end;
 handle_call(get_all_workers, _From, State) ->
     {reply, ets:tab2list(worker_records), State};
-handle_call(Request, _From, _State) ->
-    {unexpected_request, Request}.
+handle_call(Request, _From, State) ->
+    error_logger:error_msg("Got unexpected call ~p", [Request]),
+    {stop, not_supported, State}.
 
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-handle_cast(_Request, _State) ->
-    not_implemented.
+handle_cast({master_coordinator, Master}, State) ->
+    {noreply, State#state{master_coordinator = Master}};
+handle_cast(Request, State) ->
+    error_logger:error_msg("Got unexpected cast ~p", [Request]),
+    {stop, not_supported, State}.
 
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-handle_info({nodedown, WName}, State) ->
+handle_info(send_load, State = #state{master_coordinator = Master}) ->
+    rpc:cast(Master, dron_coordinator, scheduler_load,
+             [node(), calendar:local_time(), calculate_load()]),
+    erlang:send_after(dron_config:scheduler_load_interval(),
+                      self(), send_load),
+    {noreply, State};
+handle_info({nodedown, WName}, State = #state{master_coordinator = Master}) ->
     error_logger:error_msg("Node ~p failed!~n", [WName]),
     case disable_worker(WName) of
         none   -> ok;
         Worker -> evict_worker(Worker)
     end,
+    rpc:cast(Master, dron_coordinator, remove_workers, [[WName]]),
     {noreply, State};
 handle_info(Request, _State) ->
     {unexpected_request, Request}.
@@ -285,3 +312,15 @@ reconstruct_state() ->
                       end,                                   
                       ets:insert(slot_workers, {Slots, Ws})
               end, Workers).
+
+calculate_load() ->
+    {AllSlots, FreeSlots} =
+        lists:unzip(lists:map(fun({_WName, #worker{max_slots = MaxSlots,
+                                                   used_slots = UsedSlots}}) ->
+                                      {MaxSlots, MaxSlots - UsedSlots}
+                              end, ets:tab2list(worker_records))),
+    NSlots = lists:sum(AllSlots),
+    NFreeSlots = lists:sum(FreeSlots),
+    if NSlots > 0 -> NFreeSlots / NSlots;
+       true       -> 1
+    end.

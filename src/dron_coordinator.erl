@@ -7,14 +7,17 @@
          handle_leader_call/4, handle_leader_cast/3, handle_DOWN/3,
          elected/3, surrendered/3, from_leader/3, code_change/4, terminate/2]).
 
--export([start_link/3, schedule/1, unschedule/1]).
+-export([start_link/1, schedule/1, unschedule/1]).
 
 -export([job_instance_succeeded/1, job_instance_failed/2,
          job_instance_timeout/1, job_instance_killed/1,
-         dependency_satisfied/1, worker_disabled/1,
-         worker_load/2]).
+         dependency_satisfied/1, worker_disabled/1]).
 
--record(state, {leader, schedulers, nodes, num_nodes, worker_assig}).
+-export([scheduler_load/3, new_scheduler_leader/2, start_new_workers/2,
+        start_new_scheduler/2, add_workers/2, add_scheduler/2,
+        remove_scheduler/1, remove_workers/1, auto_add_sched_workers/0]).
+
+-record(state, {leader, schedulers}).
 
 %===============================================================================
 
@@ -26,9 +29,8 @@
 %% @spec start_link(MasterNodes, SchedulerNodes) -> ok
 %% @end
 %%------------------------------------------------------------------------------
-start_link(MasterNodes, SchedulerNodes, WorkerAssig) ->
-    gen_leader:start_link(?MODULE, MasterNodes, [], ?MODULE,
-                          [SchedulerNodes, WorkerAssig], []).
+start_link(MasterNodes) ->
+    gen_leader:start_link(?MODULE, MasterNodes, [], ?MODULE, [], []).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -96,11 +98,102 @@ worker_disabled(JI) ->
 
 %%------------------------------------------------------------------------------
 %% @doc
-%% @spec worker_load(WorkerName, Time) -> ok
+%% Schedulers use this method to inform the coordinator about their load.
+%%
+%% @spec scheduler_load(SchedulerName, Time, Load) -> ok
 %% @end
 %%------------------------------------------------------------------------------
-worker_load(WName, Time) ->
-    gen_leader:leader_cast(?MODULE, {worker_load, WName, Time}).
+scheduler_load(SchedulerName, Time, Load) ->
+    gen_leader:leader_cast(?MODULE,
+                           {scheduler_load, SchedulerName, Time, Load}).
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% Schedulers use this method to inform the coordinator about a new leader.
+%%
+%% @spec new_scheduler_leader(OldScheduler, NewScheduler) -> ok
+%% @end
+%%------------------------------------------------------------------------------
+new_scheduler_leader(OldSched, NewSched) ->
+    gen_leader:leader_cast(?MODULE, {new_scheduler_leader, OldSched, NewSched}).
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% Starts a list of new workers. Returns a list containing the workers that have
+%% been successfully started.
+%%
+%% @spec start_new_workers(SchedulerName, Workers) ->
+%%     NewWorkers | {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
+start_new_workers(SName, Workers) ->
+    gen_leader:leader_call(?MODULE, {start_new_workers, SName, Workers}).
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% Starts a new scheduler together with a list of new workers.
+%%
+%% @spec start_new_workers(SchedulerName, Workers) ->
+%%     NewWorkers | {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
+start_new_scheduler(SName, Workers) ->
+    gen_leader:leader_call(?MODULE, {start_new_scheduler, SName, Workers}).
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% Adds a list of already existing workers to a scheduler. The ones managed
+%% by other schedulers are ignored.
+%%
+%% @spec add_workers(SchedulerName, Workers) ->
+%%     AddedWorkers | {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
+add_workers(SName, Workers) ->
+    gen_leader:leader_call(?MODULE, {add_workers, SName, Workers}).
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% Adds a scheduler and a list of already existing workers. The workers managed
+%% by other schedulers are ignored.
+%%
+%% @spec add_scheduler(SchedulerName, Workers) ->
+%%     AddedWorkers | {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
+add_scheduler(SName, Workers) ->
+    gen_leader:leader_call(?MODULE, {add_scheduler, SName, Workers}).    
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% Remove a scheduler from the coordinator.
+%%
+%% @spec remove_scheduler(SchedulerName) ->
+%%     RemovedWorkers | {error, unknown_scheduler}
+%% @end
+%%------------------------------------------------------------------------------
+remove_scheduler(SName) ->
+    gen_leader:leader_call(?MODULE, {remove_scheduler, SName}).
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% Removes workers. It ignores the one that do not exist.
+%%
+%% @spec remove_workers(Workers) -> RemovedWorkers
+%% @end
+%%------------------------------------------------------------------------------
+remove_workers(Workers) ->
+    gen_leader:leader_call(?MODULE, {remove_workers, Workers}).
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% Adds the schedulers and workers defined in the environemnt variables.
+%%
+%% @spec auto_add_sched_workers() -> ok
+%% @end
+%%------------------------------------------------------------------------------
+auto_add_sched_workers() ->
+    gen_leader:leader_call(?MODULE, auto_add_sched_workers).
 
 %===============================================================================
 % Internal
@@ -109,14 +202,22 @@ worker_load(WName, Time) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-init([SchedulerNodes, WorkerAssig]) ->
-    {ok, #state{schedulers = SchedulerNodes, worker_assig = WorkerAssig}}.
+init([]) ->
+    ets:new(scheduler_load, [named_table]),
+    ets:new(scheduler_assig, [named_table]),
+    ets:new(worker_scheduler, [named_table]),
+    {ok, #state{schedulers = []}}.
 
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-elected(State, _Election, undefined) ->
+elected(State = #state{schedulers = Schedulers}, _Election, undefined) ->
     error_logger:info_msg("~p elected as master", [node()]),
+    %% Inform the schedulers who is the new master.
+    lists:map(fun(Scheduler) ->
+                      rpc:cast(Scheduler, dron_scheduler, master_coordinator,
+                               [node()])
+              end, Schedulers),
     {ok, [], State#state{leader = true}};
 elected(State, _Election, _Node) ->
     {reply, [], State}.
@@ -130,6 +231,70 @@ surrendered(State, _Sync, _Election) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
+handle_leader_call({start_new_workers, SName, Workers}, _From,
+                   State = #state{schedulers = Schedulers}, _Election) ->
+    case dron_monitor:start_new_workers(Schedulers, SName, Workers) of
+        {error, Reason} -> {reply, {error, Reason}, State};
+        NewWs           -> {reply, NewWs, {start_new_workers, SName, NewWs},
+                            State}
+    end;
+handle_leader_call({start_new_scheduler, SName, Workers}, _From,
+                   State = #state{schedulers = Schedulers}, _Election) ->
+    case dron_monitor:start_new_scheduler(Schedulers, SName, Workers) of
+        {error, Reason} -> {reply, {error, Reason}, State};
+        NewWs           -> {reply, NewWs, {start_new_scheduler, SName, NewWs},
+                            State#state{schedulers = [SName | Schedulers]}}
+    end;
+handle_leader_call({add_workers, SName, Workers}, _From,
+                   State = #state{schedulers = Schedulers}, _Election) ->
+    case lists:member(SName, Schedulers) of
+        false -> {error, unknown_scheduler};
+        true  -> AddedWs = dron_monitor:add_workers(SName, Workers),
+                 {reply, AddedWs, {add_workers, SName, AddedWs}, State}
+    end;
+handle_leader_call({add_scheduler, SName, Workers}, _From,
+                   State = #state{schedulers = Schedulers}, _Election) ->
+    case dron_monitor:add_scheduler(Schedulers, SName, Workers) of
+        {error, Reason} -> {reply, {error, Reason}, State};
+        AddedWs         -> {reply, AddedWs, {add_scheduler, SName, AddedWs},
+                            State#state{schedulers = [SName | Schedulers]}}
+    end;
+handle_leader_call({remove_scheduler, SName}, _From,
+                   State = #state{schedulers = Schedulers}, _Election) ->
+    case dron_monitor:remove_scheduler(Schedulers, SName) of
+        {error, Reason} -> {reply, {error, Reason}, State};
+        RemWs           -> {reply, RemWs, {remove_scheduler, SName, RemWs},
+                            State#state{schedulers = lists:delete(SName,
+                                                                  Schedulers)}}
+    end;
+handle_leader_call({remove_workers, Workers}, _From,
+                   State, _Election) ->
+    RemWs = dron_monitor:remove_workers(Workers),
+    {reply, RemWs, {remove_workers, RemWs}, State};
+handle_leader_call(auto_add_sched_workers, _From,
+                   State = #state{schedulers = Schedulers}, _Election) ->
+    SchedWorkers = dron_monitor:assign_workers(dron_config:scheduler_nodes()),
+    error_logger:info_msg("~nDron schedulers assignments: ~p~n",
+                          [SchedWorkers]),
+    error_logger:info_msg("~nDron schedulers are starting...~n", []),
+    OkSched = lists:filter(
+        fun({SName, Workers}) ->
+                case dron_monitor:start_new_scheduler(Schedulers,
+                                                      SName, Workers) of
+                    {error, Reason} ->
+                        error_logger:error_msg("Failed to start ~p because ~p",
+                                               [SName, Reason]),
+                        false;
+                    Ws              ->
+                        error_logger:info_msg(
+                          "Started workers ~p for scheduler ~p", [Ws, SName]),
+                        true
+                end
+        end, SchedWorkers),
+    error_logger:info_msg("~nStarted schedulers: ~p~n", [OkSched]),
+    {NewSched, _} = lists:unzip(OkSched),
+    {reply, ok, {auto_add_sched_workers, NewSched, OkSched},
+     State#state{schedulers = lists:append(Schedulers, NewSched)}};
 handle_leader_call(Request, _From, State, _Election) ->
     error_logger:error_msg("Unexpected leader call ~p", [Request]),
     {stop, not_supported, State}.
@@ -166,18 +331,68 @@ handle_leader_cast({killed, JId = {Name, _Date}},
     rpc:call(dron_hash:hash(Name, Schedulers), dron_scheduler,
              job_instance_killed, [JId]),
     {ok, State};
+handle_leader_cast({satisfied, _RId}, State, _Election) ->
+    %% TODO(ionel): Do the call to the appropriate scheduler.
+    {ok, State};
 handle_leader_cast({worker_disabled, _JI}, State, _Election) ->
     %% TODO(ionel): Do the call to the appropriate scheduler.
     {ok, State};
-handle_leader_cast({worker_load, _WName, _Time}, State, _Election) ->
-    %% TODO(ionel): Do the call to the appropriate scheduler.
-    {ok, State};
+%% Updates the load of a scheduler. It is called by the scheduler.
+handle_leader_cast({scheduler_load, SName, Time, Load}, State, _Election) ->
+    ets:insert(scheduler_load, {SName, {Load, Time}}),
+    {ok, {scheduler_load, SName, Time, Load}, State};
+handle_leader_cast({new_scheduler_leader, OldSched, NewSched},
+                   State = #state{schedulers = Schedulers}, _Election) ->
+    dron_monitor:new_scheduler_leader(OldSched, NewSched),
+    {ok, {new_scheduler_leader, OldSched, NewSched},
+     State#state{schedulers = [NewSched | lists:delete(OldSched, Schedulers)]}};
 handle_leader_cast(_Request, State, _Election) ->
     {stop, not_supported, State}.
 
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
+from_leader({scheduler_load, SName, Time, Load}, State, _Election) ->
+    ets:insert(scheduler_load, {SName, {Load, Time}}),
+    {ok, State};
+from_leader({new_scheduler_leader, OldSched, NewSched},
+            State = #state{schedulers = Schedulers}, _Election) ->
+    dron_monitor:new_scheduler_leader(OldSched, NewSched),
+    {ok, State#state{
+           schedulers = [NewSched | lists:delete(OldSched, Schedulers)]}};
+from_leader({start_new_workers, SName, Workers}, State, _Election) ->
+    dron_monitor:store_new_workers(SName, Workers),
+    {ok, State};
+from_leader({start_new_scheduler, SName, Workers},
+            State = #state{schedulers = Schedulers}, _Election) ->
+    ets:insert(scheduler_load, {SName, {0, calendar:local_time()}}),
+    dron_monitor:store_new_workers(SName, Workers),
+    {ok, State#state{schedulers = [SName | Schedulers]}};
+from_leader({add_workers, SName, Workers}, State, _Election) ->
+    dron_monitor:store_new_workers(SName, Workers),
+    {ok, State};
+from_leader({add_scheduler, SName, AddedWs},
+            State = #state{schedulers = Schedulers}, _Election) ->
+    ets:insert(scheduler_load, {SName, {0, calendar:local_time()}}),
+    dron_monitor:store_new_workers(SName, AddedWs),
+    {ok, State#state{schedulers = [SName | Schedulers]}};    
+from_leader({remove_scheduler, SName, RemWs},
+            State = #state{schedulers = Schedulers}, _Election) ->
+    ets:delete(scheduler_load, SName),
+    ets:delete(scheduler_assig, SName),
+    lists:map(fun(W) ->
+                      ets:delete(worker_scheduler, W)
+              end, RemWs),
+    {ok, State#state{schedulers = lists:delete(SName, Schedulers)}};
+from_leader({remove_workers, RemWs}, State, _Election) ->
+    remove_workers(RemWs),
+    {ok, State};
+from_leader({auto_add_sched_workers, NewSched, OkSched},
+            State = #state{schedulers = Schedulers}, _Election) ->
+    lists:map(fun({SName, Workers}) ->
+                      dron_monitor:add_scheduler(Schedulers, SName, Workers)
+              end, OkSched),
+    {ok, State#state{schedulers = lists:append(Schedulers, NewSched)}};
 from_leader(_Request, State, _Election) ->
     {stop, not_supported, State}.
 
