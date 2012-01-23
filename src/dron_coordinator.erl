@@ -15,7 +15,8 @@
 
 -export([scheduler_load/3, new_scheduler_leader/2, start_new_workers/2,
         start_new_scheduler/2, add_workers/2, add_scheduler/2,
-        remove_scheduler/1, remove_workers/1, auto_add_sched_workers/0]).
+        remove_scheduler/1, remove_workers/1, auto_add_sched_workers/0,
+        get_workers/1]).
 
 -record(state, {leader, schedulers}).
 
@@ -195,6 +196,16 @@ remove_workers(Workers) ->
 auto_add_sched_workers() ->
     gen_leader:leader_call(?MODULE, auto_add_sched_workers).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% Returns the workers assigned to a scheduler.
+%%
+%% @spec get_workers(SName) -> {ok, Workers} | {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
+get_workers(SName) ->
+    gen_leader:leader_call(?MODULE, {get_workers, SName}).
+
 %===============================================================================
 % Internal
 %===============================================================================
@@ -295,6 +306,16 @@ handle_leader_call(auto_add_sched_workers, _From,
     {NewSched, _} = lists:unzip(OkSched),
     {reply, ok, {auto_add_sched_workers, NewSched, OkSched},
      State#state{schedulers = lists:append(Schedulers, NewSched)}};
+handle_leader_call({get_workers, SName}, _From,
+                   State = #state{schedulers = Schedulers}, _Election) ->
+    case lists:member(SName, Schedulers) of
+        false -> {reply, {error, unknown_scheduler}, State};
+        true  -> Reply = case ets:lookup(scheduler_assig, SName) of
+                             [] -> {error, no_sched_entry};
+                             [{_, Ws}] -> {ok, Ws}
+                         end,
+                 {reply, Reply, State}
+    end;
 handle_leader_call(Request, _From, State, _Election) ->
     error_logger:error_msg("Unexpected leader call ~p", [Request]),
     {stop, not_supported, State}.
@@ -344,6 +365,13 @@ handle_leader_cast({scheduler_load, SName, Time, Load}, State, _Election) ->
 handle_leader_cast({new_scheduler_leader, OldSched, NewSched},
                    State = #state{schedulers = Schedulers}, _Election) ->
     dron_monitor:new_scheduler_leader(OldSched, NewSched),
+    case dron_db:update_workers_scheduler(OldSched, NewSched) of
+        ok              -> ok;
+        {error, Reason} ->
+            error_logger:error_msg("Could not update workers" ++
+                                       " from ~p to ~p because of ~p",
+                                   [OldSched, NewSched, Reason])
+    end,
     {ok, {new_scheduler_leader, OldSched, NewSched},
      State#state{schedulers = [NewSched | lists:delete(OldSched, Schedulers)]}};
 handle_leader_cast(_Request, State, _Election) ->

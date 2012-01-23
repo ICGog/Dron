@@ -9,6 +9,6 @@
 
 -record(resource_deps, {rid, state, dep}).
 
--record(worker, {name, enabled, max_slots, used_slots}).
+-record(worker, {name, scheduler, enabled, max_slots, used_slots}).
 
 -define(NAME, {global, ?MODULE}).

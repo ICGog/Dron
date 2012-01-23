@@ -7,6 +7,7 @@
          get_job_instance/1, get_job_instance_unsync/1, get_job_instance/2,
          set_job_instance_state/2, archive_job/1, store_worker/1,
          delete_worker/1, get_worker/1, get_workers/1,
+         update_workers_scheduler/2, get_workers_of_scheduler/1,
          get_job_instances_on_worker/1, get_dependants/1, store_dependant/2,
          set_resource_state/2]).
 
@@ -215,6 +216,44 @@ get_workers(Enabled) ->
             end,
     case mnesia:transaction(Trans) of
         {atomic, Return}  -> {ok, Return};
+        {aborted, Reason} -> {error, Reason}
+    end.
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec get_workers_of_scheduler(SchedulerName) ->
+%%    {ok, [Workers]} | {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
+get_workers_of_scheduler(SName) ->
+    Trans = fun() ->
+                    qlc:eval(qlc:q([W || W <- mnesia:table(workers),
+                                         W#worker.scheduler == SName]))
+            end,
+    case mnesia:transaction(Trans) of
+        {atomic, Return}  -> {ok, Return};
+        {aborted, Reason} -> {error, Reason}
+    end.
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec update_workers_scheduler(OldScheduler, NewScheduler) ->
+%%    ok | {error, Reason}
+%% @end
+%%------------------------------------------------------------------------------
+update_workers_scheduler(OldSched, NewSched) ->
+    Trans = fun() ->
+                    Ws = qlc:eval(qlc:q([W || W <- mnesia:table(workers),
+                                              W#worker.scheduler == OldSched])),
+                    lists:map(
+                      fun(W) ->
+                              mnesia:write(workers,
+                                           W#worker{scheduler = NewSched},
+                                           write)
+                      end, Ws)
+            end,
+    case mnesia:transaction(Trans) of
+        {atomic, _Return}  -> ok;
         {aborted, Reason} -> {error, Reason}
     end.
 

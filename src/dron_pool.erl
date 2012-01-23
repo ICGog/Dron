@@ -130,7 +130,6 @@ master_coordinator(Master) ->
 init([Master]) ->
     ets:new(worker_records, [named_table]),
     ets:new(slot_workers, [ordered_set, named_table]),
-    %% TODO(ionel): Fix reconstruct state.
     reconstruct_state(),
     erlang:send_after(dron_config:scheduler_load_interval(),
                       self(), send_load),
@@ -153,8 +152,9 @@ handle_call({add, WName, Slots}, _From, State) ->
                                        []            -> []
                                    end,
                         ets:insert(slot_workers, {0, [WName | SWorkers]}),
-                        NewW = #worker{name = WName, enabled = true,
-                                       max_slots = Slots, used_slots = 0},
+                        NewW = #worker{name = WName, scheduler = node(),
+                                       enabled = true, max_slots = Slots,
+                                       used_slots = 0},
                         case dron_db:store_worker(NewW) of
                             ok    -> ets:insert(worker_records, {WName, NewW}),
                                      {reply, ok, State};
@@ -301,10 +301,10 @@ disable_worker(WName) ->
     lists:map(fun(JI) -> dron_coordinator:worker_disabled(JI) end, FailedJIs),
     Ret.
 
-% TODO(ionel): Implement worker monitoring.
 reconstruct_state() ->
-    {ok, Workers} = dron_db:get_workers(true),
+    {ok, Workers} = dron_db:get_workers_of_scheduler(node()),
     lists:map(fun(Worker = #worker{name = WName, used_slots = Slots}) ->
+                      monitor(WName, true),
                       ets:insert(worker_records, {WName, Worker}),
                       Ws = case ets:lookup(slot_workers, Slots) of
                                [{Slots, Wls}] -> [WName|Wls];
