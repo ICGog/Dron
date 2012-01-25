@@ -4,7 +4,8 @@
 -export([scheduler_nodes/0, db_nodes/0, max_slots/0, exchanges/0,
          dron_exchange/0, consumers/0, log_dir/0, master_nodes/0,
          worker_nodes/0, expand_node_names/1, scheduler_heartbeat_interval/0,
-         scheduler_heartbeat_timeout/0]).
+         scheduler_heartbeat_timeout/0, worker_low_load/0, worker_medium_load/0,
+         worker_high_load/0]).
 
 %-------------------------------------------------------------------------------
 
@@ -23,7 +24,7 @@ db_nodes() ->
     end.    
 
 max_slots() ->
-    1500.
+    20.
 
 exchanges() ->
     [{<<"dron_events">>, <<"fanout">>},
@@ -58,6 +59,18 @@ scheduler_heartbeat_interval() ->
 
 scheduler_heartbeat_timeout() ->
     {0, {0, 0, 30}}.
+
+%% {WorkerOfferings, WorkersRequests}. The first value represents an upper bound
+%% up to which the worker pool is offering workers. The second value represents
+%% an upper bound up to which the scheduler is not asking for extra workers.
+worker_low_load() ->
+    {0.3, 0.9}.
+
+worker_medium_load() ->
+    {0.2, 0.8}.
+
+worker_high_load() ->
+    {0.1, 0.7}.
 
 %===============================================================================
 % Internal

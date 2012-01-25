@@ -263,7 +263,8 @@ handle_cast(Request, State) ->
 handle_info(heartbeat, State = #state{master_coordinator = Master,
                                       worker_policy = WorkerPolicy}) ->
     Res = rpc:cast(Master, dron_coordinator, scheduler_heartbeat,
-                   [node(), calendar:local_time(), calculate_needs()]),
+                   [node(), calendar:local_time(),
+                    calculate_needs(WorkerPolicy)]),
     erlang:send_after(dron_config:scheduler_heartbeat_interval(),
                       self(), heartbeat),
     {noreply, State};
@@ -328,15 +329,61 @@ reconstruct_state() ->
                       ets:insert(slot_workers, {Slots, Ws})
               end, Workers).
 
-calculate_needs() ->
-    alive.
-    %% {AllSlots, FreeSlots} =
-    %%     lists:unzip(lists:map(fun({_WName, #worker{max_slots = MaxSlots,
-    %%                                                used_slots = UsedSlots}}) ->
-    %%                                   {MaxSlots, MaxSlots - UsedSlots}
-    %%                           end, ets:tab2list(worker_records))),
-    %% NSlots = lists:sum(AllSlots),
-    %% NFreeSlots = lists:sum(FreeSlots),
-    %% if NSlots > 0 -> NFreeSlots / NSlots;
-    %%    true       -> 1
-    %% end.
+calculate_needs(WorkerPolicy) ->
+    {AllSlots, UsedSlots} =
+        lists:unzip(lists:map(fun({_WName, #worker{max_slots = MaxSlots,
+                                                   used_slots = UsedSlots}}) ->
+                                      {MaxSlots, UsedSlots}
+                              end, ets:tab2list(worker_records))),
+    NWorkers = length(AllSlots),
+    NSlots = lists:sum(AllSlots),
+    NUsedSlots = lists:sum(UsedSlots),
+    Load = compute_load(NSlots, NUsedSlots),
+    Policy = apply(dron_config, WorkerPolicy, []),
+    {OffersBound, RequestsBound} = Policy,
+    if
+        Load < OffersBound ->
+            compute_offers(NSlots, NUsedSlots, Policy, 0);
+        Load > RequestsBound ->
+            compute_requests(NSlots, NUsedSlots, Policy, 0);
+        true ->
+            alive
+    end.
+
+compute_load(NSlots, NUsedSlots) ->
+    if
+        NSlots > 0 -> NUsedSlots / NSlots;
+        true       -> 1
+    end.
+
+compute_offers(NSlots, NUsedSlots, {OffersBound, RequestsBound} = Policy,
+               NumOffers) ->
+    Load = compute_load(NSlots, NUsedSlots),
+    if
+        Load < OffersBound ->
+            compute_offers(NSlots - dron_config:max_slots(),
+                           NUsedSlots, Policy, NumOffers + 1);
+        true ->
+            NOffers = if
+                          Load > RequestsBound -> NumOffers - 1;
+                          true -> NumOffers
+                      end,
+            case NOffers of
+                0 -> alive;
+                _ -> {offer, NOffers}
+            end
+    end.
+
+compute_requests(NSlots, NUsedSlots, {OffersBound, RequestsBound} = Policy,
+                 NumRequests) ->
+    Load = compute_load(NSlots, NUsedSlots),
+    if
+        Load > RequestsBound ->
+            compute_requests(NSlots + dron_config:max_slots(),
+                             NUsedSlots, Policy, NumRequests + 1);
+        true ->
+            case NumRequests of
+                0 -> alive;
+                _ -> {request, NumRequests}
+            end
+    end.
