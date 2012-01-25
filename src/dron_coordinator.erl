@@ -13,7 +13,7 @@
          job_instance_timeout/1, job_instance_killed/1,
          dependency_satisfied/1, worker_disabled/1]).
 
--export([scheduler_load/3, new_scheduler_leader/2, start_new_workers/2,
+-export([scheduler_heartbeat/3, new_scheduler_leader/2, start_new_workers/2,
         start_new_scheduler/2, add_workers/2, add_scheduler/2,
         remove_scheduler/1, remove_workers/1, auto_add_sched_workers/0,
         get_workers/1]).
@@ -27,7 +27,7 @@
 %% Starts the coordinator on a list of nodes. One node will be elected as
 %% leader.
 %%
-%% @spec start_link(MasterNodes, SchedulerNodes) -> ok
+%% @spec start_link(MasterNodes) -> ok
 %% @end
 %%------------------------------------------------------------------------------
 start_link(MasterNodes) ->
@@ -99,14 +99,14 @@ worker_disabled(JI) ->
 
 %%------------------------------------------------------------------------------
 %% @doc
-%% Schedulers use this method to inform the coordinator about their load.
+%% Schedulers use this method to inform the coordinator about their requirement.
 %%
-%% @spec scheduler_load(SchedulerName, Time, Load) -> ok
+%% @spec scheduler_heartbeat(SchedulerName, Time, Requirement) -> ok
 %% @end
 %%------------------------------------------------------------------------------
-scheduler_load(SchedulerName, Time, Load) ->
-    gen_leader:leader_cast(?MODULE,
-                           {scheduler_load, SchedulerName, Time, Load}).
+scheduler_heartbeat(SchedulerName, Time, Requirement) ->
+    gen_leader:leader_cast(?MODULE, {scheduler_heartbeat, SchedulerName,
+                                     Time, Requirement}).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -134,7 +134,7 @@ start_new_workers(SName, Workers) ->
 %% @doc
 %% Starts a new scheduler together with a list of new workers.
 %%
-%% @spec start_new_workers(SchedulerName, Workers) ->
+%% @spec start_new_scheduler(SchedulerName, Workers) ->
 %%     NewWorkers | {error, Reason}
 %% @end
 %%------------------------------------------------------------------------------
@@ -214,8 +214,8 @@ get_workers(SName) ->
 %% @private
 %%------------------------------------------------------------------------------
 init([]) ->
-    ets:new(scheduler_load, [named_table]),
-    ets:new(scheduler_assig, [named_table]),
+    ets:new(scheduler_heartbeat, [named_table]),
+    ets:new(scheduler_assig, [public, named_table]),
     ets:new(worker_scheduler, [named_table]),
     {ok, #state{schedulers = []}}.
 
@@ -229,6 +229,8 @@ elected(State = #state{schedulers = Schedulers}, _Election, undefined) ->
                       rpc:cast(Scheduler, dron_scheduler, master_coordinator,
                                [node()])
               end, Schedulers),
+    erlang:send_after(dron_config:scheduler_heartbeat_interval(), self(),
+                     balance_workers),
     {ok, [], State#state{leader = true}};
 elected(State, _Election, _Node) ->
     {reply, [], State}.
@@ -359,9 +361,10 @@ handle_leader_cast({worker_disabled, _JI}, State, _Election) ->
     %% TODO(ionel): Do the call to the appropriate scheduler.
     {ok, State};
 %% Updates the load of a scheduler. It is called by the scheduler.
-handle_leader_cast({scheduler_load, SName, Time, Load}, State, _Election) ->
-    ets:insert(scheduler_load, {SName, {Load, Time}}),
-    {ok, {scheduler_load, SName, Time, Load}, State};
+handle_leader_cast({scheduler_heartbeat, SName, Time, Req}, State, _Election) ->
+    error_logger:info_msg("Got scheduler ~p heartbeat ~p", [SName, Req]),
+    ets:insert(scheduler_heartbeat, {SName, {Req, Time}}),
+    {ok, {scheduler_heartbeat, SName, Time, Req}, State};
 handle_leader_cast({new_scheduler_leader, OldSched, NewSched},
                    State = #state{schedulers = Schedulers}, _Election) ->
     dron_monitor:new_scheduler_leader(OldSched, NewSched),
@@ -380,8 +383,8 @@ handle_leader_cast(_Request, State, _Election) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-from_leader({scheduler_load, SName, Time, Load}, State, _Election) ->
-    ets:insert(scheduler_load, {SName, {Load, Time}}),
+from_leader({scheduler_heartbeat, SName, Time, Req}, State, _Election) ->
+    ets:insert(scheduler_heartbeat, {SName, {Req, Time}}),
     {ok, State};
 from_leader({new_scheduler_leader, OldSched, NewSched},
             State = #state{schedulers = Schedulers}, _Election) ->
@@ -393,7 +396,7 @@ from_leader({start_new_workers, SName, Workers}, State, _Election) ->
     {ok, State};
 from_leader({start_new_scheduler, SName, Workers},
             State = #state{schedulers = Schedulers}, _Election) ->
-    ets:insert(scheduler_load, {SName, {0, calendar:local_time()}}),
+    ets:insert(scheduler_heartbeat, {SName, {alive, calendar:local_time()}}),
     dron_monitor:store_new_workers(SName, Workers),
     {ok, State#state{schedulers = [SName | Schedulers]}};
 from_leader({add_workers, SName, Workers}, State, _Election) ->
@@ -401,12 +404,12 @@ from_leader({add_workers, SName, Workers}, State, _Election) ->
     {ok, State};
 from_leader({add_scheduler, SName, AddedWs},
             State = #state{schedulers = Schedulers}, _Election) ->
-    ets:insert(scheduler_load, {SName, {0, calendar:local_time()}}),
+    ets:insert(scheduler_heartbeat, {SName, {alive, calendar:local_time()}}),
     dron_monitor:store_new_workers(SName, AddedWs),
     {ok, State#state{schedulers = [SName | Schedulers]}};    
 from_leader({remove_scheduler, SName, RemWs},
             State = #state{schedulers = Schedulers}, _Election) ->
-    ets:delete(scheduler_load, SName),
+    ets:delete(scheduler_heartbeat, SName),
     ets:delete(scheduler_assig, SName),
     lists:map(fun(W) ->
                       ets:delete(worker_scheduler, W)
@@ -448,6 +451,16 @@ handle_cast(Msg, State, _Election) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
+handle_info(balance_workers, State = #state{leader = false}) ->
+    % Ignore the message.
+    {noreply, State};
+handle_info(balance_workers, State = #state{leader = true}) ->
+    error_logger:info_msg("Balancing workers", []),
+    Heartbeats = ets:tab2list(scheduler_heartbeat),
+    erlang:spawn_link(dron_monitor, balance_workers, [Heartbeats, Heartbeats]),
+    erlang:send_after(dron_config:scheduler_heartbeat_interval(), self(),
+                      balance_workers),
+    {noreply, State};
 handle_info(Info, State) ->
     error_logger:error_msg("Got unexpected message ~p", [Info]),
     {stop, not_supported, State}.

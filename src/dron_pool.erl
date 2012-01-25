@@ -6,17 +6,18 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3]).
 
--export([start_link/1, add_worker/1, add_worker/2, add_workers/1,
-         auto_add_workers/0, offer_worker/1, take_worker/1, remove_worker/1,
+-export([start_link/2, add_worker/1, add_worker/2, add_workers/1,
+         auto_add_workers/0, offer_workers/1, take_workers/1, remove_worker/1,
          get_worker/0, release_worker_slot/1, get_all_workers/0,
          master_coordinator/1]).
 
--record(state, {master_coordinator}).
+-record(state, {master_coordinator, worker_policy}).
 
 %===============================================================================
 
-start_link(Master) ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [Master], []).
+start_link(Master, WorkerPolicy) ->
+    gen_server:start_link({local, ?MODULE}, ?MODULE,
+                          [Master, WorkerPolicy], []).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -55,24 +56,24 @@ auto_add_workers() ->
 
 %%------------------------------------------------------------------------------
 %% @doc
-%% Adds a worker to the pool. It does not try to start a dron_worker on the
-%% given node.
+%% Adds a list of workers to the pool. It does not try to start a dron_worker
+%% on the worker nodes.
 %%
-%% @spec offer_worker(WorkerName) -> ok | {error, unknown_worker}
+%% @spec offer_workers(Workers) -> [ok | {error, unknown_worker}]
 %% @end
 %%------------------------------------------------------------------------------
-offer_worker(WName) ->
-    gen_server:call(?MODULE, {offer_worker, WName}).
+offer_workers(Workers) ->
+    gen_server:call(?MODULE, {offer_workers, Workers}).
 
 %%------------------------------------------------------------------------------
 %% @doc
-%% Removes a worker from the pool. It does not disable it.
+%% Removes a list of workers from the pool. It does not disable them.
 %%
-%% @spec take_worker(WorkerName) -> ok | {error, unknown_worker}
+%% @spec take_workers(Workers) -> [ok | {error, unknown_worker}]
 %% @end
 %%------------------------------------------------------------------------------
-take_worker(WName) ->
-    gen_server:call(?MODULE, {take_worker, WName}).
+take_workers(Workers) ->
+    gen_server:call(?MODULE, {take_workers, Workers}).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -127,13 +128,13 @@ master_coordinator(Master) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-init([Master]) ->
+init([Master, WorkerPolicy]) ->
     ets:new(worker_records, [named_table]),
     ets:new(slot_workers, [ordered_set, named_table]),
     reconstruct_state(),
-    erlang:send_after(dron_config:scheduler_load_interval(),
-                      self(), send_load),
-    {ok, #state{master_coordinator = Master}}.
+    erlang:send_after(dron_config:scheduler_heartbeat_interval(),
+                      self(), heartbeat),
+    {ok, #state{master_coordinator = Master, worker_policy = WorkerPolicy}}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -163,29 +164,41 @@ handle_call({add, WName, Slots}, _From, State) ->
                 _    -> {reply, {error, no_connection}, State}
             end
     end;
-handle_call({offer_worker, WName}, _From, State) ->
-    case dron_db:get_worker(WName) of
-        {error, Reason} ->
-            {reply, {error, Reason}, State};
-        {ok, Worker = #worker{used_slots = UsedSlots}} ->
-            ets:insert(worker_records, {WName, Worker}),
-            SWorkers = case ets:lookup(slot_workers, UsedSlots) of
-                           []     -> [WName];
-                           CurSWs -> [WName | CurSWs]
-                       end,
-            ets:insert(slot_workers, {UsedSlots, SWorkers}),
-            {reply, ok, State}
-    end;
-handle_call({take_worker, WName}, _From, State) ->
-    case ets:lookup(worker_records, WName) of
-        []                -> {reply, {error, unknown_worker}, State};
-        [{WName, Worker}] -> evict_worker(Worker),
-                             ets:delete(worker_records, WName),
-                             {reply, ok, State}
-    end;
+handle_call({offer_workers, Workers}, _From, State) ->
+    Result = lists:map(fun(WName) ->
+                case dron_db:get_worker(WName) of
+                    {ok, Worker = #worker{used_slots = UsedSlots}} ->
+                        monitor(WName, true),
+                        ets:insert(worker_records, {WName, Worker}),
+                        SWorkers = case ets:lookup(slot_workers, UsedSlots) of
+                                       []     -> [WName];
+                                       CurSWs -> [WName | CurSWs]
+                                   end,
+                        ets:insert(slot_workers, {UsedSlots, SWorkers}),
+                        ok;
+                    Error -> Error
+                end
+                       end, Workers),
+    {reply, Result, State};
+handle_call({take_workers, Workers}, _From, State) ->
+    Result = lists:map(fun(WName) ->
+                case ets:lookup(worker_records, WName) of
+                    [{WName, Worker}] ->
+                        % TODO(ionel): Figure out a way of stopp monitoring only
+                        % when all the current jobs have finished!
+                        monitor(WName, false),
+                        evict_worker(Worker),
+                        ets:delete(worker_records, WName),
+                        ok;
+                    []                ->
+                        {error, unknown_worker}
+                end
+                       end, Workers),
+    {reply, Result, State};
 handle_call({remove, WName}, _From, State) ->
     case ets:lookup(worker_records, WName) of
         [{WName, W}] -> disable_worker(WName),
+                        monitor(WName, false),
                         case dron_db:delete_worker(WName) of
                             ok    -> evict_worker(W),
                                      {reply, ok, State};
@@ -247,11 +260,12 @@ handle_cast(Request, State) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-handle_info(send_load, State = #state{master_coordinator = Master}) ->
-    rpc:cast(Master, dron_coordinator, scheduler_load,
-             [node(), calendar:local_time(), calculate_load()]),
-    erlang:send_after(dron_config:scheduler_load_interval(),
-                      self(), send_load),
+handle_info(heartbeat, State = #state{master_coordinator = Master,
+                                      worker_policy = WorkerPolicy}) ->
+    Res = rpc:cast(Master, dron_coordinator, scheduler_heartbeat,
+                   [node(), calendar:local_time(), calculate_needs()]),
+    erlang:send_after(dron_config:scheduler_heartbeat_interval(),
+                      self(), heartbeat),
     {noreply, State};
 handle_info({nodedown, WName}, State = #state{master_coordinator = Master}) ->
     error_logger:error_msg("Node ~p failed!~n", [WName]),
@@ -302,7 +316,8 @@ disable_worker(WName) ->
     Ret.
 
 reconstruct_state() ->
-    {ok, Workers} = dron_db:get_workers_of_scheduler(node()),
+    Ret = dron_db:get_workers_of_scheduler(node()),
+    {ok, Workers} = Ret,
     lists:map(fun(Worker = #worker{name = WName, used_slots = Slots}) ->
                       monitor(WName, true),
                       ets:insert(worker_records, {WName, Worker}),
@@ -313,14 +328,15 @@ reconstruct_state() ->
                       ets:insert(slot_workers, {Slots, Ws})
               end, Workers).
 
-calculate_load() ->
-    {AllSlots, FreeSlots} =
-        lists:unzip(lists:map(fun({_WName, #worker{max_slots = MaxSlots,
-                                                   used_slots = UsedSlots}}) ->
-                                      {MaxSlots, MaxSlots - UsedSlots}
-                              end, ets:tab2list(worker_records))),
-    NSlots = lists:sum(AllSlots),
-    NFreeSlots = lists:sum(FreeSlots),
-    if NSlots > 0 -> NFreeSlots / NSlots;
-       true       -> 1
-    end.
+calculate_needs() ->
+    alive.
+    %% {AllSlots, FreeSlots} =
+    %%     lists:unzip(lists:map(fun({_WName, #worker{max_slots = MaxSlots,
+    %%                                                used_slots = UsedSlots}}) ->
+    %%                                   {MaxSlots, MaxSlots - UsedSlots}
+    %%                           end, ets:tab2list(worker_records))),
+    %% NSlots = lists:sum(AllSlots),
+    %% NFreeSlots = lists:sum(FreeSlots),
+    %% if NSlots > 0 -> NFreeSlots / NSlots;
+    %%    true       -> 1
+    %% end.

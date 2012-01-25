@@ -10,7 +10,7 @@
          ji_succeeded/1, ji_killed/1, ji_timeout/1, ji_failed/2,
          run_job_instance/2]).
 
--export([start/2, schedule/1, unschedule/1]).
+-export([start/3, schedule/1, unschedule/1]).
 
 -export([job_instance_succeeded/1, job_instance_failed/2,
          job_instance_timeout/1, job_instance_killed/1,
@@ -18,7 +18,7 @@
          store_waiting_job_instance_timer/2,
          store_waiting_job_instance_deps/2, master_coordinator/1]).
 
--record(state, {leader, leader_node, master_coordinator}).
+-record(state, {leader, leader_node, master_coordinator, worker_policy}).
 
 %===============================================================================
 
@@ -27,11 +27,11 @@
 %% Starts the the scheduler on a list of nodes. One node will be elected as
 %% leader. It also receives the name of the master coordinator node.
 %%
-%% @spec start(Nodes, Master) -> ok
+%% @spec start(Nodes, Master, WorkerPolicy) -> ok
 %% @end
 %%------------------------------------------------------------------------------
-start(Nodes, Master) ->
-    gen_leader:start(?MODULE, Nodes, [], ?MODULE, [Master], []).
+start(Nodes, Master, WorkerPolicy) ->
+    gen_leader:start(?MODULE, Nodes, [], ?MODULE, [Master, WorkerPolicy], []).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -130,13 +130,14 @@ master_coordinator(Node) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-init([Master]) ->
+init([Master, WorkerPolicy]) ->
     ets:new(schedule_timers, [named_table]),
     ets:new(start_timers, [named_table]),
     ets:new(wait_timers, [named_table]),
     ets:new(ji_deps, [named_table]),
     ets:new(delay, [public, named_table]),
-    {ok, #state{leader_node = undefined, master_coordinator = Master}}.
+    {ok, #state{leader_node = undefined, master_coordinator = Master,
+                worker_policy = WorkerPolicy}}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -147,10 +148,10 @@ init([Master]) ->
 %% @spec elected(State, Election, undefined) -> {ok, Synch, State}
 %% @end
 %%------------------------------------------------------------------------------
-elected(State = #state{master_coordinator = Master, leader_node = LeaderNode},
-        _Election, undefined) ->
+elected(State = #state{master_coordinator = Master, leader_node = LeaderNode,
+                       worker_policy = WorkerPolicy}, _Election, undefined) ->
     error_logger:info_msg("~p elected as master", [node()]),
-    dron_pool:start_link(Master),
+    dron_pool:start_link(Master, WorkerPolicy),
     case LeaderNode of
         undefined ->
             ok;
@@ -183,7 +184,7 @@ elected(State, _Election, _Node) ->
 %%------------------------------------------------------------------------------
 surrendered(State, {LeaderNode, Master}, _Election) ->
     {ok, State#state{leader = false, leader_node = LeaderNode,
-                    master_coordinator = Master}}.
+                     master_coordinator = Master}}.
 
 %%------------------------------------------------------------------------------
 %% @private

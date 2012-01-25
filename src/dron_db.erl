@@ -52,7 +52,8 @@ get_job(Name) ->
 %% @doc
 %% Get the job. The method performs a dirty read.
 %%
-%% @spec get_job(Name) -> {ok, Job} | {error, no_job} | {error, multiple_jobs} |
+%% @spec get_job_unsync(Name) -> {ok, Job} | {error, no_job}
+%%     | {error, multiple_jobs} |
 %%        {error, Reason}
 %% @end
 %%------------------------------------------------------------------------------
@@ -228,7 +229,8 @@ get_workers(Enabled) ->
 get_workers_of_scheduler(SName) ->
     Trans = fun() ->
                     qlc:eval(qlc:q([W || W <- mnesia:table(workers),
-                                         W#worker.scheduler == SName]))
+                                         W#worker.scheduler == SName,
+                                         W#worker.enabled == true]))
             end,
     case mnesia:transaction(Trans) of
         {atomic, Return}  -> {ok, Return};

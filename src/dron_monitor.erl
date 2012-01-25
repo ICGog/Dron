@@ -5,7 +5,7 @@
 -export([new_scheduler_leader/2, start_new_workers/3, store_new_workers/2,
         start_new_scheduler/3, add_workers/2, add_scheduler/3,
         remove_scheduler/2, remove_workers/1, assign_workers/1,
-        balance_workers/1]).
+        balance_workers/2]).
 
 %===============================================================================
 
@@ -46,13 +46,14 @@ start_new_workers(SName, Workers) ->
 %% @doc
 %% Store the new workers. They must be brand new.
 %%
-%% @spec store_workers(SchedulerName, Workers) -> ok
+%% @spec store_new_workers(SchedulerName, Workers) -> ok
 %% @end
 %%------------------------------------------------------------------------------
 store_new_workers(SName, Ws) ->
-    lists:map(fun(W) -> ets:insert(worker_scheduler, {W, SName}) end, Ws),    
+    lists:map(fun(W) -> ets:insert(worker_scheduler, {W, SName}) end, Ws),
+    NewWs = lists:append(get_scheduler_workers(SName), Ws),
     ets:insert(scheduler_assig,
-               {SName, lists:append(get_scheduler_workers(SName), Ws)}),
+               {SName, NewWs}),
     ok.
 
 %%------------------------------------------------------------------------------
@@ -60,7 +61,7 @@ store_new_workers(SName, Ws) ->
 %% Starts a new scheduler together with its workers. The workers that are used
 %% by other schedulers are not added.
 %%
-%% @spec start_new_workers(Schedulers, SchedulerName, Workers) ->
+%% @spec start_new_scheduler(Schedulers, SchedulerName, Workers) ->
 %%    NewWorkers | {error, Reason} | {error, already_added}
 %% @end
 %%------------------------------------------------------------------------------
@@ -71,13 +72,14 @@ start_new_scheduler(Schedulers, SName, Workers) ->
 %% one node. Otherwise, dron_scheduler:start may elect a different leader. Thus,
 %% one may add workers to an unsuitable slave scheduler.
         false -> case rpc:call(SName, dron_scheduler,
-                               start, [[SName], node()]) of
-                     {ok, _Pid} -> ets:insert(scheduler_load,
-                                          {SName, {0, calendar:local_time()}}),
-                                   timer:sleep(200),
-                                   start_new_workers(SName,
-                                                     get_new_workers(Workers));
-                     Reason     -> {error, Reason}
+                               start, [[SName], node(), worker_low_load]) of
+                     {ok, _Pid} ->
+                         ets:insert(scheduler_heartbeat,
+                                    {SName, {alive, calendar:local_time()}}),
+                         timer:sleep(200),
+                         start_new_workers(SName, get_new_workers(Workers));
+                     Reason     ->
+                         {error, Reason}
                  end
     end.
 
@@ -107,8 +109,8 @@ add_scheduler(Schedulers, SName, Workers) ->
         false -> NewWs = get_new_workers(Workers),
                  case NewWs of
                      [] -> {error, no_workers};
-                     _  -> ets:insert(scheduler_load,
-                             {SName, {0, calendar:local_time()}}),
+                     _  -> ets:insert(scheduler_heartbeat,
+                             {SName, {alive, calendar:local_time()}}),
                            store_new_workers(SName, NewWs),
                            NewWs
                  end
@@ -119,19 +121,19 @@ add_scheduler(Schedulers, SName, Workers) ->
 %% Removes a scheduler. Its workers do not get reassigned.
 %%
 %% @spec remove_scheduler(Schedulers, SchedulerName) ->
-%%    ok | {error, unknown_scheduler}
+%%    RemWs | {error, unknown_scheduler}
 %% @end
 %%------------------------------------------------------------------------------
 remove_scheduler(Schedulers, SName) ->
     case lists:member(SName, Schedulers) of
         false -> {error, unknown_scheduler};
-        true  -> ets:delete(scheduler_load, SName),
+        true  -> ets:delete(scheduler_heartbeat, SName),
                  Ws = get_scheduler_workers(SName),
                  ets:delete(scheduler_assig, SName),
                  lists:map(fun(W) ->
                                    ets:delete(worker_scheduler, W)
                            end, Ws),
-                 ok
+                 Ws
     end.
 
 %%------------------------------------------------------------------------------
@@ -160,12 +162,12 @@ remove_workers(Workers) ->
 new_scheduler_leader(OldSched, NewSched) ->
     Ws = get_scheduler_workers(OldSched),
     ets:delete(scheduler_assig, OldSched),
-    ets:delete(scheduler_load, OldSched),
+    ets:delete(scheduler_heartbeat, OldSched),
     lists:map(fun(Worker) ->
                       ets:insert(worker_scheduler, {Worker, NewSched})
               end, Ws),
     ets:insert(scheduler_assig, {NewSched, Ws}),
-    ets:insert(scheduler_load, {NewSched, {0, calendar:local_time()}}),
+    ets:insert(scheduler_heartbeat, {NewSched, {alive, calendar:local_time()}}),
     ok.
 
 %%------------------------------------------------------------------------------
@@ -173,7 +175,7 @@ new_scheduler_leader(OldSched, NewSched) ->
 %% Assigns workers stored in environment variable to the given list of
 %% schedulers.
 %%
-%% @spec assign_workers(Schedulers) -> [{Scheduler, Workers}...]
+%% @spec assign_workers(Schedulers) -> [{Scheduler, Workers}]
 %% @end
 %%------------------------------------------------------------------------------
 assign_workers(Schedulers) ->
@@ -203,19 +205,26 @@ assign_workers(Schedulers) ->
 %%------------------------------------------------------------------------------
 %% @doc
 %%
-%% @spec balance_workers(Loads)
+%% @spec balance_workers(Heartbeats) -> ok
 %% @end
 %%------------------------------------------------------------------------------
-balance_workers([]) ->
+balance_workers([], _Heartbeats) ->
     ok;
-balance_workers([{Load, {SName, Time}} | Rest]) ->
+balance_workers([{SName, {Req, Time}} = Heartbeat | Rest], Heartbeats) ->
     TimeDiff = calendar:time_difference(Time, calendar:local_time()),
-    Expired = TimeDiff > dron_config:scheduler_load_timeout(),
+    Expired = TimeDiff > dron_config:scheduler_heartbeat_timeout(),
     if
-        Expired -> ok; %% TODO(ionel): handle load timeout
-        true    -> ok  %% TODO(ionel): implement balancing
-    end,
-    balance_workers(Rest).
+        Expired ->
+            Ws = dron_coordinator:remove_scheduler(SName),
+            error_logger:error_msg("Scheduler ~p went down. Reassigning workers"
+                                   ++ " ~p", [SName, Ws]),
+            reassign_workers(Ws, lists:append(Heartbeats, Rest)),
+            balance_workers(Rest, Heartbeats);
+        true   ->
+            %% TODO(ionel): Handle the case when the workers have requests or
+            %% offers.
+            balance_workers(Rest, [Heartbeat | Heartbeats])
+    end.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -263,31 +272,38 @@ get_scheduler_workers(SName) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-reassign_workers(Ws) ->
-    Loads = ets:tab2list(scheduler_load),
-    WsLeft = reassign_workers(Ws, Loads),
+reassign_workers(Ws, Heartbeats) ->
+    WsLeft = reassign_workers(Ws, length(Ws), Heartbeats),
     case WsLeft of
         [] -> ok;
-        _  -> case Loads of
+        _  -> case Heartbeats of
                   [] -> error_logger:error_msg("No schedulers available");
-                  [{SName, _}] -> append_to_scheduler(SName, WsLeft)
+                  [{SName, _}|Rest] -> append_to_scheduler(SName, WsLeft)
               end
     end.
 
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-reassign_workers(Ws, [{SName, {Load, Time}} | _Rest]) when Load > 0.8 ->
-    append_to_scheduler(SName, Ws),
+reassign_workers([], 0, _) ->
     [];
-reassign_workers(Ws, []) ->
+reassign_workers(Ws, _WLen, []) ->
     Ws;
-reassign_workers(Ws, [_Load | Rest]) ->
-    reassign_workers(Ws, Rest).
+reassign_workers(Ws, WLen, [{SName, {{request, Num}, _Time}} | Rest]) ->
+    Take = if
+               WLen >= Num -> Num;
+               true        -> WLen
+           end,
+    {AppendWs, WorkersRest} = lists:split(Take, Ws),
+    append_to_scheduler(SName, AppendWs),
+    reassign_workers(WorkersRest, WLen - Take, Rest);
+reassign_workers(Ws, WLen, [Hearbeat | Rest]) ->
+    reassign_workers(Ws, WLen, Rest).
 
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
 append_to_scheduler(SName, Ws) ->
+    rpc:call(SName, dron_pool, offer_workers, [Ws]),
     ets:insert(scheduler_assig,
                {SName, lists:append(get_scheduler_workers(SName), Ws)}).

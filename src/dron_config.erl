@@ -3,8 +3,8 @@
 
 -export([scheduler_nodes/0, db_nodes/0, max_slots/0, exchanges/0,
          dron_exchange/0, consumers/0, log_dir/0, master_nodes/0,
-         worker_nodes/0, expand_node_names/1, scheduler_load_interval/0,
-         scheduler_load_timeout/0]).
+         worker_nodes/0, expand_node_names/1, scheduler_heartbeat_interval/0,
+         scheduler_heartbeat_timeout/0]).
 
 %-------------------------------------------------------------------------------
 
@@ -53,12 +53,11 @@ worker_nodes() ->
         _  -> Nodes
     end.
 
-scheduler_load_interval() ->
-    60000.
+scheduler_heartbeat_interval() ->
+    10000.
 
-%% Two minutes.
-scheduler_load_timeout() ->
-    {0, {0, 2, 0}}.
+scheduler_heartbeat_timeout() ->
+    {0, {0, 0, 30}}.
 
 %===============================================================================
 % Internal
