@@ -262,9 +262,9 @@ handle_cast(Request, State) ->
 %%------------------------------------------------------------------------------
 handle_info(heartbeat, State = #state{master_coordinator = Master,
                                       worker_policy = WorkerPolicy}) ->
-    Res = rpc:cast(Master, dron_coordinator, scheduler_heartbeat,
-                   [node(), calendar:local_time(),
-                    calculate_needs(WorkerPolicy)]),
+    rpc:cast(Master, dron_coordinator, scheduler_heartbeat,
+             [node(), calendar:local_time(),
+             calculate_needs(WorkerPolicy)]),
     erlang:send_after(dron_config:scheduler_heartbeat_interval(),
                       self(), heartbeat),
     {noreply, State};
@@ -335,7 +335,6 @@ calculate_needs(WorkerPolicy) ->
                                                    used_slots = UsedSlots}}) ->
                                       {MaxSlots, UsedSlots}
                               end, ets:tab2list(worker_records))),
-    NWorkers = length(AllSlots),
     NSlots = lists:sum(AllSlots),
     NUsedSlots = lists:sum(UsedSlots),
     Load = compute_load(NSlots, NUsedSlots),
@@ -374,7 +373,7 @@ compute_offers(NSlots, NUsedSlots, {OffersBound, RequestsBound} = Policy,
             end
     end.
 
-compute_requests(NSlots, NUsedSlots, {OffersBound, RequestsBound} = Policy,
+compute_requests(NSlots, NUsedSlots, {_OffersBound, RequestsBound} = Policy,
                  NumRequests) ->
     Load = compute_load(NSlots, NUsedSlots),
     if

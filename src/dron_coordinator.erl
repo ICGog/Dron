@@ -15,8 +15,8 @@
 
 -export([scheduler_heartbeat/3, new_scheduler_leader/2, start_new_workers/2,
         start_new_scheduler/2, add_workers/2, add_scheduler/2,
-        remove_scheduler/1, remove_workers/1, auto_add_sched_workers/0,
-        get_workers/1]).
+        remove_scheduler/1, remove_workers/1, remove_workers/2,
+        auto_add_sched_workers/0, get_workers/1]).
 
 -record(state, {leader, schedulers}).
 
@@ -188,6 +188,16 @@ remove_workers(Workers) ->
 
 %%------------------------------------------------------------------------------
 %% @doc
+%% Removes a specified number of workers from a given scheduler.
+%%
+%% @spec remove_workers(SchedulerName, Number) -> RemovedWorkers
+%% @end
+%%------------------------------------------------------------------------------
+remove_workers(SName, Number) ->
+    gen_leader:leader_call(?MODULE, {remove_workers, SName, Number}).
+
+%%------------------------------------------------------------------------------
+%% @doc
 %% Adds the schedulers and workers defined in the environemnt variables.
 %%
 %% @spec auto_add_sched_workers() -> ok
@@ -215,7 +225,7 @@ get_workers(SName) ->
 %%------------------------------------------------------------------------------
 init([]) ->
     ets:new(scheduler_heartbeat, [named_table]),
-    ets:new(scheduler_assig, [public, named_table]),
+    ets:new(scheduler_assig, [named_table]),
     ets:new(worker_scheduler, [named_table]),
     {ok, #state{schedulers = []}}.
 
@@ -280,10 +290,12 @@ handle_leader_call({remove_scheduler, SName}, _From,
                             State#state{schedulers = lists:delete(SName,
                                                                   Schedulers)}}
     end;
-handle_leader_call({remove_workers, Workers}, _From,
-                   State, _Election) ->
+handle_leader_call({remove_workers, Workers}, _From, State, _Election) ->
     RemWs = dron_monitor:remove_workers(Workers),
     {reply, RemWs, {remove_workers, RemWs}, State};
+handle_leader_call({remove_workers, SName, WNum}, _From, State, _Election) ->
+    RemWs = dron_monitor:remove_num_workers(SName, WNum),
+    {reply, RemWs, {remove_workers, SName, RemWs}, State};
 handle_leader_call(auto_add_sched_workers, _From,
                    State = #state{schedulers = Schedulers}, _Election) ->
     SchedWorkers = dron_monitor:assign_workers(dron_config:scheduler_nodes()),
@@ -412,11 +424,14 @@ from_leader({remove_scheduler, SName, RemWs},
     ets:delete(scheduler_heartbeat, SName),
     ets:delete(scheduler_assig, SName),
     lists:map(fun(W) ->
-                      ets:delete(worker_scheduler, W)
+                      ets:insert(worker_scheduler, {W, unallocated})
               end, RemWs),
     {ok, State#state{schedulers = lists:delete(SName, Schedulers)}};
 from_leader({remove_workers, RemWs}, State, _Election) ->
-    remove_workers(RemWs),
+    dron_monitor:remove_workers(RemWs),
+    {ok, State};
+from_leader({remove_workers, SName, RemWs}, State, _Election) ->
+    dron_monitor:remove_workers(SName, RemWs),
     {ok, State};
 from_leader({auto_add_sched_workers, NewSched, OkSched},
             State = #state{schedulers = Schedulers}, _Election) ->
@@ -455,9 +470,10 @@ handle_info(balance_workers, State = #state{leader = false}) ->
     % Ignore the message.
     {noreply, State};
 handle_info(balance_workers, State = #state{leader = true}) ->
-    error_logger:info_msg("Balancing workers", []),
-    Heartbeats = ets:tab2list(scheduler_heartbeat),
-    erlang:spawn_link(dron_monitor, balance_workers, [Heartbeats, Heartbeats]),
+    error_logger:info_msg("Balancing workers: ~p",
+                          [ets:tab2list(scheduler_assig)]),
+    erlang:spawn_link(dron_monitor, balance_workers,
+                      [ets:tab2list(scheduler_heartbeat)]),
     erlang:send_after(dron_config:scheduler_heartbeat_interval(), self(),
                       balance_workers),
     {noreply, State};
