@@ -225,22 +225,12 @@ handle_call({release_slot, WName}, _From, State) ->
 handle_call(get_worker, _From, State) ->
     case ets:first(slot_workers) of
         '$end_of_table' -> {reply, {error, no_workers}, State};
-        Slots -> [{_, [WName|Aws]}] = ets:lookup(slot_workers, Slots),
-                 NSlots = Slots + 1,
-                 case ets:lookup(slot_workers, NSlots) of
-                     [{_, Ws}] -> ets:insert(slot_workers,
-                                             {NSlots, [WName|Ws]});
-                     []        -> ets:insert(slot_workers, {NSlots, [WName]})
-                 end,
-                 [{_, Worker}] = ets:lookup(worker_records, WName),
-                 NewWorker = Worker#worker{used_slots = NSlots},
-                 ets:insert(worker_records, {WName, NewWorker}),
-                 ok = dron_db:store_worker(NewWorker),
-                 case Aws of
-                     [] -> ets:delete(slot_workers, Slots);
-                     _  -> ets:insert(slot_workers, {Slots, Aws})
-                 end,
-                 {reply, NewWorker, State}
+        Slots -> MaxSlots = dron_config:max_slots(),
+                 if Slots >= MaxSlots ->
+                         {reply, {error, no_workers}, State};
+                    true ->
+                         {reply, get_worker(Slots), State}
+                 end
     end;
 handle_call(get_all_workers, _From, State) ->
     {reply, ets:tab2list(worker_records), State};
@@ -290,6 +280,23 @@ code_change(_OldVsn, State, _Extra) ->
 %%------------------------------------------------------------------------------
 terminate(_Reason, _State) ->
     ok.
+
+get_worker(Slots) ->
+    [{_, [WName|Aws]}] = ets:lookup(slot_workers, Slots),
+    NSlots = Slots + 1,
+    case ets:lookup(slot_workers, NSlots) of
+        [{_, Ws}] -> ets:insert(slot_workers, {NSlots, [WName|Ws]});
+        []        -> ets:insert(slot_workers, {NSlots, [WName]})
+    end,
+    [{_, Worker}] = ets:lookup(worker_records, WName),
+    NewWorker = Worker#worker{used_slots = NSlots},
+    ets:insert(worker_records, {WName, NewWorker}),
+    ok = dron_db:store_worker(NewWorker),
+    case Aws of
+        [] -> ets:delete(slot_workers, Slots);
+        _  -> ets:insert(slot_workers, {Slots, Aws})
+    end,
+    NewWorker.
 
 % Deletes worker from the tree of (#slots, [workers]).
 % It returns the same tree if the pair could not be found.

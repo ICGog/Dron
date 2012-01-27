@@ -423,7 +423,7 @@ run_instance(_JId, false) ->
 run_instance(JId, true) ->
     {ok, NoWorkerJI = #job_instance{timeout = Timeout}} =
         dron_db:get_job_instance_unsync(JId),
-    #worker{name = WName} = dron_pool:get_worker(),
+    #worker{name = WName} = get_worker_backoff(),
     JI = NoWorkerJI#job_instance{worker = WName},
     ok = dron_db:store_job_instance(JI),
     dron_worker:run(WName, JI, Timeout).
@@ -434,7 +434,7 @@ run_instance(JId, true) ->
 run_job_instance(_JI, false) ->
     ok;
 run_job_instance(JobInstance = #job_instance{timeout = Timeout}, true) ->
-    #worker{name = WName} = dron_pool:get_worker(),
+    #worker{name = WName} = get_worker_backoff(),
     WorkerJI = JobInstance#job_instance{worker = WName, state = running},
     ok = dron_db:store_job_instance(WorkerJI),
     dron_worker:run(WName, WorkerJI, Timeout).
@@ -525,4 +525,20 @@ unschedule_job_inmemory(JName) ->
         [{JName, TRef}]  -> timer:cancel(TRef),
                             ets:delete(schedule_timers, JName);
         []               -> ok
+    end.
+
+get_worker_backoff() ->
+    get_worker_backoff(dron_config:min_backoff(), dron_config:max_backoff()).
+
+get_worker_backoff(CurBackoff, MaxBackoff) ->
+    case dron_pool:get_worker() of
+        {error, Error} ->
+            if CurBackoff =< MaxBackoff ->
+                    timer:sleep(CurBackoff),
+                    get_worker_backoff(CurBackoff * 2, MaxBackoff);
+               true ->
+                    error_logger:info_msg("No slots available on ~p", [node()]),
+                    {error, Error}
+            end;
+        Worker -> Worker
     end.

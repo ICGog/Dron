@@ -5,7 +5,7 @@
          dron_exchange/0, consumers/0, log_dir/0, master_nodes/0,
          worker_nodes/0, expand_node_names/1, scheduler_heartbeat_interval/0,
          scheduler_heartbeat_timeout/0, worker_low_load/0, worker_medium_load/0,
-         worker_high_load/0]).
+         worker_high_load/0, min_backoff/0, max_backoff/0]).
 
 %-------------------------------------------------------------------------------
 
@@ -71,6 +71,12 @@ worker_medium_load() ->
 
 worker_high_load() ->
     {0.1, 0.7}.
+
+min_backoff() ->
+    100.
+
+max_backoff() ->
+    409600.
 
 %===============================================================================
 % Internal
