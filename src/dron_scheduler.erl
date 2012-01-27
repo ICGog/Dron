@@ -8,7 +8,7 @@
          elected/3, surrendered/3, from_leader/3, code_change/4, terminate/2,
          create_job_instance/3, create_job_instance/4, run_instance/2,
          ji_succeeded/1, ji_killed/1, ji_timeout/1, ji_failed/2,
-         run_job_instance/2]).
+         run_job_instance/2, reschedule_job/1]).
 
 -export([start/3, schedule/1, unschedule/1]).
 
@@ -122,6 +122,14 @@ store_waiting_job_instance_deps(JId, UnsatisfiedDeps) ->
 %%------------------------------------------------------------------------------
 master_coordinator(Node) ->
     gen_leader:leader_cast(?MODULE, {master_coordinator, Node}).
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec reschedule_job(JId) -> ok
+%% @end
+%%------------------------------------------------------------------------------
+reschedule_job(JId) ->
+    gen_leader:leader_cast(?MODULE, {reschedule, JId}).
 
 %===============================================================================
 % Internal
@@ -247,6 +255,16 @@ handle_leader_cast({master_coordinator, Master}, State, _Election) ->
     dron_pool:master_coordinator(Master),
     {ok, {master_coordinator, Master},
      State#state{master_coordinator = Master}};
+handle_leader_cast({reschedule, {Name, Date}}, State, _Election) ->
+    {ok, Job} = dron_db:get_job(Name),
+    AfterT = run_job_instances_up_to_now(
+               Job, self(),
+               calendar:datetime_to_gregorian_seconds(calendar:local_time()),
+               calendar:datetime_to_gregorian_seconds(Date)),
+    ets:insert(start_timers,
+               {Name, erlang:send_after(AfterT * 1000, self(),
+                                        {schedule, Job})}),
+    {ok, {schedule, Job, AfterT}, State};
 handle_leader_cast(Request, State, _Election) ->
     error_logger:error_msg("Unexpected leader cast ~p", [Request]),
     {stop, not_supported, State}.
@@ -476,10 +494,30 @@ satisfied_dependency(RId, JId, Leader) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
+detect_reschedule_job({Name, Date}) ->
+    case ets:lookup(schedule_timers, Name) of
+        []              -> reschedule_job({Name, Date}),
+                           true;
+        [{_JId, _TRef}] -> false
+    end.
+
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
+call_release_slot(WName, Coord) ->
+    case Coord of
+        true  -> ok = dron_coordinator:release_slot(WName);
+        false -> ok = dron_pool:release_worker_slot(WName)
+    end.
+
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 ji_succeeded(JId) ->
+    Reschedule = detect_reschedule_job(JId),
     ok = dron_db:set_job_instance_state(JId, succeeded),
     {ok, #job_instance{worker = WName}} = dron_db:get_job_instance_unsync(JId),
-    ok = dron_pool:release_worker_slot(WName),
+    call_release_slot(WName, Reschedule),
     % TODO(ionel): Move this out to consumer. (Think about satisfing various
     % resources)
     dependency_satisfied(JId).
@@ -488,25 +526,28 @@ ji_succeeded(JId) ->
 %% @private
 %%------------------------------------------------------------------------------
 ji_killed(JId) ->
+    Reschedule = detect_reschedule_job(JId),
     ok = dron_db:set_job_instance_state(JId, killed),
     {ok, #job_instance{worker = WName}} = dron_db:get_job_instance_unsync(JId),
-    ok = dron_pool:release_worker_slot(WName).
+    call_release_slot(WName, Reschedule).
 
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
 ji_timeout(JId) ->
+    Reschedule = detect_reschedule_job(JId),
     ok = dron_db:set_job_instance_state(JId, timeout),
     {ok, #job_instance{worker = WName}} = dron_db:get_job_instance_unsync(JId),
-    ok = dron_pool:release_worker_slot(WName).
+    call_release_slot(WName, Reschedule).
 
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
 ji_failed(JId, Leader) ->
+    Reschedule = detect_reschedule_job(JId),
     {ok, JI = #job_instance{name = JName, worker = WName, num_retry = NumRet}} =
         dron_db:get_job_instance_unsync(JId),
-    ok = dron_pool:release_worker_slot(WName),
+    call_release_slot(WName, Reschedule),
     {ok, #job{max_retries = MaxRet}} = dron_db:get_job_unsync(JName),
     if
         NumRet < MaxRet ->

@@ -16,7 +16,7 @@
 -export([scheduler_heartbeat/3, new_scheduler_leader/2, start_new_workers/2,
         start_new_scheduler/2, add_workers/2, add_scheduler/2,
         remove_scheduler/1, remove_workers/1, remove_workers/2,
-        auto_add_sched_workers/0, get_workers/1]).
+        auto_add_sched_workers/0, get_workers/1, release_slot/1]).
 
 -record(state, {leader, schedulers}).
 
@@ -216,6 +216,17 @@ auto_add_sched_workers() ->
 get_workers(SName) ->
     gen_leader:leader_call(?MODULE, {get_workers, SName}).
 
+%%------------------------------------------------------------------------------
+%% @doc
+%% Release a slot on a given worker. Called by the scheduler when it is not
+%% managing the worker.
+%%
+%% @spec release_slot(WName) -> ok
+%% @end
+%%------------------------------------------------------------------------------
+release_slot(WName) ->
+    gen_leader:leader_cast(?MODULE, {release_slot, WName}).
+
 %===============================================================================
 % Internal
 %===============================================================================
@@ -389,6 +400,16 @@ handle_leader_cast({new_scheduler_leader, OldSched, NewSched},
     end,
     {ok, {new_scheduler_leader, OldSched, NewSched},
      State#state{schedulers = [NewSched | lists:delete(OldSched, Schedulers)]}};
+handle_leader_cast({release_slot, WName}, State, _Election) ->
+    case ets:lookup(worker_scheduler, WName) of
+        [{_, SName}] ->
+            rpc:cast(SName, dron_pool, release_worker_slot, [WName]);
+        [{_, unallocated}] ->
+            dron_db:adjust_slot(WName, -1);
+        [] ->
+            error_logger:info_msg("Unknown worker ~p", [WName])
+    end,
+    {ok, State};
 handle_leader_cast(_Request, State, _Election) ->
     {stop, not_supported, State}.
 
@@ -491,4 +512,4 @@ terminate(_Reason, _State) ->
 %% @private
 %%------------------------------------------------------------------------------
 code_change(_OldVsn, State, _Election, _Extra) ->
-    {ok, State}.
+    {ok, State}.    

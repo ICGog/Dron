@@ -9,7 +9,7 @@
          delete_worker/1, get_worker/1, get_workers/1,
          update_workers_scheduler/2, get_workers_of_scheduler/1,
          get_job_instances_on_worker/1, get_dependants/1, store_dependant/2,
-         set_resource_state/2]).
+         set_resource_state/2, adjust_slot/2]).
 
 %===============================================================================
 
@@ -219,6 +219,29 @@ get_workers(Enabled) ->
             end,
     case mnesia:transaction(Trans) of
         {atomic, Return}  -> {ok, Return};
+        {aborted, Reason} -> {error, Reason}
+    end.
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% @spec adjust_slot(WName, Add) ->
+%%     ok | {error, Reason} | {error, unknown_worker}
+%% @end
+%%------------------------------------------------------------------------------
+adjust_slot(WName, Add) ->
+    Trans = fun() ->
+                    case mnesia:wread({workers, WName}) of
+                        [W = #worker{used_slots = UsedSlots}] ->
+                            mnesia:write(
+                              workers,
+                              W#worker{used_slots = UsedSlots + Add},
+                              write);
+                        [] -> unknown_worker
+                    end
+            end,
+    case mnesia:transaction(Trans) of
+        {atomic, ok}      -> ok;
+        {atomic, Return}  -> {error, Return};
         {aborted, Reason} -> {error, Reason}
     end.
 
