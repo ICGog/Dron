@@ -201,8 +201,10 @@ get_worker(WName) ->
                     mnesia:read({workers, WName})
             end,
     case mnesia:transaction(Trans) of
-        {atomic, Worker}  -> {ok, Worker};
-        {aborted, Reason} -> {error, Reason}
+        {atomic, [Worker]} -> {ok, Worker};
+        {atomic, []}       -> {error, no_worker};
+        {atomic, _Workers} -> {error, multiple_workers};
+        {aborted, Reason}  -> {error, Reason}
     end.
 
 %%------------------------------------------------------------------------------

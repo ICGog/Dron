@@ -52,8 +52,7 @@ start_new_workers(SName, Workers) ->
 store_new_workers(SName, Ws) ->
     lists:map(fun(W) -> ets:insert(worker_scheduler, {W, SName}) end, Ws),
     NewWs = lists:append(get_scheduler_workers(SName), Ws),
-    ets:insert(scheduler_assig,
-               {SName, NewWs}),
+    ets:insert(scheduler_assig, {SName, NewWs}),
     ok.
 
 %%------------------------------------------------------------------------------
@@ -93,6 +92,8 @@ start_new_scheduler(Schedulers, SName, Workers) ->
 add_workers(SName, Workers) ->
     NewWs = get_new_workers(Workers),
     store_new_workers(SName, NewWs),
+    Res = rpc:call(SName, dron_pool, offer_workers, [NewWs]),
+    error_logger:info_msg("AddW ~p", [Res]),
     NewWs.
 
 %%------------------------------------------------------------------------------
@@ -166,6 +167,7 @@ remove_num_workers(SName, NumW) ->
     {RemovedWs, RemainedWs} = if NumW > LenSWs -> {SWs, []};
                                  true          -> lists:split(NumW, SWs)
                               end,
+    rpc:call(SName, dron_pool, take_workers, [RemovedWs]),
     ets:insert(scheduler_assig, {SName, RemainedWs}),
     lists:map(fun(W) ->
                       ets:insert(worker_scheduler, {W, unallocated})
@@ -181,6 +183,7 @@ remove_num_workers(SName, NumW) ->
 %%------------------------------------------------------------------------------
 remove_workers(SName, Ws) ->
     SWs = get_scheduler_workers(SName),
+    rpc:call(SName, dron_pool, take_workers, [Ws]),
     ets:insert(scheduler_assig, {SName, lists:subtract(SWs, Ws)}),
     lists:map(fun(W) ->
                       ets:insert(worker_scheduler, {W, unallocated})
@@ -348,6 +351,7 @@ assign_workers(Workers, [Scheduler | RestS], WPerScheduler, ExtraWorkers,
 %% @private
 %%------------------------------------------------------------------------------
 remove_worker_scheduler(SName, Worker) ->
+    rpc:cast(SName, dron_pool, take_workers, [Worker]),
     lists:delete(Worker, get_scheduler_workers(SName)).
 
 %%------------------------------------------------------------------------------

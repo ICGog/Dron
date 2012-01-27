@@ -168,7 +168,7 @@ handle_call({offer_workers, Workers}, _From, State) ->
     Result = lists:map(fun(WName) ->
                 case dron_db:get_worker(WName) of
                     {ok, Worker = #worker{used_slots = UsedSlots}} ->
-                        monitor(WName, true),
+                        monitor_node(WName, true),
                         ets:insert(worker_records, {WName, Worker}),
                         SWorkers = case ets:lookup(slot_workers, UsedSlots) of
                                        []     -> [WName];
@@ -186,7 +186,7 @@ handle_call({take_workers, Workers}, _From, State) ->
                     [{WName, Worker}] ->
                         % TODO(ionel): Figure out a way of stopp monitoring only
                         % when all the current jobs have finished!
-                        monitor(WName, false),
+                        monitor_node(WName, false),
                         evict_worker(Worker),
                         ets:delete(worker_records, WName),
                         ok;
@@ -198,7 +198,7 @@ handle_call({take_workers, Workers}, _From, State) ->
 handle_call({remove, WName}, _From, State) ->
     case ets:lookup(worker_records, WName) of
         [{WName, W}] -> disable_worker(WName),
-                        monitor(WName, false),
+                        monitor_node(WName, false),
                         case dron_db:delete_worker(WName) of
                             ok    -> evict_worker(W),
                                      {reply, ok, State};
@@ -320,7 +320,7 @@ reconstruct_state() ->
     Ret = dron_db:get_workers_of_scheduler(node()),
     {ok, Workers} = Ret,
     lists:map(fun(Worker = #worker{name = WName, used_slots = Slots}) ->
-                      monitor(WName, true),
+                      monitor_node(WName, true),
                       ets:insert(worker_records, {WName, Worker}),
                       Ws = case ets:lookup(slot_workers, Slots) of
                                [{Slots, Wls}] -> [WName|Wls];

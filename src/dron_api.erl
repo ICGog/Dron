@@ -22,8 +22,7 @@ register_job(Job) ->
 %% @end
 %%------------------------------------------------------------------------------
 unregister_job(JName) ->
-    dron_coordinator:unschedule(JName),
-    ok = dron_db:archive_job(JName).
+    dron_coordinator:unschedule(JName).
 
 %%------------------------------------------------------------------------------
 %% @doc
