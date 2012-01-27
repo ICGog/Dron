@@ -5,12 +5,18 @@
 
 -export([register_long_jobs/1, register_long_jobs/2, register_long_jobs/3,
          register_short_jobs/1, register_short_jobs/2, register_short_jobs/3,
-         populate_db/4, count_jobs_and_instances/0, generate_node_names/1]).
+         populate_db/4, count_jobs_and_instances/0, generate_node_names/1,
+         unregister_long_jobs/2, unregister_short_jobs/2]).
 
 %-------------------------------------------------------------------------------
 
 register_long_jobs(NumJobs) ->
     register_long_jobs(1, NumJobs).
+
+unregister_long_jobs(NumStartJob, NumEndJob) ->
+    lists:map(fun(Num) ->
+                      dron_api:unregister_job("long" ++ integer_to_list(Num))
+              end, lists:seq(NumStartJob, NumEndJob)).
 
 register_long_jobs(NumStartJob, NumEndJob) ->
     StartTime = calendar:local_time(),
@@ -42,6 +48,11 @@ register_long_jobs(NumStartJob, NumEndJob, Increment)
 
 register_short_jobs(NumJobs) ->
     register_short_jobs(1, NumJobs).
+
+unregister_short_jobs(NumStartJob, NumEndJob) ->
+    lists:map(fun(Num) ->
+                      dron_api:unregister_job("short" ++ integer_to_list(Num))
+              end, lists:seq(NumStartJob, NumEndJob)).
 
 register_short_jobs(NumStartJob, NumEndJob) ->
     StartTime = calendar:local_time(),
