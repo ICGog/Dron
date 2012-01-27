@@ -5,7 +5,8 @@
 -export([new_scheduler_leader/2, start_new_workers/3, store_new_workers/2,
         start_new_scheduler/3, add_workers/2, add_scheduler/3,
         remove_scheduler/2, remove_workers/1, remove_num_workers/2,
-        remove_workers/2, assign_workers/1, balance_workers/1]).
+        remove_workers/2, remove_workers_from_memory/2, assign_workers/1,
+        balance_workers/1]).
 
 %===============================================================================
 
@@ -93,7 +94,6 @@ add_workers(SName, Workers) ->
     NewWs = get_new_workers(Workers),
     store_new_workers(SName, NewWs),
     Res = rpc:call(SName, dron_pool, offer_workers, [NewWs]),
-    error_logger:info_msg("AddW ~p", [Res]),
     NewWs.
 
 %%------------------------------------------------------------------------------
@@ -187,6 +187,21 @@ remove_workers(SName, Ws) ->
     ets:insert(scheduler_assig, {SName, lists:subtract(SWs, Ws)}),
     lists:map(fun(W) ->
                       ets:insert(worker_scheduler, {W, unallocated})
+              end, Ws),
+    ok.
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% Removes from the memory a given list of workers from a scheduler.
+%%
+%% @spec remove_workers_from_memory(SchedulerName, Workers) -> ok
+%% @end
+%%------------------------------------------------------------------------------
+remove_workers_from_memory(SName, Ws) ->
+    SWs = get_scheduler_workers(SName),
+    ets:insert(scheduler_assig, {SName, lists:subtract(SWs, Ws)}),
+    lists:map(fun(W) ->
+                      ets:delete(worker_scheduler, W)
               end, Ws),
     ok.
 

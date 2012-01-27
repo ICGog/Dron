@@ -11,12 +11,13 @@
 
 -export([job_instance_succeeded/1, job_instance_failed/2,
          job_instance_timeout/1, job_instance_killed/1,
-         dependency_satisfied/1, worker_disabled/1]).
+         dependency_satisfied/1]).
 
 -export([scheduler_heartbeat/3, new_scheduler_leader/2, start_new_workers/2,
         start_new_scheduler/2, add_workers/2, add_scheduler/2,
         remove_scheduler/1, remove_workers/1, remove_workers/2,
-        auto_add_sched_workers/0, get_workers/1, release_slot/1]).
+        auto_add_sched_workers/0, get_workers/1, release_slot/1,
+        remove_failed_workers/2]).
 
 -record(state, {leader, schedulers}).
 
@@ -88,14 +89,6 @@ job_instance_killed(JId) ->
 %%------------------------------------------------------------------------------
 dependency_satisfied(RId) ->
     gen_leader:leader_cast(?MODULE, {satisfied, RId}).
-
-%%------------------------------------------------------------------------------
-%% @doc
-%% @spec worker_disabled(JobInstance) -> ok
-%% @end
-%%------------------------------------------------------------------------------
-worker_disabled(JI) ->
-    gen_leader:leader_cast(?MODULE, {worker_disabled, JI}).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -195,6 +188,16 @@ remove_workers(Workers) ->
 %%------------------------------------------------------------------------------
 remove_workers(SName, Number) ->
     gen_leader:leader_call(?MODULE, {remove_workers, SName, Number}).
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% Removes given failed workers from the in-memory state.
+%%
+%% @spec remove_failed_workers(SchedulerName, Workers) -> ok
+%% @end
+%%------------------------------------------------------------------------------
+remove_failed_workers(SName, Workers) ->
+    gen_leader:leader_cast(?MODULE, {remove_failed_workers, SName, Workers}).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -377,10 +380,10 @@ handle_leader_cast({killed, JId = {Name, _Date}},
     rpc:call(dron_hash:hash(Name, Schedulers), dron_scheduler,
              job_instance_killed, [JId]),
     {ok, State};
+handle_leader_cast({remove_failed_workers, SName, Workers}, State, _Election) ->
+    dron_monitor:remove_workers_from_memory(SName, Workers),
+    {ok, {remove_failed_workers, SName, Workers}, State};
 handle_leader_cast({satisfied, _RId}, State, _Election) ->
-    %% TODO(ionel): Do the call to the appropriate scheduler.
-    {ok, State};
-handle_leader_cast({worker_disabled, _JI}, State, _Election) ->
     %% TODO(ionel): Do the call to the appropriate scheduler.
     {ok, State};
 %% Updates the load of a scheduler. It is called by the scheduler.
@@ -453,6 +456,9 @@ from_leader({remove_workers, RemWs}, State, _Election) ->
     {ok, State};
 from_leader({remove_workers, SName, RemWs}, State, _Election) ->
     dron_monitor:remove_workers(SName, RemWs),
+    {ok, State};
+from_leader({remove_failed_workers, SName, Workers}, State, _Election) ->
+    dron_monitor:remove_workers_from_memory(SName, Workers),
     {ok, State};
 from_leader({auto_add_sched_workers, NewSched, OkSched},
             State = #state{schedulers = Schedulers}, _Election) ->

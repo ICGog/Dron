@@ -264,7 +264,8 @@ handle_info({nodedown, WName}, State = #state{master_coordinator = Master}) ->
         none   -> ok;
         Worker -> evict_worker(Worker)
     end,
-    rpc:cast(Master, dron_coordinator, remove_workers, [[WName]]),
+    rpc:cast(Master, dron_coordinator, remove_failed_workers,
+             [node(), [WName]]),
     {noreply, State};
 handle_info(Request, _State) ->
     {unexpected_request, Request}.
@@ -319,8 +320,7 @@ disable_worker(WName) ->
           end,
     % If these db writes fail then the whole worker is restarted.
     {ok, FailedJIs} = dron_db:get_job_instances_on_worker(WName),
-    % TODO(ionel): Check if the proper coordinator/scheduler is called.
-    lists:map(fun(JI) -> dron_coordinator:worker_disabled(JI) end, FailedJIs),
+    lists:map(fun(JI) -> dron_scheduler:worker_disabled(JI) end, FailedJIs),
     Ret.
 
 reconstruct_state() ->
