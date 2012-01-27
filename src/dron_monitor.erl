@@ -170,7 +170,7 @@ remove_num_workers(SName, NumW) ->
     lists:map(fun(W) ->
                       ets:insert(worker_scheduler, {W, unallocated})
               end, RemovedWs),
-    RemainedWs.
+    RemovedWs.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -250,10 +250,12 @@ balance_workers(Heartbeats) ->
     {_RemWs, RRequests} = allocate_workers(ExtraWs, SRequests),
     NReqW = sum_heartbeats(RRequests, 0),
     if NReqW > 0 ->
-            {Ws, Offers} = get_offers(SOffers, NOfferW, NReqW, [], 0, []),
+            {Ws, ROffers} = get_offers(SOffers, NOfferW, NReqW, [], 0, []),
             LWs = length(Ws),
             OWs = if LWs < NReqW ->
-                          get_first_offers(SOffers, NReqW - LWs, [], Ws);
+                          {NWs, _} = get_first_offers(ROffers, NReqW - LWs,
+                                                      [], Ws),
+                          NWs;
                      true ->
                           Ws
                   end,
@@ -355,6 +357,7 @@ get_new_workers(Workers) ->
     lists:filter(fun(W) ->
                          case ets:lookup(worker_scheduler, W) of
                              [] -> true;
+                             [{_, unallocated}] -> true;
                              _  -> false
                          end end, Workers).
 
@@ -368,16 +371,16 @@ get_scheduler_workers(SName) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-satisfy_requests(Ws, _NOffW, [], _NReqW, NSatis, Heartbeats) ->
+satisfy_requests(Ws, _NWs, [], _NReqW, NSatis, Heartbeats) ->
     {Ws, Heartbeats, NSatis};
-satisfy_requests([], _NOffW, Requests, _NReqW, NSatis, Heartbeats) ->
+satisfy_requests([], _NWs, Requests, _NReqW, NSatis, Heartbeats) ->
     {[], lists:append(lists:reverse(Heartbeats), Requests), NSatis};
-satisfy_requests(Ws, NOffW,
+satisfy_requests(Ws, NWs,
                  [{SName, {{request, NumW}, Time}} = Heartbeat | Rest],
                  NReqW, NSatis, Heartbeats) ->
     OfferNumW = if
-                    NReqW > NOffW -> NumW;
-                    true          -> NumW * NReqW div NOffW
+                    NReqW > NWs -> min(NumW, NWs - NSatis);
+                    true        -> min(NumW * NReqW div NWs, NWs - NSatis)
                 end,
     case OfferNumW of
         0 -> {Ws, lists:append(lists:reverse(Heartbeats),
@@ -386,7 +389,7 @@ satisfy_requests(Ws, NOffW,
              AddedWs = dron_coordinator:add_workers(SName, AssignWs),
              LAddedWs = length(AddedWs),
              satisfy_requests(
-               RemWs, NOffW, Rest, NReqW, NSatis + LAddedWs,
+               RemWs, NWs, Rest, NReqW, NSatis + LAddedWs,
                [{SName, {{request, NumW - LAddedWs}, Time}} | Heartbeats])
     end.
 
@@ -414,7 +417,7 @@ get_offers([], _NOffW, _NReqW, Heartbeats, _NumWs, Ws) ->
     {Ws, lists:reverse(Heartbeats)};
 get_offers(Offers, _NOffW, NReqW, Heartbeats, NReqW, Ws) ->
     {Ws, lists:append(lists:reverse(Heartbeats), Offers)};
-get_offers([{SName, {{offer, NumW}, _}} = Heartbeat | Rest], NOffW, NReqW,
+get_offers([{SName, {{offer, NumW}, Time}} = Heartbeat | Rest], NOffW, NReqW,
            Heartbeats, NWs, Ws) ->
     TakeNumW = if
                    NReqW > NOffW -> NumW;
@@ -426,7 +429,7 @@ get_offers([{SName, {{offer, NumW}, _}} = Heartbeat | Rest], NOffW, NReqW,
         _ -> RemWs = dron_coordinator:remove_workers(SName, TakeNumW),
              LRemWs = length(RemWs),
              get_offers(Rest, NOffW, NReqW,
-                        [{SName, {offer, NumW - LRemWs}} | Heartbeats],
+                        [{SName, {{offer, NumW - LRemWs}, Time}} | Heartbeats],
                         NWs + LRemWs, lists:append(RemWs, Ws))
     end.
 
