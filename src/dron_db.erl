@@ -329,7 +329,7 @@ store_dependant(Dependencies, JId) ->
 
 %%------------------------------------------------------------------------------
 %% @doc
-%% @spec set_resource_state(ResourceId, State) -> ok | {error, Reason}
+%% @spec set_resource_state(ResourceId, State) -> {ok, JIds} | {error, Reason}
 %% @end
 %%------------------------------------------------------------------------------
 set_resource_state(RId, State) ->
@@ -341,15 +341,16 @@ set_resource_state(RId, State) ->
     Trans = fun() ->
                     ResDeps = mnesia:wread({resource_deps, RId}),
                     mnesia:delete({resource_deps, RId}),
-                    lists:map(fun(ResDep) ->
+                    lists:map(
+                      fun(ResDep) ->
                               mnesia:write(resource_deps,
                                            ResDep#resource_deps{state = State},
-                                           write)
-                              end, ResDeps),
-                    ok
+                                           write),
+                              ResDep#resource_deps.dep
+                      end, ResDeps)
             end,
     case mnesia:transaction(Trans) of
-        {atomic, ok}      -> ok;
+        {atomic, JIds}    -> {ok, JIds};
         {aborted, Reason} -> {error, Reason}
     end.
 

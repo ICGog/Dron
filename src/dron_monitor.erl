@@ -93,7 +93,7 @@ start_new_scheduler(Schedulers, SName, Workers) ->
 add_workers(SName, Workers) ->
     NewWs = get_new_workers(Workers),
     store_new_workers(SName, NewWs),
-    Res = rpc:call(SName, dron_pool, offer_workers, [NewWs]),
+    rpc:call(SName, dron_pool, offer_workers, [NewWs]),
     NewWs.
 
 %%------------------------------------------------------------------------------

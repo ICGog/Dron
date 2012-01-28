@@ -14,7 +14,7 @@
 
 -export([job_instance_succeeded/1, job_instance_failed/2,
          job_instance_timeout/1, job_instance_killed/1,
-         dependency_satisfied/1, worker_disabled/1,
+         dependency_satisfied/2, worker_disabled/1,
          store_waiting_job_instance_timer/2,
          store_waiting_job_instance_deps/2, master_coordinator/1]).
 
@@ -83,11 +83,11 @@ job_instance_killed(JId) ->
 
 %%------------------------------------------------------------------------------
 %% @doc
-%% @spec dependency_satisfied(ResourceId) -> ok
+%% @spec dependency_satisfied(ResourceId, JobInstanceId) -> ok
 %% @end
 %%------------------------------------------------------------------------------
-dependency_satisfied(RId) ->
-    gen_leader:leader_cast(?MODULE, {satisfied, RId}).
+dependency_satisfied(RId, JId) ->
+    gen_leader:leader_cast(?MODULE, {satisfied, RId, JId}).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -235,22 +235,16 @@ handle_leader_cast({timeout, JId}, State, _Election) ->
 handle_leader_cast({killed, JId}, State, _Election) ->
     erlang:spawn_link(?MODULE, ji_killed, [JId]),
     {noreply, State};
-%% TODO(ionel): Adapt this for multi-schedulers. 
-handle_leader_cast({satisfied, RId}, State, _Election) ->
-    ok = dron_db:set_resource_state(RId, satisfied),
-    {ok, Dependants} = dron_db:get_dependants(RId),
-    lists:map(fun(#resource_deps{dep = JId}) ->
-                      satisfied_dependency(RId, JId, true) end, Dependants),
-    {ok, {satisfied, RId}, State};
-%% TODO(ionel): Adapt this for multi-schedulers. 
+handle_leader_cast({satisfied, RId, JId}, State, _Election) ->
+    satisfied_dependency(RId, JId, true),
+    {ok, {satisfied, RId, JId}, State};
 handle_leader_cast({worker_disabled, JI}, State, _Election) ->
     erlang:spawn_link(?MODULE, run_job_instance, [JI, true]),
     {ok, {worker_disabled, JI}, State};
-%% TODO(ionel): Adapt this for multi-schedulers. 
 handle_leader_cast({waiting_job_instance_deps, JId, UnsatisfiedDeps}, State,
                    _Election) ->
     ets:insert(ji_deps, {JId, UnsatisfiedDeps}),
-    {ok, {waiting_job_instance_deps, UnsatisfiedDeps}, State};
+    {ok, {waiting_job_instance_deps, JId, UnsatisfiedDeps}, State};
 handle_leader_cast({master_coordinator, Master}, State, _Election) ->
     dron_pool:master_coordinator(Master),
     {ok, {master_coordinator, Master},
@@ -287,10 +281,8 @@ from_leader({schedule, Job = #job{name = JName}, AfterT}, State, _Election) ->
 from_leader({unschedule, JName}, State, _Election) ->
     unschedule_job_inmemory(JName),
     {ok, State};
-from_leader({satisfied, RId}, State, _Election) ->
-    {ok, Dependants} = dron_db:get_dependants(RId),
-    lists:map(fun(JId) -> satisfied_dependency(RId, JId, false) end,
-              Dependants),
+from_leader({satisfied, RId, JId}, State, _Election) ->
+    satisfied_dependency(RId, JId, false),
     {ok, State};
 from_leader({worker_disabled, JI}, State, _Election) ->
     erlang:spawn_link(?MODULE, run_job_instance, [JI, false]),
@@ -424,6 +416,8 @@ create_job_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout,
                         dependencies = Deps,
                         worker = undefined},
     ok = dron_db:store_job_instance(JI),
+    % TODO(ionel): Check if the wait_timer is properly inserted in the slave as
+    % well.
     case UnsatisfiedDeps of 
         [] -> run_job_instance(JI, true);
         _  -> TRef = erlang:send_after(DepsTimeout * 1000, SchedulerPid,
@@ -483,8 +477,8 @@ satisfied_dependency(RId, JId, Leader) ->
                                             ets:delete(wait_timers, JId);
                            []            -> ok 
                        end,
-                       run_instance(JId, Leader),
-                       ets:delete(ji_deps, JId);
+                       ets:delete(ji_deps, JId),
+                       erlang:spawn_link(?MODULE, run_instance, [JId, Leader]);
                 Val -> ets:insert(ji_deps, {JId, Val})
             end;
         []            ->
@@ -517,10 +511,7 @@ ji_succeeded(JId) ->
     Reschedule = detect_reschedule_job(JId),
     ok = dron_db:set_job_instance_state(JId, succeeded),
     {ok, #job_instance{worker = WName}} = dron_db:get_job_instance_unsync(JId),
-    call_release_slot(WName, Reschedule),
-    % TODO(ionel): Move this out to consumer. (Think about satisfing various
-    % resources)
-    dependency_satisfied(JId).
+    call_release_slot(WName, Reschedule).
 
 %%------------------------------------------------------------------------------
 %% @private

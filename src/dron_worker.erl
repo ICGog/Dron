@@ -165,8 +165,7 @@ code_change(_OldVsn, State, _Extra) ->
 %% @spec run_job_instance(JobInstance) -> ok
 %% @end
 %%------------------------------------------------------------------------------
-run_job_instance(JI = #job_instance{jid = JId, name = Name, cmd_line = Cmd}) ->
-%%    error_logger:info_msg("Run ~p", [JI]),
+run_job_instance(#job_instance{jid = JId, name = Name, cmd_line = Cmd}) ->
     {_, {{Y, M, D}, {H, Min, Sec}}} = JId,
     WPid = receive
                {Pid, start} -> %error_logger:info_msg(

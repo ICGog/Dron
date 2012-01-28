@@ -11,7 +11,7 @@
 
 -export([job_instance_succeeded/1, job_instance_failed/2,
          job_instance_timeout/1, job_instance_killed/1,
-         dependency_satisfied/1]).
+         dependency_satisfied/1, dependency_satisfied/2]).
 
 -export([scheduler_heartbeat/3, new_scheduler_leader/2, start_new_workers/2,
         start_new_scheduler/2, add_workers/2, add_scheduler/2,
@@ -362,6 +362,7 @@ handle_leader_cast({unschedule, JName},
     {ok, State};
 handle_leader_cast({succeeded, JId = {Name, _Date}},
                    State = #state{schedulers = Schedulers}, _Election) ->
+    dron_coordinator:dependency_satisfied(JId),
     rpc:call(dron_hash:hash(Name, Schedulers), dron_scheduler,
              job_instance_succeeded, [JId]),
     {ok, State};
@@ -383,8 +384,9 @@ handle_leader_cast({killed, JId = {Name, _Date}},
 handle_leader_cast({remove_failed_workers, SName, Workers}, State, _Election) ->
     dron_monitor:remove_workers_from_memory(SName, Workers),
     {ok, {remove_failed_workers, SName, Workers}, State};
-handle_leader_cast({satisfied, _RId}, State, _Election) ->
-    %% TODO(ionel): Do the call to the appropriate scheduler.
+handle_leader_cast({satisfied, RId}, State = #state{schedulers = Schedulers},
+                   _Election) ->
+    erlang:spawn_link(?MODULE, dependency_satisfied, [RId, Schedulers]),
     {ok, State};
 %% Updates the load of a scheduler. It is called by the scheduler.
 handle_leader_cast({scheduler_heartbeat, SName, Time, Req}, State, _Election) ->
@@ -519,3 +521,13 @@ terminate(_Reason, _State) ->
 %%------------------------------------------------------------------------------
 code_change(_OldVsn, State, _Election, _Extra) ->
     {ok, State}.    
+
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
+dependency_satisfied(RId, Schedulers) ->
+    {ok, JIds} = dron_db:set_resource_state(RId, satisfied),
+    lists:map(fun({Name, _Date} = JId) ->
+                      rpc:cast(dron_hash:hash(Name, Schedulers),
+                               dron_scheduler, dependency_satisfied, [RId, JId])
+              end, JIds).
