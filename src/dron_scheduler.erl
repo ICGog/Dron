@@ -370,8 +370,11 @@ code_change(_OldVsn, State, _Election, _Extra) ->
 instanciate_dependencies(_JId, []) ->
     {[], []};
 instanciate_dependencies(JId, Dependencies) ->
-    % TODO(ionel): Handle dependencies instanciation.
-    {Dependencies, dron_db:store_dependant(Dependencies, JId)}.
+    IDeps = dron_language:instanciate_dependencies(Dependencies),
+    case IDeps of 
+        [] -> {[], []};
+        _  -> {IDeps, dron_db:store_dependant(IDeps, JId)}
+    end.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -490,8 +493,12 @@ satisfied_dependency(RId, JId, Leader) ->
 %%------------------------------------------------------------------------------
 detect_reschedule_job({Name, Date}) ->
     case ets:lookup(schedule_timers, Name) of
-        []              -> reschedule_job({Name, Date}),
-                           true;
+        []              -> 
+            case ets:lookup(start_timers, Name) of
+                [] -> reschedule_job({Name, Date}),
+                      true;
+                _  -> false
+            end;
         [{_JId, _TRef}] -> false
     end.
 
