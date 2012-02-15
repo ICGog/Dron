@@ -11,4 +11,6 @@
 
 -record(worker, {name, scheduler, enabled, max_slots, used_slots}).
 
+-record(name_server, {name, location}).
+
 -define(NAME, {global, ?MODULE}).

@@ -11,6 +11,8 @@
                                dron_hash,
                                dron_language,
                                dron_monitor,
+                               dron_ns,
+                               dron_ns_local,
                                dron_pubsub,
                                dron,
                                dron_sup,
