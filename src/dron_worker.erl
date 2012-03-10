@@ -9,10 +9,6 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3, run_job_instance/1]).
 
--export([create_file/2, delete_file/2, create_dir/2, delete_dir/2]).
-
--export([ns_create_file/2, ns_delete_file/2, ns_create_dir/2, ns_delete_dir/2]).
-
 % A dict of (JId, Pid) and a dict of (Pid, JId).
 -record(wstate, {jipids = dict:new(), pidjis = dict:new(),
                  jitimeout = dict:new()}).
@@ -63,22 +59,6 @@ kill_job_instance(WName, JId) ->
 kill_job_instance(WName, JId, Timeout) ->
     gen_server:cast({global, WName}, {kill, JId, Timeout}).
 
-%%------------------------------------------------------------------------------
-%% File System API
-%%------------------------------------------------------------------------------
-
-create_file(WName, Path) ->
-    gen_server:call({global, WName}, {create_file, Path}).
-
-delete_file(WName, Path) ->
-    gen_server:call({global, WName}, {delete_file, Path}).
-
-create_dir(WName, Path) ->
-    gen_server:call({global, WName}, {create_dir, Path}).
-
-delete_dir(WName, Path) ->
-    gen_server:call({global, WName}, {delete_dir, Path}).
-
 %===============================================================================
 % Internal
 %===============================================================================
@@ -93,18 +73,6 @@ init([]) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-handle_call({create_file, Path}, From, State) ->
-    erlang:spawn_link(?MODULE, ns_create_file, [From, Path]),
-    {noreply, State};
-handle_call({delete_file, Path}, From, State) ->
-    erlang:spawn_link(?MODULE, ns_delete_file, [From, Path]),
-    {noreply, State};
-handle_call({create_dir, Path}, From, State) ->
-    erlang:spawn_link(?MODULE, ns_create_dir, [From, Path]),
-    {noreply, State};
-handle_call({delete_dir, Path}, From, State) ->
-    erlang:spawn_link(?MODULE, ns_delete_dir, [From, Path]),
-    {noreply, State};    
 handle_call(Request, _From, State) ->
     error_logger:error_msg("Got unexpected call ~p", [Request]),
     {stop, not_supported, State}.
@@ -238,48 +206,3 @@ publish_state(JId, State, Reason) ->
 
 job_instance_id_to_binary({Host, {{Year, Month, Day}, {Hour, Min, Sec}}}) ->
     [list_to_binary(Host), Year, Month, Day, Hour, Min, Sec].
-
-ns_create_file(From, Path) ->
-    Reply = case os:cmd("touch " ++ get_local_path(Path)) of
-                [] -> ok;
-                % TODO(ionel): Do not hide errors. Moreover, touch does not
-                % complain if the file already exists.
-                Reason -> error_logger:error_msg("Could not create file ~p",
-                                                 [Reason]),
-                          {error, path}
-            end,
-    gen_server:reply(From, Reply).
-
-ns_delete_file(From, Path) ->
-    Reply = case file:delete(get_local_path(Path)) of
-                ok -> ok;
-                % TODO(ionel): Do not hide errors.
-                {error, Reason} ->
-                    error_logger:error_msg("Could not delete file ~p",
-                                           [Reason]),
-                    {error, path}
-            end,
-    gen_server:reply(From, Reply).
-
-ns_create_dir(From, Path) ->
-    Reply = case file:make_dir(get_local_path(Path)) of
-                ok -> ok;
-                % TODO(ionel): Do not hide errors.
-                {error, Reason} ->
-                    error_logger:error_msg("Could not create dir ~p", [Reason]),
-                    {error, path}
-            end,
-    gen_server:reply(From, Reply).
-
-ns_delete_dir(From, Path) ->
-    Reply = case file:del_dir(get_local_path(Path)) of
-                ok -> ok;
-                % TODO(ionel): Do not hide errors.
-                {error, Reason} ->
-                    error_logger:error_msg("Could not delete dir ~p", [Reason]),
-                    {error, path}
-            end,
-    gen_server:reply(From, Reply).
-
-get_local_path(Path) ->
-    "/tmp/" ++ Path.

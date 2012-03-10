@@ -15,7 +15,5 @@ init([]) ->
          [{coordinator, {dron_coordinator, start_link,
                          [dron_config:master_nodes()]},
            permanent, 60, worker, [dron_coordinator]},
-          {name_server, {dron_ns, start_link, []}, permanent, 60, worker,
-           [dron_ns]},
           {pubsub, {dron_pubsub, start_link, []}, permanent, 60, worker,
            [dron_pubsub]}]}}.
