@@ -1,5 +1,5 @@
 {application, dron, [{description, "Job Scheduler"},
-                    {vsn, "0.1"},
+                    {vsn, "1"},
                     {modules, [dron,
                                dron_api,
                                dron_config,
