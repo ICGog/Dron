@@ -59,6 +59,7 @@ stop_exchange(Exchange) ->
 %% @private
 %%------------------------------------------------------------------------------
 init([]) ->
+    process_flag(trap_exit, true),
     {ok, Connection} = amqp_connection:start(#amqp_params_network{}),
     {ok, Channel} = amqp_connection:open_channel(Connection),
     % It does not matter whether the exchanges were already declared or not.
@@ -121,7 +122,9 @@ code_change(_OldVsn, State, _Extra) ->
 %% @private
 %%------------------------------------------------------------------------------
 terminate(_Reason, #state{channel = Channel, connection = Connection}) ->
-    % The exchange is not stopped to that frameworks can still publish messages.
+    error_logger:info_msg("Stopping pubsub exchanges ~p",
+                          [dron_config:dron_exchange()]),
+    stop_exchange_intern(Channel, dron_config:dron_exchange()),
     amqp_channel:close(Channel),
     amqp_connection:close(Connection),
     ok.

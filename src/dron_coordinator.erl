@@ -238,10 +238,11 @@ release_slot(WName) ->
 %% @private
 %%------------------------------------------------------------------------------
 init([]) ->
-    ets:new(scheduler_heartbeat, [named_table]),
-    ets:new(scheduler_assig, [named_table]),
-    ets:new(worker_scheduler, [named_table]),
-    {ok, #state{schedulers = []}}.
+  process_flag(trap_exit, true),
+  ets:new(scheduler_heartbeat, [named_table]),
+  ets:new(scheduler_assig, [named_table]),
+  ets:new(worker_scheduler, [named_table]),
+  {ok, #state{schedulers = []}}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -513,8 +514,11 @@ handle_info(Info, State) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-terminate(_Reason, _State) ->
-    ok.
+terminate(_Reason, #state{schedulers = Schedulers}) ->
+  lists:foreach(fun(SName) ->
+                      rpc:call(SName, dron_scheduler, stop, []) end,
+                Schedulers),
+  error_logger:info_msg("Shutting down coordinator ~p", [node()]).
 
 %%------------------------------------------------------------------------------
 %% @private

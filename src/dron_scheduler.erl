@@ -10,7 +10,7 @@
          ji_succeeded/1, ji_killed/1, ji_timeout/1, ji_failed/2,
          run_job_instance/2, reschedule_job/1]).
 
--export([start/3, schedule/1, unschedule/1]).
+-export([start/3, stop/0, schedule/1, unschedule/1]).
 
 -export([job_instance_succeeded/1, job_instance_failed/2,
          job_instance_timeout/1, job_instance_killed/1,
@@ -31,7 +31,10 @@
 %% @end
 %%------------------------------------------------------------------------------
 start(Nodes, Master, WorkerPolicy) ->
-    gen_leader:start(?MODULE, Nodes, [], ?MODULE, [Master, WorkerPolicy], []).
+  gen_leader:start(?MODULE, Nodes, [], ?MODULE, [Master, WorkerPolicy], []).
+
+stop() ->
+  gen_leader:leader_call(?MODULE, stop).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -197,6 +200,10 @@ surrendered(State, {LeaderNode, Master}, _Election) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
+handle_leader_call(stop, _From, State, _Election) ->
+  error_logger:info_msg("Shutting down scheduler ~p", [node()]),
+  dron_pool:stop(),
+  {stop, shutdown, State};
 handle_leader_call(Request, _From, State, _Election) ->
     error_logger:error_msg("Unexpected leader call ~p", [Request]),
     {stop, not_supported, State}.
@@ -293,6 +300,8 @@ from_leader({waiting_job_instance_deps, JId, UnsatisfiedDeps}, State,
     {ok, State};
 from_leader({master_coordinator, Master}, State, _Election) ->
     {ok, State#state{master_coordinator = Master}};
+from_leader(stop, State, _Election) ->
+    {stop, shutdown, State};
 from_leader(_Request, State, _Election) ->
     {stop, not_supported, State}.
 

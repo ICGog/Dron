@@ -14,7 +14,7 @@
 %% @end
 %%------------------------------------------------------------------------------
 start() ->
-    application:start(dron).
+  application:start(dron).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -22,7 +22,7 @@ start() ->
 %% @end
 %%------------------------------------------------------------------------------
 stop() ->
-    application:stop(dron).
+  application:stop(dron).
 
 %===============================================================================
 % Internal
@@ -32,16 +32,15 @@ stop() ->
 %% @private
 %%------------------------------------------------------------------------------
 start(_Type, _Args) ->
-    dron_mnesia:start(dron_config:db_nodes(), [{n_ram_copies, 2}]),
-    error_logger:info_msg("~nMnesia is running!~n", []),
-    {ok, Sup} = dron_sup:start(),
-    dron_coordinator:auto_add_sched_workers(),
-    {ok, Sup}.
+  dron_mnesia:start(dron_config:db_nodes(), [{n_ram_copies, 2}]),
+  error_logger:info_msg("~nMnesia is running!~n", []),
+  {ok, Sup} = dron_sup:start(),
+  dron_coordinator:auto_add_sched_workers(),
+  {ok, Sup}.
     
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
 stop(_State) ->
-    dron_pubsub:stop_exchange(dron_config:job_instance_exchange()),
-    dron_mnesia:stop(),
-    ok.
+  dron_mnesia:stop(),
+  ok.

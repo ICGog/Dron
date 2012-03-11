@@ -6,7 +6,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
          code_change/3]).
 
--export([start_link/2, add_worker/1, add_worker/2, add_workers/1,
+-export([start_link/2, stop/0, add_worker/1, add_worker/2, add_workers/1,
          auto_add_workers/0, offer_workers/1, take_workers/1, remove_worker/1,
          get_worker/0, release_worker_slot/1, get_all_workers/0,
          master_coordinator/1]).
@@ -19,6 +19,9 @@ start_link(Master, WorkerPolicy) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE,
                           [Master, WorkerPolicy], []).
 
+stop() ->
+  gen_server:call(?MODULE, stop).
+  
 %%------------------------------------------------------------------------------
 %% @doc
 %% Add a new worker to the pool. The worker will have the number of slots
@@ -234,6 +237,12 @@ handle_call(get_worker, _From, State) ->
     end;
 handle_call(get_all_workers, _From, State) ->
     {reply, ets:tab2list(worker_records), State};
+handle_call(stop, _From, State) ->
+  error_logger:info_msg("Shutting down pool ~p", [node()]),
+  lists:foreach(fun({WName, _}) ->
+                      dron_worker:stop(WName) end,
+                ets:tab2list(worker_records)),
+  {stop, shutdown, State};
 handle_call(Request, _From, State) ->
     error_logger:error_msg("Got unexpected call ~p", [Request]),
     {stop, not_supported, State}.

@@ -1,8 +1,8 @@
 export INCLUDE_DIR=include
 export EBIN_DIR=ebin
 export LOG_DIR=log
-export LIB_DIR=lib
 export DRON_NODE=dron
+export ERL_LIBS=lib
 
 DRON_NODES=w1 w2 w3
 REBAR=./rebar
@@ -10,11 +10,11 @@ REBAR=./rebar
 DIALYZER=dialyzer
 DIALYZER_OPTS=-Wno_return -Wrace_conditions -Wunderspecs
 
-ERL_OPTS=-pa $(EBIN_DIR) -pa $(LIB_DIR) -I $(INCLUDE_DIR) -sname $(DRON_NODE) -boot start_sasl -config dron -s dron -env ERL_MAX_ETS_TABLES 65536 -env ERL_MAX_PORTS 16384 +P256000
+ERL_OPTS=-pa $(EBIN_DIR) -I $(INCLUDE_DIR) -sname $(DRON_NODE) -boot start_sasl -config dron -s dron -env ERL_MAX_ETS_TABLES 65536 -env ERL_MAX_PORTS 16384 +P256000
 
 START_WORKERS=for worker in $(DRON_NODES) ; do \
 		echo "Starting worker $$worker" ; \
-		echo 'code:add_pathsa(["$(realpath $(EBIN_DIR))","$(realpath $(LIB_DIR))"]).' | \
+		echo 'code:add_pathsa(["$(realpath $(EBIN_DIR))"]).' | \
 		erl_call -sname $$worker -s -e ; \
 	      done
 RUN=erl $(ERL_OPTS)
@@ -58,6 +58,7 @@ clean:
 .PHONY: clean_ec2
 clean_ec2:
 	rm -rf dron_exports
+	rm -rf dron_instances
 
 .PHONY: start_workers
 start_workers:

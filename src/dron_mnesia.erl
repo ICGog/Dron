@@ -45,8 +45,12 @@ start_node(Node) ->
 %% @end
 %%------------------------------------------------------------------------------
 stop() ->
-    {db_nodes, Nodes} = mnesia:system_info(db_nodes),
-    lists:map(fun stop_node/1, Nodes),
+    Nodes = lists:delete(node(), mnesia:system_info(db_nodes)),
+    error_logger:info_msg("Stopping Mnesia on nodes ~p", [Nodes]),
+    lists:foreach(fun(Node) ->
+                        rpc:call(Node, mnesia, stop, []) end,
+                  lists:reverse(Nodes)),
+    mnesia:delete_schema(Nodes),
     ok.
 
 %%------------------------------------------------------------------------------
@@ -55,8 +59,8 @@ stop() ->
 %% @end
 %%------------------------------------------------------------------------------
 stop_node(Node) ->
-    ok = mnesia:delete_schema([Node]),
-    ok = rpc:call(Node, mnesia, stop, []).
+    ok = rpc:call(Node, mnesia, stop, []),
+    ok = mnesia:delete_schema([Node]).
 
 %===============================================================================
 % Internal

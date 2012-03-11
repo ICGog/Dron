@@ -3,7 +3,7 @@
 -include("dron.hrl").
 -behaviour(gen_server).
 
--export([start/1, start_link/1, run/3, kill_job_instance/2,
+-export([start/1, stop/1, start_link/1, run/3, kill_job_instance/2,
          kill_job_instance/3]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
@@ -27,6 +27,9 @@ start(WName) ->
 
 start_link(WName) ->
     gen_server:start_link({global, WName}, ?MODULE, [], []).
+
+stop(WName) ->
+  gen_server:call({global, WName}, stop).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -73,6 +76,9 @@ init([]) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
+handle_call(stop, _From, State) ->
+  error_logger:info_msg("Shutting down worker ~p", [node()]),
+  {stop, shutdown, State};
 handle_call(Request, _From, State) ->
     error_logger:error_msg("Got unexpected call ~p", [Request]),
     {stop, not_supported, State}.
