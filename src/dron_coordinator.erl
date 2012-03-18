@@ -498,6 +498,9 @@ handle_info(balance_workers, State = #state{leader = true}) ->
   {noreply, State};
 handle_info({'EXIT', Pid, normal}, State) ->
   % Node balancing finished successfully.
+  {noreply, State};
+handle_info({'EXIT', Pid, Reason}, State) ->
+  error_logger:error_msg("Process ~p finished with ~p", [Pid, Reason]),
   {noreply, State}.
 
 %%------------------------------------------------------------------------------
