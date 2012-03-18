@@ -19,17 +19,17 @@
 %% @end
 %%------------------------------------------------------------------------------
 store_job(Job) ->
-    Trans = fun() ->
-                    case mnesia:wread({jobs, Job#job.name}) of
-                        [OldJob]  -> mnesia:write({jobs_archive, OldJob});
-                        []        -> ok
-                    end,
-                    mnesia:write(jobs, Job, write)
-            end,            
-    case mnesia:transaction(Trans) of
-        {atomic, ok}      -> ok;
-        {aborted, Reason} -> {error, Reason}
-    end.
+  Trans = fun() -> 
+                case mnesia:wread({jobs, Job#job.name}) of
+                  [OldJob] -> mnesia:write({jobs_archive, OldJob});
+                  []       -> ok
+                end,
+                mnesia:write(jobs, Job, write)
+          end,            
+  case mnesia:transaction(Trans) of
+    {atomic, ok}      -> ok;
+    {aborted, Reason} -> {error, Reason}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -38,15 +38,15 @@ store_job(Job) ->
 %% @end
 %%------------------------------------------------------------------------------
 get_job(Name) ->
-    Trans = fun() ->
-                    mnesia:read(jobs, Name, read)
-            end,
-    case mnesia:transaction(Trans) of
-        {atomic, [Job]}         -> {ok, Job};
-        {atomic, []}            -> {error, no_job};
-        {atomic, _Jobs}         -> {error, multiple_jobs};
-        {aborted, Reason}       -> {error, Reason}
-    end.
+  Trans = fun() ->
+                  mnesia:read(jobs, Name, read)
+          end,
+  case mnesia:transaction(Trans) of
+    {atomic, [Job]}   -> {ok, Job};
+    {atomic, []}      -> {error, no_job};
+    {atomic, _Jobs}   -> {error, multiple_jobs};
+    {aborted, Reason} -> {error, Reason}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -58,25 +58,25 @@ get_job(Name) ->
 %% @end
 %%------------------------------------------------------------------------------
 get_job_unsync(Name) ->
-    case (catch mnesia:dirty_read(jobs, Name)) of
-        [Job]  -> {ok, Job};
-        []     -> {error, no_job};
-        Reason -> {error, Reason}
-    end.
-    
+  case (catch mnesia:dirty_read(jobs, Name)) of
+    [Job]  -> {ok, Job};
+    []     -> {error, no_job};
+    Reason -> {error, Reason}
+  end.
+
 %%------------------------------------------------------------------------------
 %% @doc
 %% @spec store_job_instance(JobInstance) -> ok | {error, Reason}
 %% @end
 %%------------------------------------------------------------------------------
 store_job_instance(JobInstance) ->
-    Trans = fun() ->
-                    mnesia:write(job_instances, JobInstance, write)
-            end,            
-    case mnesia:transaction(Trans) of
-        {atomic, ok}      -> ok;
-        {aborted, Reason} -> {error, Reason}
-    end.
+  Trans = fun() ->
+                  mnesia:write(job_instances, JobInstance, write)
+          end,            
+  case mnesia:transaction(Trans) of
+    {atomic, ok}      -> ok;
+    {aborted, Reason} -> {error, Reason}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -86,22 +86,22 @@ store_job_instance(JobInstance) ->
 %% @end
 %%------------------------------------------------------------------------------
 get_job_instance(JId) ->
-    Trans = fun() ->
-                    mnesia:read(job_instances, JId, read)
-            end,
-    case mnesia:transaction(Trans) of
-        {atomic, [JobInstance]} -> {ok, JobInstance};
-        {atomic, []}            -> {error, no_job_instance};
-        {atomic, _JobInstances} -> {error, multiple_job_instances};
-        {aborted, Reason}       -> {error, Reason}
-    end.
+  Trans = fun() ->
+                  mnesia:read(job_instances, JId, read)
+          end,
+  case mnesia:transaction(Trans) of
+    {atomic, [JobInstance]} -> {ok, JobInstance};
+    {atomic, []}            -> {error, no_job_instance};
+    {atomic, _JobInstances} -> {error, multiple_job_instances};
+    {aborted, Reason}       -> {error, Reason}
+  end.
 
 get_job_instance_unsync(JId) ->
-    case (catch mnesia:dirty_read(job_instances, JId)) of
-        [JobInstance] -> {ok, JobInstance};
-        []            -> {error, no_job_instance};
-        Reason        -> {error, Reason}
-    end.
+  case (catch mnesia:dirty_read(job_instances, JId)) of
+    [JobInstance] -> {ok, JobInstance};
+    []            -> {error, no_job_instance};
+    Reason        -> {error, Reason}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -111,17 +111,17 @@ get_job_instance_unsync(JId) ->
 %% @end
 %%------------------------------------------------------------------------------
 get_job_instance(JName, RTime) ->
-    Trans = fun() ->
-                    qlc:eval(qlc:q([JI || JI <- mnesia:table(job_instances),
-                                          JI#job_instance.name == JName,
-                                          JI#job_instance.run_time == RTime]))
-            end,
-    case mnesia:transaction(Trans) of
-        {atomic, [JobInstance]} -> {ok, JobInstance};
-        {atomic, []}            -> {error, no_job_instance};
-        {atomic, _JobInstances} -> {error, multiple_job_instances};
-        {aborted, Reason}       -> {error, Reason}
-    end.
+  Trans = fun() ->
+                  qlc:eval(qlc:q([JI || JI <- mnesia:table(job_instances),
+                                        JI#job_instance.name == JName,
+                                        JI#job_instance.run_time == RTime]))
+          end,
+  case mnesia:transaction(Trans) of
+    {atomic, [JobInstance]} -> {ok, JobInstance};
+    {atomic, []}            -> {error, no_job_instance};
+    {atomic, _JobInstances} -> {error, multiple_job_instances};
+    {aborted, Reason}       -> {error, Reason}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -130,19 +130,19 @@ get_job_instance(JName, RTime) ->
 %% @end
 %%------------------------------------------------------------------------------
 set_job_instance_state(JId, State) ->
-    Trans = fun() ->
-                    case mnesia:wread({job_instances, JId}) of
-                        [JI] -> mnesia:write(job_instances,
-                                             JI#job_instance{state = State},
-                                             write);
-                        []   -> no_such_job_instance
-                    end
-            end,                                      
-    case mnesia:transaction(Trans) of
-        {atomic, ok}      -> ok;
-        {atomic, Return}  -> {error, Return};
-        {aborted, Reason} -> {error, Reason}
-    end.
+  Trans = fun() ->
+                  case mnesia:wread({job_instances, JId}) of
+                    [JI] -> mnesia:write(job_instances,
+                                         JI#job_instance{state = State},
+                                         write);
+                    []   -> no_such_job_instance
+                  end
+          end,                                      
+  case mnesia:transaction(Trans) of
+    {atomic, ok}      -> ok;
+    {atomic, Return}  -> {error, Return};
+    {aborted, Reason} -> {error, Reason}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -150,18 +150,18 @@ set_job_instance_state(JId, State) ->
 %% @end
 %%------------------------------------------------------------------------------
 archive_job(Name) ->
-    Trans = fun() ->
-                    case mnesia:wread({jobs, Name}) of
-                        [Job] -> ok = mnesia:delete({jobs, Name}),
-                                 mnesia:write(jobs_archive, Job, write);
-                        []    -> no_such_job
-                    end
-            end,
-    case mnesia:transaction(Trans) of
-        {atomic, ok}      -> ok;
-        {atomic, Return}  -> {error, Return};
-        {aborted, Reason} -> {error, Reason}
-    end.
+  Trans = fun() ->
+                  case mnesia:wread({jobs, Name}) of
+                    [Job] -> ok = mnesia:delete({jobs, Name}),
+                             mnesia:write(jobs_archive, Job, write);
+                    []    -> no_such_job
+                  end
+          end,
+  case mnesia:transaction(Trans) of
+    {atomic, ok}      -> ok;
+    {atomic, Return}  -> {error, Return};
+    {aborted, Reason} -> {error, Reason}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -169,13 +169,13 @@ archive_job(Name) ->
 %% @end
 %%------------------------------------------------------------------------------
 store_worker(Worker) ->
-    Trans = fun() ->
-                    mnesia:write(workers, Worker, write)
-            end,
-    case mnesia:transaction(Trans) of
-        {atomic, ok}      -> ok;
-        {aborted, Reason} -> {error, Reason}
-    end.
+  Trans = fun() ->
+                  mnesia:write(workers, Worker, write)
+          end,
+  case mnesia:transaction(Trans) of
+    {atomic, ok}      -> ok;
+    {aborted, Reason} -> {error, Reason}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -183,13 +183,13 @@ store_worker(Worker) ->
 %% @end
 %%------------------------------------------------------------------------------
 delete_worker(WName) ->
-    Trans = fun() ->
-                    mnesia:delete({workers, WName})
-            end,
-    case mnesia:transaction(Trans) of
-        {atomic, ok}      -> ok;
-        {aborted, Reason} -> {error, Reason}
-    end.
+  Trans = fun() ->
+                  mnesia:delete({workers, WName})
+          end,
+  case mnesia:transaction(Trans) of
+    {atomic, ok}      -> ok;
+    {aborted, Reason} -> {error, Reason}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -197,15 +197,15 @@ delete_worker(WName) ->
 %% @end
 %%------------------------------------------------------------------------------
 get_worker(WName) ->
-    Trans = fun() ->
-                    mnesia:read({workers, WName})
-            end,
-    case mnesia:transaction(Trans) of
-        {atomic, [Worker]} -> {ok, Worker};
-        {atomic, []}       -> {error, no_worker};
-        {atomic, _Workers} -> {error, multiple_workers};
-        {aborted, Reason}  -> {error, Reason}
-    end.
+  Trans = fun() ->
+                  mnesia:read({workers, WName})
+          end,
+  case mnesia:transaction(Trans) of
+    {atomic, [Worker]} -> {ok, Worker};
+    {atomic, []}       -> {error, no_worker};
+    {atomic, _Workers} -> {error, multiple_workers};
+    {aborted, Reason}  -> {error, Reason}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -213,14 +213,14 @@ get_worker(WName) ->
 %% @end
 %%------------------------------------------------------------------------------
 get_workers(Enabled) ->
-    Trans = fun() ->
-                    qlc:eval(qlc:q([W || W <- mnesia:table(workers),
-                                   W#worker.enabled == Enabled]))
-            end,
-    case mnesia:transaction(Trans) of
-        {atomic, Return}  -> {ok, Return};
-        {aborted, Reason} -> {error, Reason}
-    end.
+  Trans = fun() ->
+                  qlc:eval(qlc:q([W || W <- mnesia:table(workers),
+                                 W#worker.enabled == Enabled]))
+          end,
+  case mnesia:transaction(Trans) of
+    {atomic, Return}  -> {ok, Return};
+    {aborted, Reason} -> {error, Reason}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -229,21 +229,20 @@ get_workers(Enabled) ->
 %% @end
 %%------------------------------------------------------------------------------
 adjust_slot(WName, Add) ->
-    Trans = fun() ->
-                    case mnesia:wread({workers, WName}) of
-                        [W = #worker{used_slots = UsedSlots}] ->
-                            mnesia:write(
-                              workers,
-                              W#worker{used_slots = UsedSlots + Add},
-                              write);
-                        [] -> unknown_worker
-                    end
-            end,
-    case mnesia:transaction(Trans) of
-        {atomic, ok}      -> ok;
-        {atomic, Return}  -> {error, Return};
-        {aborted, Reason} -> {error, Reason}
-    end.
+  Trans = fun() ->
+                  case mnesia:wread({workers, WName}) of
+                    [W = #worker{used_slots = UsedSlots}] ->
+                      mnesia:write(workers, 
+                                   W#worker{used_slots = UsedSlots + Add},
+                                   write);
+                    [] -> unknown_worker
+                  end
+          end,
+  case mnesia:transaction(Trans) of
+    {atomic, ok}      -> ok;
+    {atomic, Return}  -> {error, Return};
+    {aborted, Reason} -> {error, Reason}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -252,15 +251,15 @@ adjust_slot(WName, Add) ->
 %% @end
 %%------------------------------------------------------------------------------
 get_workers_of_scheduler(SName) ->
-    Trans = fun() ->
-                    qlc:eval(qlc:q([W || W <- mnesia:table(workers),
-                                         W#worker.scheduler == SName,
-                                         W#worker.enabled == true]))
-            end,
-    case mnesia:transaction(Trans) of
-        {atomic, Return}  -> {ok, Return};
-        {aborted, Reason} -> {error, Reason}
-    end.
+  Trans = fun() ->
+                  qlc:eval(qlc:q([W || W <- mnesia:table(workers),
+                                       W#worker.scheduler == SName,
+                                       W#worker.enabled == true]))
+          end,
+  case mnesia:transaction(Trans) of
+    {atomic, Return}  -> {ok, Return};
+    {aborted, Reason} -> {error, Reason}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -269,20 +268,20 @@ get_workers_of_scheduler(SName) ->
 %% @end
 %%------------------------------------------------------------------------------
 update_workers_scheduler(OldSched, NewSched) ->
-    Trans = fun() ->
-                    Ws = qlc:eval(qlc:q([W || W <- mnesia:table(workers),
-                                              W#worker.scheduler == OldSched])),
-                    lists:map(
-                      fun(W) ->
-                              mnesia:write(workers,
-                                           W#worker{scheduler = NewSched},
-                                           write)
-                      end, Ws)
-            end,
-    case mnesia:transaction(Trans) of
-        {atomic, _Return}  -> ok;
-        {aborted, Reason} -> {error, Reason}
-    end.
+  Trans = fun() ->
+                  Ws = qlc:eval(qlc:q([W || W <- mnesia:table(workers),
+                                            W#worker.scheduler == OldSched])),
+                  lists:map(
+                    fun(W) ->
+                            mnesia:write(workers,
+                                         W#worker{scheduler = NewSched},
+                                         write)
+                    end, Ws)
+          end,
+  case mnesia:transaction(Trans) of
+    {atomic, _Return}  -> ok;
+    {aborted, Reason} -> {error, Reason}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -291,14 +290,14 @@ update_workers_scheduler(OldSched, NewSched) ->
 %% @end
 %%------------------------------------------------------------------------------
 get_job_instances_on_worker(WName) ->
-    Trans = fun() ->
-                    qlc:eval(qlc:q([JI || JI <- mnesia:table(job_instances),
-                                          JI#job_instance.worker == WName]))
-            end,
-    case mnesia:transaction(Trans) of
-        {atomic, Return}  -> {ok, Return};
-        {aborted, Reason} -> {error, Reason}
-    end.
+  Trans = fun() ->
+                  qlc:eval(qlc:q([JI || JI <- mnesia:table(job_instances),
+                                        JI#job_instance.worker == WName]))
+          end,
+  case mnesia:transaction(Trans) of
+    {atomic, Return}  -> {ok, Return};
+    {aborted, Reason} -> {error, Reason}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -306,13 +305,13 @@ get_job_instances_on_worker(WName) ->
 %% @end
 %%------------------------------------------------------------------------------
 get_dependants(RId) ->
-    Trans = fun() ->
-                    mnesia:read(resource_deps, RId, read)
-            end,
-    case mnesia:transaction(Trans) of
-        {atomic, Return}  -> {ok, Return};
-        {aborted, Reason} -> {error, Reason}
-    end.
+  Trans = fun() ->
+                  mnesia:read(resource_deps, RId, read)
+          end,
+  case mnesia:transaction(Trans) of
+    {atomic, Return}  -> {ok, Return};
+    {aborted, Reason} -> {error, Reason}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -321,11 +320,11 @@ get_dependants(RId) ->
 %% @end
 %%------------------------------------------------------------------------------
 store_dependant(Dependencies, JId) ->
-    Trans = fun() -> write_deps(Dependencies, JId, []) end,
-    case mnesia:transaction(Trans) of
-        {atomic, UnsatisfiedDeps} -> UnsatisfiedDeps;
-        {aborted, Reason}         -> {error, Reason}
-    end.
+  Trans = fun() -> write_deps(Dependencies, JId, []) end,
+  case mnesia:transaction(Trans) of
+    {atomic, UnsatisfiedDeps} -> UnsatisfiedDeps;
+    {aborted, Reason}         -> {error, Reason}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -333,26 +332,26 @@ store_dependant(Dependencies, JId) ->
 %% @end
 %%------------------------------------------------------------------------------
 set_resource_state(RId, State) ->
-    % TODO(ionel): Check if can improve this. It may have some race conditions
-    % because first I read all the res_deps with a given RId, then I remove
-    % them and finally I add them back. I am forced to do this because the
-    % table is of type bag. I may solve the problem with an additional set
-    % table.
-    Trans = fun() ->
-                    ResDeps = mnesia:wread({resource_deps, RId}),
-                    mnesia:delete({resource_deps, RId}),
-                    lists:map(
-                      fun(ResDep) ->
-                              mnesia:write(resource_deps,
-                                           ResDep#resource_deps{state = State},
-                                           write),
-                              ResDep#resource_deps.dep
-                      end, ResDeps)
-            end,
-    case mnesia:transaction(Trans) of
-        {atomic, JIds}    -> {ok, JIds};
-        {aborted, Reason} -> {error, Reason}
-    end.
+  % TODO(ionel): Check if can improve this. It may have some race conditions
+  % because first I read all the res_deps with a given RId, then I remove
+  % them and finally I add them back. I am forced to do this because the
+  % table is of type bag. I may solve the problem with an additional set
+  % table.
+  Trans = fun() ->
+                  ResDeps = mnesia:wread({resource_deps, RId}),
+                  mnesia:delete({resource_deps, RId}),
+                  lists:map(
+                    fun(ResDep) ->
+                            mnesia:write(resource_deps,
+                                         ResDep#resource_deps{state = State},
+                                         write),
+                            ResDep#resource_deps.dep
+                    end, ResDeps)
+          end,
+  case mnesia:transaction(Trans) of
+    {atomic, JIds}    -> {ok, JIds};
+    {aborted, Reason} -> {error, Reason}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -364,16 +363,16 @@ set_resource_state(RId, State) ->
 %% @end
 %%------------------------------------------------------------------------------
 write_deps([], _JId, UnsatisfiedDeps) ->
-    UnsatisfiedDeps;
+  UnsatisfiedDeps;
 write_deps([Dep|Dependencies], JId, UnsatisfiedDeps) ->
-    State = case mnesia:wread({resource_deps, Dep}) of
-                [#resource_deps{state = RState}|_] -> RState;
-                []                                 -> unsatisfied
-            end,
-    ok = mnesia:write(resource_deps,
-                      #resource_deps{rid = Dep, state = State, dep = JId},
-                      write),
-    case State of
-        satisfied -> write_deps(Dependencies, JId, UnsatisfiedDeps);
-        _         -> write_deps(Dependencies, JId, [Dep|UnsatisfiedDeps])
-    end.
+  State = case mnesia:wread({resource_deps, Dep}) of
+              [#resource_deps{state = RState}|_] -> RState;
+              []                                 -> unsatisfied
+          end,
+  ok = mnesia:write(resource_deps,
+                    #resource_deps{rid = Dep, state = State, dep = JId},
+                    write),
+  case State of
+    satisfied -> write_deps(Dependencies, JId, UnsatisfiedDeps);
+    _         -> write_deps(Dependencies, JId, [Dep|UnsatisfiedDeps])
+  end.

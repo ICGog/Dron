@@ -16,7 +16,7 @@
 %% @end
 %%------------------------------------------------------------------------------
 init_state(Tab, State) when is_atom(Tab), State == undefined ->
-    #hash_state{n_fragments = 1}.
+  #hash_state{n_fragments = 1}.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -25,7 +25,7 @@ init_state(Tab, State) when is_atom(Tab), State == undefined ->
 %% @end
 %%------------------------------------------------------------------------------
 add_frag(#hash_state{n_fragments = NumFrag} = State) ->
-    {State#hash_state{n_fragments = NumFrag + 1}, [], [NumFrag + 1]}.
+  {State#hash_state{n_fragments = NumFrag + 1}, [], [NumFrag + 1]}.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -34,7 +34,7 @@ add_frag(#hash_state{n_fragments = NumFrag} = State) ->
 %% @end
 %%------------------------------------------------------------------------------
 del_frag(#hash_state{n_fragments = NumFrag} = State) ->
-    {State#hash_state{n_fragments = NumFrag - 1}, [NumFrag], []}.
+  {State#hash_state{n_fragments = NumFrag - 1}, [NumFrag], []}.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -45,7 +45,7 @@ del_frag(#hash_state{n_fragments = NumFrag} = State) ->
 %% @end
 %%------------------------------------------------------------------------------
 key_to_frag_number(#hash_state{n_fragments = NumFrag} , Key) ->
-    hash(Key, NumFrag).
+  hash(Key, NumFrag).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -57,7 +57,7 @@ key_to_frag_number(#hash_state{n_fragments = NumFrag} , Key) ->
 %% @end
 %%------------------------------------------------------------------------------
 match_spec_to_frag_numbers(_State, _MatchSpec) ->
-    [1].
+  [1].
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -67,4 +67,4 @@ match_spec_to_frag_numbers(_State, _MatchSpec) ->
 %% @end
 %%------------------------------------------------------------------------------
 hash(_Key, _NumFrag) ->
-    1.
+  1.

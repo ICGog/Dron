@@ -15,7 +15,6 @@
                                dron_pubsub,
                                dron_pool,
                                dron_scheduler,
-                               dron_stream,
                                dron_sup,
                                dron_worker,
                                dron_test]},

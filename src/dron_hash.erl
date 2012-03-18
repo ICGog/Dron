@@ -7,4 +7,4 @@
 %===============================================================================
 
 hash(JName, Nodes) ->
-    lists:nth(erlang:phash(JName, length(Nodes)), Nodes).
+  lists:nth(erlang:phash(JName, length(Nodes)), Nodes).

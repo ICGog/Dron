@@ -23,10 +23,10 @@
 %% @end
 %%------------------------------------------------------------------------------
 start(WName) ->
-    gen_server:start({global, WName}, ?MODULE, [], []).
+  gen_server:start({global, WName}, ?MODULE, [], []).
 
 start_link(WName) ->
-    gen_server:start_link({global, WName}, ?MODULE, [], []).
+  gen_server:start_link({global, WName}, ?MODULE, [], []).
 
 stop(WName) ->
   gen_server:call({global, WName}, stop).
@@ -39,7 +39,7 @@ stop(WName) ->
 %% @end
 %%------------------------------------------------------------------------------
 run(WName, JobInstance, Timeout) ->
-    gen_server:cast({global, WName}, {run, JobInstance, Timeout}).
+  gen_server:cast({global, WName}, {run, JobInstance, Timeout}).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -49,7 +49,7 @@ run(WName, JobInstance, Timeout) ->
 %% @end
 %%------------------------------------------------------------------------------
 kill_job_instance(WName, JId) ->
-    kill_job_instance(WName, JId, false).
+  kill_job_instance(WName, JId, false).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -60,7 +60,7 @@ kill_job_instance(WName, JId) ->
 %% @end
 %%------------------------------------------------------------------------------
 kill_job_instance(WName, JId, Timeout) ->
-    gen_server:cast({global, WName}, {kill, JId, Timeout}).
+  gen_server:cast({global, WName}, {kill, JId, Timeout}).
 
 %===============================================================================
 % Internal
@@ -70,8 +70,8 @@ kill_job_instance(WName, JId, Timeout) ->
 %% @private
 %%------------------------------------------------------------------------------
 init([]) ->
-    process_flag(trap_exit, true),
-    {ok, #wstate{}}.
+  process_flag(trap_exit, true),
+  {ok, #wstate{}}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -80,8 +80,8 @@ handle_call(stop, _From, State) ->
   error_logger:info_msg("Shutting down worker ~p", [node()]),
   {stop, shutdown, State};
 handle_call(Request, _From, State) ->
-    error_logger:error_msg("Got unexpected call ~p", [Request]),
-    {stop, not_supported, State}.
+  error_logger:error_msg("Got unexpected call ~p", [Request]),
+  {stop, not_supported, State}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -89,31 +89,31 @@ handle_call(Request, _From, State) ->
 handle_cast({run, JI = #job_instance{jid = JId, worker = WName}, Timeout},
             State = #wstate{jipids = JIPids, pidjis = PidJIs,
                            jitimeout = JITimeout}) ->
-    {ok, TRef} = timer:apply_after(Timeout * 1000, ?MODULE, kill_job_instance,
-                                   [WName, JId, true]),
-    JIPid = spawn_link(dron_worker, run_job_instance, [JI]),
-    JIPid ! {self(), start},
-    {noreply, State#wstate{jipids = dict:store(JId, JIPid, JIPids),
-                           pidjis = dict:store(JIPid, JId, PidJIs),
-                           jitimeout = dict:store(JId, TRef, JITimeout)}};
+  {ok, TRef} = timer:apply_after(Timeout * 1000, ?MODULE, kill_job_instance,
+                                 [WName, JId, true]),
+  JIPid = spawn_link(dron_worker, run_job_instance, [JI]),
+  JIPid ! {self(), start},
+  {noreply, State#wstate{jipids = dict:store(JId, JIPid, JIPids),
+                         pidjis = dict:store(JIPid, JId, PidJIs),
+                         jitimeout = dict:store(JId, TRef, JITimeout)}};
 handle_cast({kill, JId, TimeoutReason},
             State = #wstate{jipids = JIPids, pidjis = PidJIs,
                             jitimeout = JITimeout}) ->
-    Reason = case TimeoutReason of
-                 false -> killed;
-                 true  -> timeout
-             end,
-    case dict:find(JId, JIPids) of
-        {ok, Pid} -> exit(Pid, {JId, Reason}),
-                     {noreply,
-                      State#wstate{jipids = dict:erase(JId, JIPids),
-                                   pidjis = dict:erase(Pid, PidJIs),
-                                   jitimeout = clear_timeout(JId, JITimeout)}};
-        error     -> {noreply, State}
-    end;
+  Reason = case TimeoutReason of
+             false -> killed;
+             true  -> timeout
+           end,
+  case dict:find(JId, JIPids) of
+    {ok, Pid} -> exit(Pid, {JId, Reason}),
+                 {noreply,
+                 State#wstate{jipids = dict:erase(JId, JIPids),
+                              pidjis = dict:erase(Pid, PidJIs),
+                              jitimeout = clear_timeout(JId, JITimeout)}};
+    error     -> {noreply, State}
+  end;
 handle_cast(Request, State) ->
-    error_logger:errog_msg("Got unexpected cast ~p", [Request]),
-    {stop, not_supported, State}.
+  error_logger:errog_msg("Got unexpected cast ~p", [Request]),
+  {stop, not_supported, State}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -121,47 +121,47 @@ handle_cast(Request, State) ->
 handle_info({JId, JPid, ok}, State = #wstate{jipids = JIPids,
                                             pidjis = PidJIs,
                                             jitimeout = JITimeout}) ->
-    %% Notifies the scheduler that a job instance has finished.
-    publish_state(JId, <<"succeeded">>),
-    {noreply, State#wstate{jipids = dict:erase(JId, JIPids),
-                          pidjis = dict:erase(JPid, PidJIs),
-                          jitimeout = clear_timeout(JId, JITimeout)}};
+  %% Notifies the scheduler that a job instance has finished.
+  publish_state(JId, <<"succeeded">>),
+  {noreply, State#wstate{jipids = dict:erase(JId, JIPids),
+                         pidjis = dict:erase(JPid, PidJIs),
+                         jitimeout = clear_timeout(JId, JITimeout)}};
 handle_info({'EXIT', _Pid, normal}, State) ->
-    %% A job instance finished successfully. The state is already updated when
-    %% the worker is informed that the job instance finished.
-    {noreply, State};
+  %% A job instance finished successfully. The state is already updated when
+  %% the worker is informed that the job instance finished.
+  {noreply, State};
 handle_info({'EXIT', _Pid, {JId, Reason}}, State) ->
-    %% Notify the scheduler why the job instance was killed.
-    %% (timeout | killed).
-    publish_state(JId, list_to_binary(atom_to_list(Reason))),
-    {noreply, State};
+  %% Notify the scheduler why the job instance was killed.
+  %% (timeout | killed).
+  publish_state(JId, list_to_binary(atom_to_list(Reason))),
+  {noreply, State};
 handle_info({'EXIT', Pid, Reason}, State = #wstate{jipids = JIPids,
                                                   pidjis = PidJIs,
                                                   jitimeout = JITimeout}) ->
-    error_logger:info_msg("Job instance exited: ~p ~p", [Pid, Reason]),
-    case dict:find(Pid, PidJIs) of
-        {ok, JId} -> publish_state(JId, <<"failed">>, atom_to_list(Reason)),
-                     {noreply,
-                      State#wstate{jipids = dict:erase(JId, JIPids),
-                                   pidjis = dict:erase(Pid, PidJIs),
-                                   jitimeout = clear_timeout(JId, JITimeout)}};
-        error     -> {noreply, State}
-    end;
+  error_logger:info_msg("Job instance exited: ~p ~p", [Pid, Reason]),
+  case dict:find(Pid, PidJIs) of
+    {ok, JId} -> publish_state(JId, <<"failed">>, atom_to_list(Reason)),
+                 {noreply,
+                  State#wstate{jipids = dict:erase(JId, JIPids),
+                               pidjis = dict:erase(Pid, PidJIs),
+                               jitimeout = clear_timeout(JId, JITimeout)}};
+    error     -> {noreply, State}
+  end;
 handle_info(Info, State) ->
-    error_logger:error_msg("Got unexpected message ~p", [Info]),
-    {stop, not_supported, State}.
+  error_logger:error_msg("Got unexpected message ~p", [Info]),
+  {stop, not_supported, State}.
 
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
 terminate(_Reason, _State) ->
-    ok.
+  ok.
 
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
-    {ok, State}.
+  {ok, State}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -172,43 +172,43 @@ code_change(_OldVsn, State, _Extra) ->
 %% @end
 %%------------------------------------------------------------------------------
 run_job_instance(#job_instance{jid = JId, name = Name, cmd_line = Cmd}) ->
-    {_, {{Y, M, D}, {H, Min, Sec}}} = JId,
-    WPid = receive
-               {Pid, start} -> %error_logger:info_msg(
-                                % "Started job instance ~p~n", [JId]),
-                               Pid
+  {_, {{Y, M, D}, {H, Min, Sec}}} = JId,
+  WPid = receive
+           {Pid, start} -> %error_logger:info_msg(
+                           % "Started job instance ~p~n", [JId]),
+                   Pid
            after 10000 ->
                    exit(no_start_timeout)
-           end,
-    FileName = io_lib:format("~s_~p-~p-~p-~p:~p:~p", [Name, Y, M, D, H, Min,
-                                                      Sec]),
-    file:write_file(FileName, io_lib:fwrite("~s", [os:cmd(Cmd)]), [write]),
-    WPid ! {JId, self(), ok}.
+         end,
+  FileName = io_lib:format("~s_~p-~p-~p-~p:~p:~p",
+                           [Name, Y, M, D, H, Min, Sec]),
+  file:write_file(FileName, io_lib:fwrite("~s", [os:cmd(Cmd)]), [write]),
+  WPid ! {JId, self(), ok}.
 
 clear_timeout(JId, JITimeout) ->
-    case dict:find(JId, JITimeout) of
-        {ok, TRef} -> timer:cancel(TRef);
-        error      -> error_logger:error_msg("~p does not have a timeout timer",
-                                             [JId])
-    end,
-    dict:erase(JId, JITimeout).
+  case dict:find(JId, JITimeout) of
+    {ok, TRef} -> timer:cancel(TRef);
+    error      -> error_logger:error_msg(
+                    "~p does not have a timeout timer", [JId])
+  end,
+  dict:erase(JId, JITimeout).
 
 publish_state(JId, State) ->
-    dron_pubsub:publish_message(
-      dron_config:dron_exchange(), <<"">>,
-      list_to_binary(mochijson2:encode({struct,
-                                        [{<<"job_instance">>,
-                                          job_instance_id_to_binary(JId)},
-                                         {<<"state">>, State}]}))).
+  dron_pubsub:publish_message(
+    dron_config:dron_exchange(), <<"">>,
+    list_to_binary(mochijson2:encode({struct,
+                                      [{<<"job_instance">>,
+                                        job_instance_id_to_binary(JId)},
+                                       {<<"state">>, State}]}))).
 
 publish_state(JId, State, Reason) ->
-    dron_pubsub:publish_message(
-      dron_config:dron_exchange(), <<"">>,
-      list_to_binary(mochijson2:encode({struct,
-                                        [{<<"job_instance">>,
-                                          job_instance_id_to_binary(JId)},
-                                         {<<"state">>, State},
-                                         {<<"reason">>, Reason}]}))).
+  dron_pubsub:publish_message(
+    dron_config:dron_exchange(), <<"">>,
+    list_to_binary(mochijson2:encode({struct,
+                                      [{<<"job_instance">>,
+                                        job_instance_id_to_binary(JId)},
+                                       {<<"state">>, State},
+                                       {<<"reason">>, Reason}]}))).
 
 job_instance_id_to_binary({Host, {{Year, Month, Day}, {Hour, Min, Sec}}}) ->
-    [list_to_binary(Host), Year, Month, Day, Hour, Min, Sec].
+  [list_to_binary(Host), Year, Month, Day, Hour, Min, Sec].
