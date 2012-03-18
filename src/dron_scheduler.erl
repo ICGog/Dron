@@ -203,10 +203,7 @@ surrendered(State, {LeaderNode, Master}, _Election) ->
 handle_leader_call(stop, _From, State, _Election) ->
   error_logger:info_msg("Shutting down scheduler ~p", [node()]),
   dron_pool:stop(),
-  {stop, shutdown, State};
-handle_leader_call(Request, _From, State, _Election) ->
-    error_logger:error_msg("Unexpected leader call ~p", [Request]),
-    {stop, not_supported, State}.
+  {stop, shutdown, State}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -265,10 +262,7 @@ handle_leader_cast({reschedule, {Name, Date}}, State, _Election) ->
     ets:insert(start_timers,
                {Name, erlang:send_after(AfterT * 1000, self(),
                                         {schedule, Job})}),
-    {ok, {schedule, Job, AfterT}, State};
-handle_leader_cast(Request, State, _Election) ->
-    error_logger:error_msg("Unexpected leader cast ~p", [Request]),
-    {stop, not_supported, State}.
+    {ok, {schedule, Job, AfterT}, State}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -301,9 +295,7 @@ from_leader({waiting_job_instance_deps, JId, UnsatisfiedDeps}, State,
 from_leader({master_coordinator, Master}, State, _Election) ->
     {ok, State#state{master_coordinator = Master}};
 from_leader(stop, State, _Election) ->
-    {stop, shutdown, State};
-from_leader(_Request, State, _Election) ->
-    {stop, not_supported, State}.
+    {stop, shutdown, State}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -331,10 +323,7 @@ handle_call(Request, _From, State, _Election) ->
 %%------------------------------------------------------------------------------
 handle_cast({waiting_job_instance_timer, JId, TRef}, State, _Election) ->
     ets:insert(wait_timers, {JId, TRef}),
-    {noreply, State};
-handle_cast(Msg, State, _Election) ->
-    error_logger:error_msg("Got unexpected cast ~p", [Msg]),
-    {stop, not_supported, State}.
+    {noreply, State}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -359,10 +348,7 @@ handle_info({'EXIT', _Pid, normal}, State) ->
 handle_info({'EXIT', PId, Reason}, State) ->
     % TODO(ionel): Handle child process failure.
     error_logger:error_msg("~p anormally finished with ~p", [PId, Reason]),
-    {noreply, State};
-handle_info(Info, State) ->
-    error_logger:error_msg("Got unexpected message ~p", [Info]),
-    {stop, not_supported, State}.
+    {noreply, State}.
 
 %%------------------------------------------------------------------------------
 %% @private

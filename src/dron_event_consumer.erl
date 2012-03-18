@@ -48,7 +48,7 @@ consume_events(Channel, ConsumerTag) ->
   end.
 
 get_job_instance([]) ->
-    not_found;
+  not_found;
 get_job_instance([{<<"job_instance">>, [Host, Year, Month, Day, Hour, Min,
                                         Sec]}|_]) ->
   {binary_to_list(Host), {{Year, Month, Day}, {Hour, Min, Sec}}};

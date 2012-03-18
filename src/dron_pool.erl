@@ -172,8 +172,8 @@ handle_call({offer_workers, Workers}, _From, State) ->
                         monitor_node(WName, true),
                         ets:insert(worker_records, {WName, Worker}),
                         SWorkers = case ets:lookup(slot_workers, UsedSlots) of
-                                       []     -> [WName];
-                                       CurSWs -> [WName | CurSWs]
+                                     []     -> [WName];
+                                     CurSWs -> [WName | CurSWs]
                                    end,
                         ets:insert(slot_workers, {UsedSlots, SWorkers}),
                         ok;
@@ -185,7 +185,7 @@ handle_call({take_workers, Workers}, _From, State) ->
   Result = lists:map(fun(WName) ->
                   case ets:lookup(worker_records, WName) of
                     [{WName, Worker}] ->
-                        % TODO(ionel): Figure out a way of stopp monitoring only
+                        % TODO(ionel): Figure out a way to stop monitoring only
                         % when all the current jobs have finished!
                         monitor_node(WName, false),
                         evict_worker(Worker),
@@ -198,14 +198,16 @@ handle_call({take_workers, Workers}, _From, State) ->
   {reply, Result, State};
 handle_call({remove, WName}, _From, State) ->
   case ets:lookup(worker_records, WName) of
-   [{WName, W}] -> disable_worker(WName),
-                   monitor_node(WName, false),
-                   case dron_db:delete_worker(WName) of
+    [{WName, W}] -> disable_worker(WName),
+                    monitor_node(WName, false),
+                    % TODO(ionel): It should not delete the worker from the db
+                    % as there may still be job instances running on it.
+                    case dron_db:delete_worker(WName) of
                       ok    -> evict_worker(W),
                                {reply, ok, State};
                       Error -> {reply, Error, State}
-                   end; 
-   []           -> {reply, {error, unknown_worker}, State}
+                    end; 
+    []           -> {reply, {error, unknown_worker}, State}
   end;
 handle_call({release_slot, WName}, _From, State) ->
   case ets:lookup(worker_records, WName) of
@@ -240,19 +242,13 @@ handle_call(stop, _From, State) ->
   lists:foreach(fun({WName, _}) ->
                       dron_worker:stop(WName) end,
                 ets:tab2list(worker_records)),
-  {stop, shutdown, State};
-handle_call(Request, _From, State) ->
-  error_logger:error_msg("Got unexpected call ~p", [Request]),
-  {stop, not_supported, State}.
+  {stop, shutdown, State}.
 
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
 handle_cast({master_coordinator, Master}, State) ->
-  {noreply, State#state{master_coordinator = Master}};
-handle_cast(Request, State) ->
-  error_logger:error_msg("Got unexpected cast ~p", [Request]),
-  {stop, not_supported, State}.
+  {noreply, State#state{master_coordinator = Master}}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -271,9 +267,7 @@ handle_info({nodedown, WName}, State = #state{master_coordinator = Master}) ->
     Worker -> evict_worker(Worker)
   end,
   rpc:cast(Master, dron_coordinator, remove_failed_workers, [node(), [WName]]),
-  {noreply, State};
-handle_info(Request, _State) ->
-  {unexpected_request, Request}.
+  {noreply, State}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -291,7 +285,7 @@ get_worker(Slots) ->
   [{_, [WName|Aws]}] = ets:lookup(slot_workers, Slots),
   NSlots = Slots + 1,
   case ets:lookup(slot_workers, NSlots) of
-    [{_, Ws}] -> ets:insert(slot_workers, {NSlots, [WName|Ws]});
+    [{_, Ws}] -> ets:insert(slot_workers, {NSlots, [WName | Ws]});
     []        -> ets:insert(slot_workers, {NSlots, [WName]})
   end,
   [{_, Worker}] = ets:lookup(worker_records, WName),

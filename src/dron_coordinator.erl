@@ -343,10 +343,7 @@ handle_leader_call({get_workers, SName}, _From,
                        [{_, Ws}] -> {ok, Ws}
                      end,
              {reply, Reply, State}
-  end;
-handle_leader_call(Request, _From, State, _Election) ->
-  error_logger:error_msg("Unexpected leader call ~p", [Request]),
-  {stop, not_supported, State}.
+  end.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -411,9 +408,7 @@ handle_leader_cast({release_slot, WName}, State, _Election) ->
     [{_, unallocated}] -> dron_db:adjust_slot(WName, -1);
     [] -> error_logger:info_msg("Unknown worker ~p", [WName])
   end,
-  {ok, State};
-handle_leader_cast(_Request, State, _Election) ->
-  {stop, not_supported, State}.
+  {ok, State}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -464,9 +459,7 @@ from_leader({auto_add_sched_workers, NewSched, OkSched},
   lists:map(fun({SName, Workers}) ->
                     dron_monitor:add_scheduler(Schedulers, SName, Workers)
             end, OkSched),
-  {ok, State#state{schedulers = lists:append(Schedulers, NewSched)}};
-from_leader(_Request, State, _Election) ->
-  {stop, not_supported, State}.
+  {ok, State#state{schedulers = lists:append(Schedulers, NewSched)}}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -503,9 +496,9 @@ handle_info(balance_workers, State = #state{leader = true}) ->
   erlang:send_after(dron_config:scheduler_heartbeat_interval(), self(),
                     balance_workers),
   {noreply, State};
-handle_info(Info, State) ->
-  error_logger:error_msg("Got unexpected message ~p", [Info]),
-  {stop, not_supported, State}.
+handle_info({'EXIT', Pid, normal}, State) ->
+  % Node balancing finished successfully.
+  {noreply, State}.
 
 %%------------------------------------------------------------------------------
 %% @private

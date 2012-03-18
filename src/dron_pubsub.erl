@@ -67,8 +67,7 @@ init([]) ->
                     setup_exchange_intern(Channel, Exchange, Type) end,
             dron_config:exchanges()),
   lists:map(fun({Module, Exchange, RoutingKey}) ->
-                    start_consumer_intern(Channel, Module, Exchange,
-                                          RoutingKey)
+                    start_consumer_intern(Channel, Module, Exchange, RoutingKey)
             end, dron_config:consumers()),
   {ok, #state{connection = Connection, channel = Channel}}.
 
@@ -91,10 +90,7 @@ handle_call({publish_message, Exchange, RoutingKey, Payload}, _From,
                          #'basic.publish'{exchange = Exchange,
                                           routing_key = RoutingKey},
                          #amqp_msg{payload = Payload}),
-  {reply, ok, State};
-handle_call(Request, _From, State) ->
-  error_logger:error_msg("Got unexpected call ~p", [Request]),
-  {stop, not_supported, State}.
+  {reply, ok, State}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -107,10 +103,7 @@ handle_cast(Request, State) ->
 %% @private
 %%------------------------------------------------------------------------------
 handle_info({'EXIT', _Pid, normal}, State) ->
-  {noreply, State};
-handle_info(Info, State) ->
-  error_logger:error_msg("Got unexpected message ~p", [Info]),
-  {stop, not_supported, State}.
+  {noreply, State}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -126,12 +119,11 @@ terminate(_Reason, #state{channel = Channel, connection = Connection}) ->
                         [dron_config:dron_exchange()]),
   stop_exchange_intern(Channel, dron_config:dron_exchange()),
   amqp_channel:close(Channel),
-  amqp_connection:close(Connection),
-  ok.
+  amqp_connection:close(Connection).
 
 start_consumer_intern(Channel, Module, Exchange, RoutingKey) ->
-  #'queue.declare_ok'{queue = Queue} =
-      amqp_channel:call(Channel, #'queue.declare'{}),
+  #'queue.declare_ok'{queue = Queue} = 
+    amqp_channel:call(Channel, #'queue.declare'{}),
   Binding = #'queue.bind'{queue = Queue,
                           exchange = Exchange,
                           routing_key = RoutingKey},
@@ -141,12 +133,12 @@ start_consumer_intern(Channel, Module, Exchange, RoutingKey) ->
 setup_exchange_intern(Channel, Name, Type) ->
   Exchange = #'exchange.declare'{exchange = Name, type = Type},
   case amqp_channel:call(Channel, Exchange) of
-      #'exchange.declare_ok'{} -> ok;
-      _                        -> error
+    #'exchange.declare_ok'{} -> ok;
+    _                        -> error
   end.
 
 stop_exchange_intern(Channel, Exchange) ->
   case amqp_channel:call(Channel, #'exchange.delete'{exchange = Exchange}) of
-      #'exchange.delete_ok'{} -> ok;
-      _                       -> error
+    #'exchange.delete_ok'{} -> ok;
+    _                       -> error
   end.

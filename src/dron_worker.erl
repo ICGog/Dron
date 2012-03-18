@@ -78,17 +78,14 @@ init([]) ->
 %%------------------------------------------------------------------------------
 handle_call(stop, _From, State) ->
   error_logger:info_msg("Shutting down worker ~p", [node()]),
-  {stop, shutdown, State};
-handle_call(Request, _From, State) ->
-  error_logger:error_msg("Got unexpected call ~p", [Request]),
-  {stop, not_supported, State}.
+  {stop, shutdown, State}.
 
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
 handle_cast({run, JI = #job_instance{jid = JId, worker = WName}, Timeout},
-            State = #wstate{jipids = JIPids, pidjis = PidJIs,
-                           jitimeout = JITimeout}) ->
+            State = #wstate{jipids = JIPids, pidjis = PidJIs, 
+                            jitimeout = JITimeout}) ->
   {ok, TRef} = timer:apply_after(Timeout * 1000, ?MODULE, kill_job_instance,
                                  [WName, JId, true]),
   JIPid = spawn_link(dron_worker, run_job_instance, [JI]),
@@ -109,18 +106,17 @@ handle_cast({kill, JId, TimeoutReason},
                  State#wstate{jipids = dict:erase(JId, JIPids),
                               pidjis = dict:erase(Pid, PidJIs),
                               jitimeout = clear_timeout(JId, JITimeout)}};
-    error     -> {noreply, State}
-  end;
-handle_cast(Request, State) ->
-  error_logger:errog_msg("Got unexpected cast ~p", [Request]),
-  {stop, not_supported, State}.
+    error     -> error_logger:error_msg(
+                   "Job Instance does not exist ~p", [JId]), 
+                 {noreply, State}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
 handle_info({JId, JPid, ok}, State = #wstate{jipids = JIPids,
-                                            pidjis = PidJIs,
-                                            jitimeout = JITimeout}) ->
+                                             pidjis = PidJIs,
+                                             jitimeout = JITimeout}) ->
   %% Notifies the scheduler that a job instance has finished.
   publish_state(JId, <<"succeeded">>),
   {noreply, State#wstate{jipids = dict:erase(JId, JIPids),
@@ -136,8 +132,8 @@ handle_info({'EXIT', _Pid, {JId, Reason}}, State) ->
   publish_state(JId, list_to_binary(atom_to_list(Reason))),
   {noreply, State};
 handle_info({'EXIT', Pid, Reason}, State = #wstate{jipids = JIPids,
-                                                  pidjis = PidJIs,
-                                                  jitimeout = JITimeout}) ->
+                                                   pidjis = PidJIs,
+                                                   jitimeout = JITimeout}) ->
   error_logger:info_msg("Job instance exited: ~p ~p", [Pid, Reason]),
   case dict:find(Pid, PidJIs) of
     {ok, JId} -> publish_state(JId, <<"failed">>, atom_to_list(Reason)),
@@ -145,11 +141,10 @@ handle_info({'EXIT', Pid, Reason}, State = #wstate{jipids = JIPids,
                   State#wstate{jipids = dict:erase(JId, JIPids),
                                pidjis = dict:erase(Pid, PidJIs),
                                jitimeout = clear_timeout(JId, JITimeout)}};
-    error     -> {noreply, State}
-  end;
-handle_info(Info, State) ->
-  error_logger:error_msg("Got unexpected message ~p", [Info]),
-  {stop, not_supported, State}.
+    error     -> error_logger:error_msg(
+                   "Job Instance with PID ~p does not exist", [Pid]), 
+                 {noreply, State}
+  end.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -174,11 +169,8 @@ code_change(_OldVsn, State, _Extra) ->
 run_job_instance(#job_instance{jid = JId, name = Name, cmd_line = Cmd}) ->
   {_, {{Y, M, D}, {H, Min, Sec}}} = JId,
   WPid = receive
-           {Pid, start} -> %error_logger:info_msg(
-                           % "Started job instance ~p~n", [JId]),
-                   Pid
-           after 10000 ->
-                   exit(no_start_timeout)
+           {Pid, start} -> Pid
+           after 10000  -> exit(no_start_timeout)
          end,
   FileName = io_lib:format("~s_~p-~p-~p-~p:~p:~p",
                            [Name, Y, M, D, H, Min, Sec]),
