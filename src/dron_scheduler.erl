@@ -216,6 +216,7 @@ handle_leader_cast({schedule, Job = #job{name = JName, start_time = STime}},
                self(),
                calendar:datetime_to_gregorian_seconds(calendar:local_time()),
                calendar:datetime_to_gregorian_seconds(STime)),
+    error_logger:info_msg("Scheddddd ~p", [JName]),
     ets:insert(start_timers, {JName, erlang:send_after(AfterT * 1000, self(),
                                                        {schedule, Job})}),
     {ok, {schedule, Job, AfterT}, State};
@@ -275,7 +276,6 @@ handle_leader_cast({reschedule, {Name, Date}}, State, _Election) ->
 %% @end
 %%------------------------------------------------------------------------------
 from_leader({schedule, Job = #job{name = JName}, AfterT}, State, _Election) ->
-  error_logger:info_msg("Scheddddd ~p", [JName]),
   ets:insert(start_timers, {JName, erlang:send_after(AfterT * 1000, self(),
                                                      {schedule, Job})}),
   {ok, State};
@@ -330,9 +330,10 @@ handle_cast({waiting_job_instance_timer, JId, TRef}, State, _Election) ->
 %%------------------------------------------------------------------------------
 handle_info({schedule, Job = #job{name = JName, frequency = Freq}},
             State = #state{leader = Leader}) ->
-  error_logger:info_msg("Got Sched ~p", [JName]),
+  error_logger:info_msg("Got Sched ~p ~p", [JName, Leader]),
     {ok, TRef} = timer:apply_interval(Freq * 1000, ?MODULE, create_job_instance,
                                       [Job, self(), Leader]),
+  error_logger:info_msg("AAAAAAAAAAAAa"),
     ets:insert(schedule_timers, {JName, TRef}),
     ets:delete(start_timers, JName),
     {noreply, State};
@@ -385,6 +386,7 @@ create_job_instance(#job{name = Name, deps_timeout = DepsTimeout,
                          dependencies = Dependencies},
                     Date, SchedulerPid, false) ->
     JId = {Name, Date},
+  error_logger:info_msg("Creating job on slave ~p", [JId]),  
     case Dependencies of
         [] -> ok;
         _  -> TRef = erlang:send_after(DepsTimeout * 1000, SchedulerPid,
