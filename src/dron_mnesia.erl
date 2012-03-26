@@ -15,9 +15,9 @@ start(Nodes, Mode) ->
   Ret = mnesia:create_schema(Nodes),
   error_logger:info_msg("Create schema returned ~p", [Ret]),
   lists:map(fun(Node) ->
-              Ret = rpc:call(Node, mnesia, start, []),
+              RetStart = rpc:call(Node, mnesia, start, []),
               error_logger:info_msg("Got ~p while starting mnesia on ~p",
-                                    [Ret, Node]) end, Nodes),
+                                    [RetStart, Node]) end, Nodes),
   create_jobs_table(Nodes, Mode),
   create_jobs_archive_table(Nodes, Mode),
   create_job_instances_table(Nodes, Mode),
