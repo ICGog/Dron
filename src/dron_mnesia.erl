@@ -17,7 +17,7 @@ start(Nodes, Mode, MnesiaNodes) ->
   lists:map(fun(Node) ->
               RetStart = rpc:call(Node, mnesia, start, []),
               error_logger:info_msg("Got ~p while starting mnesia on ~p",
-                                    [RetStart, Node]) end, MnesiaNodes),
+                                    [RetStart, Node]) end, Nodes),
   case Ret of
     ok ->
       create_jobs_table(Nodes, Mode),
