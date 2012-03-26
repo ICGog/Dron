@@ -329,16 +329,10 @@ handle_cast({waiting_job_instance_timer, JId, TRef}, State, _Election) ->
 %%------------------------------------------------------------------------------
 handle_info({schedule, Job = #job{name = JName, frequency = Freq}},
             State = #state{leader = Leader}) ->
-  error_logger:info_msg("Got Sched ~p ~p ~p ~p", [JName, Leader, Freq, ?MODULE]),
   {ok, TRef} = timer:apply_interval(Freq * 1000, ?MODULE, create_job_instance,
                                     [Job, self(), Leader]),
-  %TRef = erlang:send_after(Freq * 1000, self(), {create, Freq, Job, Leader}),
   ets:insert(schedule_timers, {JName, TRef}),
   ets:delete(start_timers, JName),
-  {noreply, State};
-handle_info({create, Freq, Job, Leader}, State) ->
-  erlang:send_after(Freq * 1000, self(), {create, Freq, Job, Leader}),
-  create_job_instance(Job, self(), Leader),
   {noreply, State};
 handle_info({wait_timeout, JId}, State) ->
     case ets:lookup(wait_timers, JId) of
@@ -411,7 +405,6 @@ create_job_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout,
 %                           error_logger:info_msg("Max Delay ~p", [Delay]);
 %       true             -> ok
 %    end,
-  error_logger:info_msg("Creating job ~p", [JId]),
   {Deps, UnsatisfiedDeps} = instanciate_dependencies(JId, Dependencies),
   JI =  #job_instance{jid = JId, name = Name, cmd_line = Cmd,
                       state = waiting, timeout = Timeout,
