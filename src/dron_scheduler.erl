@@ -330,7 +330,7 @@ handle_cast({waiting_job_instance_timer, JId, TRef}, State, _Election) ->
 %%------------------------------------------------------------------------------
 handle_info({schedule, Job = #job{name = JName, frequency = Freq}},
             State = #state{leader = Leader}) ->
-  error_logger:info("Got Sched ~p", [JName])
+  error_logger:info("Got Sched ~p", [JName]),
     {ok, TRef} = timer:apply_interval(Freq * 1000, ?MODULE, create_job_instance,
                                       [Job, self(), Leader]),
     ets:insert(schedule_timers, {JName, TRef}),
