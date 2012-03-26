@@ -131,11 +131,13 @@ master_coordinator(Master) ->
 %% @private
 %%------------------------------------------------------------------------------
 init([Master, WorkerPolicy]) ->
+  error_logger:info_msg("Starting pool"),
   ets:new(worker_records, [named_table]),
   ets:new(slot_workers, [ordered_set, named_table]),
   reconstruct_state(),
   erlang:send_after(dron_config:scheduler_heartbeat_interval(),
                     self(), heartbeat),
+  error_logger:info_msg("Pool started"),
   {ok, #state{master_coordinator = Master, worker_policy = WorkerPolicy}}.
 
 %%------------------------------------------------------------------------------

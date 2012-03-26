@@ -162,6 +162,7 @@ init([Master, WorkerPolicy]) ->
 elected(State = #state{master_coordinator = Master, leader_node = LeaderNode,
                        worker_policy = WorkerPolicy}, _Election, undefined) ->
     error_logger:info_msg("~p elected as master", [node()]),
+    error_logger:info_msg("Pool start link"),
     dron_pool:start_link(Master, WorkerPolicy),
     error_logger:info_msg("Testing Dron Pool ~p", [dron_pool:get_worker()]),
     case LeaderNode of
