@@ -18,11 +18,16 @@ start(Nodes, Mode) ->
               RetStart = rpc:call(Node, mnesia, start, []),
               error_logger:info_msg("Got ~p while starting mnesia on ~p",
                                     [RetStart, Node]) end, Nodes),
-  create_jobs_table(Nodes, Mode),
-  create_jobs_archive_table(Nodes, Mode),
-  create_job_instances_table(Nodes, Mode),
-  create_job_instance_deps_table(Nodes, Mode),
-  create_workers_table(Nodes, Mode),
+  case Ret of
+    ok ->
+      create_jobs_table(Nodes, Mode),
+      create_jobs_archive_table(Nodes, Mode),
+      create_job_instances_table(Nodes, Mode),
+      create_job_instance_deps_table(Nodes, Mode),
+      create_workers_table(Nodes, Mode);
+    _ ->
+      ok
+  end,
   ok.
 
 %%------------------------------------------------------------------------------
