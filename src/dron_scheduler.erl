@@ -330,7 +330,7 @@ handle_cast({waiting_job_instance_timer, JId, TRef}, State, _Election) ->
 %%------------------------------------------------------------------------------
 handle_info({schedule, Job = #job{name = JName, frequency = Freq}},
             State = #state{leader = Leader}) ->
-  error_logger:info_msg("Got Sched ~p ~p", [JName, Leader]),
+  error_logger:info_msg("Got Sched ~p ~p ~p ~p", [JName, Leader, Freq, ?MODULE]),
     {ok, TRef} = timer:apply_interval(Freq * 1000, ?MODULE, create_job_instance,
                                       [Job, self(), Leader]),
   error_logger:info_msg("AAAAAAAAAAAAa"),
@@ -377,6 +377,7 @@ instanciate_dependencies(JId, Dependencies) ->
 %% @private
 %%------------------------------------------------------------------------------
 create_job_instance(Job, SchedulerPid, Leader) ->
+  error_logger:info_msg("CREATE CALLED"),
     create_job_instance(Job, calendar:local_time(), SchedulerPid, Leader).
 
 %%------------------------------------------------------------------------------
