@@ -325,7 +325,9 @@ disable_worker(WName) ->
   Ret.
 
 reconstruct_state() ->
+  error_logger:info_msg("Getting workers"),
   Ret = dron_db:get_workers_of_scheduler(node()),
+  error_logger:info_msg("Got workers"),
   {ok, Workers} = Ret,
   lists:map(fun(Worker = #worker{name = WName, used_slots = Slots}) ->
                     monitor_node(WName, true),
