@@ -426,10 +426,6 @@ create_job_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout,
     ok = dron_db:store_job_instance(JI),
     % TODO(ionel): Check if the wait_timer is properly inserted in the slave as
     % well.
-    Trans = fun() ->
-      qlc:eval(qlc:q([JI || JI <- mnesia:table(job_instances)]))
-        end,
-  error_logger:info_msg("JOOOOBBS: ~p", [mnesia:transaction(Trans)]),
     case UnsatisfiedDeps of 
         [] -> run_job_instance(JI, true);
         _  -> TRef = erlang:send_after(DepsTimeout * 1000, SchedulerPid,
@@ -460,6 +456,7 @@ run_job_instance(_JI, false) ->
 run_job_instance(JobInstance = #job_instance{timeout = Timeout}, true) ->
     #worker{name = WName} = get_worker_backoff(),
     WorkerJI = JobInstance#job_instance{worker = WName, state = running},
+    error_logger:info_msg("Worker aaaaa ~p", [WName]),
     ok = dron_db:store_job_instance(WorkerJI),
     dron_worker:run(WName, WorkerJI, Timeout).
         

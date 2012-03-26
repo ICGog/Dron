@@ -39,6 +39,7 @@ stop(WName) ->
 %% @end
 %%------------------------------------------------------------------------------
 run(WName, JobInstance, Timeout) ->
+  error_logger:info_msg("RUUUUUN"),
   gen_server:cast({global, WName}, {run, JobInstance, Timeout}).
 
 %%------------------------------------------------------------------------------
@@ -86,6 +87,7 @@ handle_call(stop, _From, State) ->
 handle_cast({run, JI = #job_instance{jid = JId, worker = WName}, Timeout},
             State = #wstate{jipids = JIPids, pidjis = PidJIs, 
                             jitimeout = JITimeout}) ->
+  error_logger:info_msg("RUUUUUN22222"),
   {ok, TRef} = timer:apply_after(Timeout * 1000, ?MODULE, kill_job_instance,
                                  [WName, JId, true]),
   JIPid = spawn_link(dron_worker, run_job_instance, [JI]),
