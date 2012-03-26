@@ -339,7 +339,7 @@ handle_info({schedule, Job = #job{name = JName, frequency = Freq}},
     ets:delete(start_timers, JName),
     {noreply, State};
 handle_info({create, Freq, Job, Leader}, State) ->
-  erlang:send_after(Freq * 1000, self(), {create, Job, Leader}),
+  erlang:send_after(Freq * 1000, self(), {create, Freq, Job, Leader}),
   create_job_instance(Job, self(), Leader),
   {noreply, State};
 handle_info({wait_timeout, JId}, State) ->
