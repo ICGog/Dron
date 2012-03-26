@@ -14,7 +14,9 @@
 start(Nodes, Mode) ->
   ok = mnesia:create_schema(Nodes),
   lists:map(fun(Node) ->
-              ok = rpc:call(Node, mnesia, start, []) end, Nodes),
+              Ret = rpc:call(Node, mnesia, start, []),
+              error_logger:info_msg("Got ~p while starting mnesia on ~p",
+                                    [Ret, Node]) end, Nodes),
   create_jobs_table(Nodes, Mode),
   create_jobs_archive_table(Nodes, Mode),
   create_job_instances_table(Nodes, Mode),
