@@ -20,7 +20,7 @@ start_link(Master, WorkerPolicy) ->
 
 stop() ->
   gen_server:call(?MODULE, stop).
-  
+
 %%------------------------------------------------------------------------------
 %% @doc
 %% Add a new worker to the pool. The worker will have the number of slots
