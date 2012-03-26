@@ -429,7 +429,7 @@ create_job_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout,
     Trans = fun() ->
       qlc:eval(qlc:q([JI || JI <- mnesia:table(job_instances)]))
         end,
-  error_logger:info_msg("JOOOOBBS: ~p", []mnesia:transaction(Trans)]),
+  error_logger:info_msg("JOOOOBBS: ~p", [mnesia:transaction(Trans)]),
     case UnsatisfiedDeps of 
         [] -> run_job_instance(JI, true);
         _  -> TRef = erlang:send_after(DepsTimeout * 1000, SchedulerPid,
