@@ -326,17 +326,18 @@ disable_worker(WName) ->
 
 reconstruct_state() ->
   error_logger:info_msg("Getting workers"),
-  Ret = dron_db:get_workers_of_scheduler(node()),
-  error_logger:info_msg("Got workers"),
-  {ok, Workers} = Ret,
+  {ok, Workers} = dron_db:get_workers_of_scheduler(node()),
+  error_logger:info_msg("Got workers ~p", [Workers]),
   lists:map(fun(Worker = #worker{name = WName, used_slots = Slots}) ->
-                    monitor_node(WName, true),
-                    ets:insert(worker_records, {WName, Worker}),
-                    Ws = case ets:lookup(slot_workers, Slots) of
-                           [{Slots, Wls}] -> [WName|Wls];
-                           []             -> [WName]
-                    end,                                   
-                    ets:insert(slot_workers, {Slots, Ws})
+                  error_logger:info_msg("Pre"),
+                  monitor_node(WName, true),
+                  error_logger:info_msg("Post"),
+                  ets:insert(worker_records, {WName, Worker}),
+                  Ws = case ets:lookup(slot_workers, Slots) of
+                         [{Slots, Wls}] -> [WName|Wls];
+                         []             -> [WName]
+                  end,                                   
+                  ets:insert(slot_workers, {Slots, Ws})
             end, Workers).
 
 calculate_needs(WorkerPolicy) ->
