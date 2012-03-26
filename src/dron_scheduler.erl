@@ -331,12 +331,17 @@ handle_cast({waiting_job_instance_timer, JId, TRef}, State, _Election) ->
 handle_info({schedule, Job = #job{name = JName, frequency = Freq}},
             State = #state{leader = Leader}) ->
   error_logger:info_msg("Got Sched ~p ~p ~p ~p", [JName, Leader, Freq, ?MODULE]),
-    {ok, TRef} = timer:apply_interval(Freq * 1000, ?MODULE, create_job_instance,
-                                      [Job, self(), Leader]),
+    %{ok, TRef} = timer:apply_interval(Freq * 1000, ?MODULE, create_job_instance,
+     %                                 [Job, self(), Leader]),
+  TRef = erlang:send_after(Freq * 1000, self(), {create, Job, Leader}),
   error_logger:info_msg("AAAAAAAAAAAAa"),
     ets:insert(schedule_timers, {JName, TRef}),
     ets:delete(start_timers, JName),
     {noreply, State};
+handle_info({create, Job, Leader}, State) ->
+  erlang:send_after(Freq * 1000, self(), {create, Job, Leader}),
+  create_job_instance(Job, self(), Leader),
+  {noreply, State};
 handle_info({wait_timeout, JId}, State) ->
     case ets:lookup(wait_timers, JId) of
         [{JId, TRef}] -> erlang:cancel_timer(TRef),
