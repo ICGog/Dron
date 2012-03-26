@@ -161,10 +161,7 @@ init([Master, WorkerPolicy]) ->
 %%------------------------------------------------------------------------------
 elected(State = #state{master_coordinator = Master, leader_node = LeaderNode,
                        worker_policy = WorkerPolicy}, _Election, undefined) ->
-    error_logger:info_msg("~p elected as master", [node()]),
-    error_logger:info_msg("Pool start link"),
     dron_pool:start_link(Master, WorkerPolicy),
-    error_logger:info_msg("Testing Dron Pool ~p", [dron_pool:get_worker()]),
     case LeaderNode of
         undefined ->
             ok;
@@ -278,26 +275,27 @@ handle_leader_cast({reschedule, {Name, Date}}, State, _Election) ->
 %% @end
 %%------------------------------------------------------------------------------
 from_leader({schedule, Job = #job{name = JName}, AfterT}, State, _Election) ->
-    ets:insert(start_timers, {JName, erlang:send_after(AfterT * 1000, self(),
-                                                       {schedule, Job})}),
-    {ok, State};
+  error_logger:info_msg("Scheddddd ~p", [JName]),
+  ets:insert(start_timers, {JName, erlang:send_after(AfterT * 1000, self(),
+                                                     {schedule, Job})}),
+  {ok, State};
 from_leader({unschedule, JName}, State, _Election) ->
-    unschedule_job_inmemory(JName),
-    {ok, State};
+  unschedule_job_inmemory(JName),
+  {ok, State};
 from_leader({satisfied, RId, JId}, State, _Election) ->
-    satisfied_dependency(RId, JId, false),
-    {ok, State};
+  satisfied_dependency(RId, JId, false),
+  {ok, State};
 from_leader({worker_disabled, JI}, State, _Election) ->
-    erlang:spawn_link(?MODULE, run_job_instance, [JI, false]),
-    {ok, State};
+  erlang:spawn_link(?MODULE, run_job_instance, [JI, false]),
+  {ok, State};
 from_leader({waiting_job_instance_deps, JId, UnsatisfiedDeps}, State,
             _Election) ->
-    ets:insert(ji_deps, {JId, UnsatisfiedDeps}),
-    {ok, State};
+  ets:insert(ji_deps, {JId, UnsatisfiedDeps}),
+  {ok, State};
 from_leader({master_coordinator, Master}, State, _Election) ->
-    {ok, State#state{master_coordinator = Master}};
+  {ok, State#state{master_coordinator = Master}};
 from_leader(stop, State, _Election) ->
-    {stop, shutdown, State}.
+  {stop, shutdown, State}.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -332,6 +330,7 @@ handle_cast({waiting_job_instance_timer, JId, TRef}, State, _Election) ->
 %%------------------------------------------------------------------------------
 handle_info({schedule, Job = #job{name = JName, frequency = Freq}},
             State = #state{leader = Leader}) ->
+  error_logger:info("Got Sched ~p", [JName])
     {ok, TRef} = timer:apply_interval(Freq * 1000, ?MODULE, create_job_instance,
                                       [Job, self(), Leader]),
     ets:insert(schedule_timers, {JName, TRef}),

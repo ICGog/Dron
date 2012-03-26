@@ -350,6 +350,7 @@ handle_leader_call({get_workers, SName}, _From,
 %%------------------------------------------------------------------------------
 handle_leader_cast({schedule, Job = #job{name = Name}},
                    State = #state{schedulers = Schedulers}, _Election) ->
+  error_logger:info_msg("Schedule ~p on ~p", [Name, dron_hash:hash(Name, Schedulers)]),
   rpc:call(dron_hash:hash(Name, Schedulers), dron_scheduler, schedule, [Job]),
   {ok, State};
 handle_leader_cast({unschedule, JName},
