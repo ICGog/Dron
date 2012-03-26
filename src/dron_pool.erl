@@ -131,13 +131,11 @@ master_coordinator(Master) ->
 %% @private
 %%------------------------------------------------------------------------------
 init([Master, WorkerPolicy]) ->
-  error_logger:info_msg("Starting pool"),
   ets:new(worker_records, [named_table]),
   ets:new(slot_workers, [ordered_set, named_table]),
   reconstruct_state(),
   erlang:send_after(dron_config:scheduler_heartbeat_interval(),
                     self(), heartbeat),
-  error_logger:info_msg("Pool started"),
   {ok, #state{master_coordinator = Master, worker_policy = WorkerPolicy}}.
 
 %%------------------------------------------------------------------------------
@@ -325,9 +323,8 @@ disable_worker(WName) ->
   Ret.
 
 reconstruct_state() ->
-  error_logger:info_msg("Getting workers"),
   Ret = dron_db:get_workers_of_scheduler(node()),
-  error_logger:info_msg("Got workers ~p", [Ret]),
+  error_logger:info_msg("Reconstructing state: ~p", [Ret]),
   {ok, Workers} = Ret,
   lists:map(fun(Worker = #worker{name = WName, used_slots = Slots}) ->
                   error_logger:info_msg("Pre"),

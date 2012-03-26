@@ -497,7 +497,7 @@ handle_info(balance_workers, State = #state{leader = true}) ->
   erlang:send_after(dron_config:scheduler_heartbeat_interval(), self(),
                     balance_workers),
   {noreply, State};
-handle_info({'EXIT', Pid, normal}, State) ->
+handle_info({'EXIT', _Pid, normal}, State) ->
   % Node balancing finished successfully.
   {noreply, State};
 handle_info({'EXIT', Pid, Reason}, State) ->

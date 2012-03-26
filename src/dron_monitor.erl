@@ -76,7 +76,7 @@ start_new_scheduler(Schedulers, SName, Workers) ->
                {ok, _Pid} ->
                    ets:insert(scheduler_heartbeat,
                               {SName, {alive, calendar:local_time()}}),
-                   timer:sleep(3000),
+                   timer:sleep(400),
                    start_new_workers(SName, get_new_workers(Workers));
                Reason     ->
                    {error, Reason}

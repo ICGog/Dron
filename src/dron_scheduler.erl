@@ -216,7 +216,6 @@ handle_leader_cast({schedule, Job = #job{name = JName, start_time = STime}},
                self(),
                calendar:datetime_to_gregorian_seconds(calendar:local_time()),
                calendar:datetime_to_gregorian_seconds(STime)),
-    error_logger:info_msg("Scheddddd ~p", [JName]),
     ets:insert(start_timers, {JName, erlang:send_after(AfterT * 1000, self(),
                                                        {schedule, Job})}),
     {ok, {schedule, Job, AfterT}, State};
@@ -331,13 +330,12 @@ handle_cast({waiting_job_instance_timer, JId, TRef}, State, _Election) ->
 handle_info({schedule, Job = #job{name = JName, frequency = Freq}},
             State = #state{leader = Leader}) ->
   error_logger:info_msg("Got Sched ~p ~p ~p ~p", [JName, Leader, Freq, ?MODULE]),
-    %{ok, TRef} = timer:apply_interval(Freq * 1000, ?MODULE, create_job_instance,
-     %                                 [Job, self(), Leader]),
-  TRef = erlang:send_after(Freq * 1000, self(), {create, Freq, Job, Leader}),
-  error_logger:info_msg("AAAAAAAAAAAAa"),
-    ets:insert(schedule_timers, {JName, TRef}),
-    ets:delete(start_timers, JName),
-    {noreply, State};
+  {ok, TRef} = timer:apply_interval(Freq * 1000, ?MODULE, create_job_instance,
+                                    [Job, self(), Leader]),
+  %TRef = erlang:send_after(Freq * 1000, self(), {create, Freq, Job, Leader}),
+  ets:insert(schedule_timers, {JName, TRef}),
+  ets:delete(start_timers, JName),
+  {noreply, State};
 handle_info({create, Freq, Job, Leader}, State) ->
   erlang:send_after(Freq * 1000, self(), {create, Freq, Job, Leader}),
   create_job_instance(Job, self(), Leader),
@@ -382,8 +380,7 @@ instanciate_dependencies(JId, Dependencies) ->
 %% @private
 %%------------------------------------------------------------------------------
 create_job_instance(Job, SchedulerPid, Leader) ->
-  error_logger:info_msg("CREATE CALLED"),
-    create_job_instance(Job, calendar:local_time(), SchedulerPid, Leader).
+  create_job_instance(Job, calendar:local_time(), SchedulerPid, Leader).
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -391,20 +388,19 @@ create_job_instance(Job, SchedulerPid, Leader) ->
 create_job_instance(#job{name = Name, deps_timeout = DepsTimeout,
                          dependencies = Dependencies},
                     Date, SchedulerPid, false) ->
-    JId = {Name, Date},
-  error_logger:info_msg("Creating job on slave ~p", [JId]),  
-    case Dependencies of
-        [] -> ok;
-        _  -> TRef = erlang:send_after(DepsTimeout * 1000, SchedulerPid,
-                                       {wait_timeout, JId}),
-              dron_scheduler:store_waiting_job_instance_timer(JId, TRef)
-    end;
+  JId = {Name, Date},  
+  case Dependencies of
+    [] -> ok;
+    _  -> TRef = erlang:send_after(DepsTimeout * 1000, SchedulerPid,
+                                   {wait_timeout, JId}),
+          dron_scheduler:store_waiting_job_instance_timer(JId, TRef)
+  end;
 create_job_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout,
                          deps_timeout = DepsTimeout,
                          dependencies = Dependencies},
                     Date, SchedulerPid, true) ->
-    JId = {Name, Date},
-    RunTime = calendar:local_time(),
+  JId = {Name, Date},
+  RunTime = calendar:local_time(),
 %    Delay = calendar:datetime_to_gregorian_seconds(RunTime) -
 %        calendar:datetime_to_gregorian_seconds(Date),
 %    MaxDelay = case ets:lookup(delay, delay) of
@@ -416,24 +412,24 @@ create_job_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout,
 %       true             -> ok
 %    end,
   error_logger:info_msg("Creating job ~p", [JId]),
-    {Deps, UnsatisfiedDeps} = instanciate_dependencies(JId, Dependencies),
-    JI =  #job_instance{jid = JId, name = Name, cmd_line = Cmd,
-                        state = waiting, timeout = Timeout,
-                        run_time = RunTime,
-                        num_retry = 0,
-                        dependencies = Deps,
-                        worker = undefined},
-    ok = dron_db:store_job_instance(JI),
-    % TODO(ionel): Check if the wait_timer is properly inserted in the slave as
-    % well.
-    case UnsatisfiedDeps of 
-        [] -> run_job_instance(JI, true);
-        _  -> TRef = erlang:send_after(DepsTimeout * 1000, SchedulerPid,
-                                       {wait_timeout, JId}),
-              dron_scheduler:store_waiting_job_instance_timer(JId, TRef),
-              dron_scheduler:store_waiting_job_instance_deps(
-                JId, UnsatisfiedDeps)
-    end.
+  {Deps, UnsatisfiedDeps} = instanciate_dependencies(JId, Dependencies),
+  JI =  #job_instance{jid = JId, name = Name, cmd_line = Cmd,
+                      state = waiting, timeout = Timeout,
+                      run_time = RunTime,
+                      num_retry = 0,
+                      dependencies = Deps,
+                      worker = undefined},
+  ok = dron_db:store_job_instance(JI),
+  % TODO(ionel): Check if the wait_timer is properly inserted in the slave as
+  % well.
+  case UnsatisfiedDeps of 
+    [] -> run_job_instance(JI, true);
+    _  -> TRef = erlang:send_after(DepsTimeout * 1000, SchedulerPid,
+                                   {wait_timeout, JId}),
+          dron_scheduler:store_waiting_job_instance_timer(JId, TRef),
+          dron_scheduler:store_waiting_job_instance_deps(
+            JId, UnsatisfiedDeps)
+  end.
 
 %%------------------------------------------------------------------------------
 %% @private

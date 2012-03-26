@@ -11,7 +11,7 @@ for instance in $ADDR_SCHEDULERS
 do
     if [ -z "$DRON_STOP" ]; then
         echo "Starting scheduler: $instance"
-        ssh ubuntu@$instance "export ERL_LIBS=\"/home/ubuntu/Dron/lib\"; erl -pa ~/Dron/ebin ~/Dron/lib -i ~/Dron/include -detached -sname s -s -e +P256000"
+        ssh ubuntu@$instance "cd Dron; make clean; make compile; export ERL_LIBS=\"/home/ubuntu/Dron/lib\"; erl -pa ~/Dron/ebin ~/Dron/lib -i ~/Dron/include -detached -sname s -s -e +P256000"
     else
         echo "Stopping scheduler: $instance"
         ssh ubuntu@$instance "erl_call -sname s -q"
@@ -24,7 +24,7 @@ do
     do
         if [ -z "$DRON_STOP" ]; then
             echo "Starting worker: w$w@$instance"
-            ssh ubuntu@$instance "export ERL_LIBS=\"/home/ubuntu/Dron/lib\"; erl -pa ~/Dron/ebin -I ~/Dron/include -detached -sname w$w -s -e +P256000"
+            ssh ubuntu@$instance "cd Dron; export ERL_LIBS=\"/home/ubuntu/Dron/lib\"; erl -pa ~/Dron/ebin -I ~/Dron/include -detached -sname w$w -s -e +P256000"
         else
             echo "Stopping worker: w$w@$instance"
             ssh ubuntu@$instance "erl_call -sname w$w -q"
