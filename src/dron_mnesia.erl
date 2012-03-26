@@ -2,7 +2,7 @@
 -author("Ionel Corneliu Gog").
 -include("dron.hrl").
 
--export([start/3, start_node/1, stop/0, stop_node/1]).
+-export([start/2, start_node/1, stop/0, stop_node/1]).
 
 %===============================================================================
 
@@ -11,7 +11,7 @@
 %% @spec start(Nodes, Mode) -> ok
 %% @end
 %%------------------------------------------------------------------------------
-start(Nodes, Mode, MnesiaNodes) ->
+start(Nodes, Mode) ->
   Ret = mnesia:create_schema(Nodes),
   error_logger:info_msg("Create schema returned ~p", [Ret]),
   lists:map(fun(Node) ->

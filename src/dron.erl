@@ -32,11 +32,7 @@ stop() ->
 %% @private
 %%------------------------------------------------------------------------------
 start(_Type, _Args) ->
-  MnesiaNodes = dron_config:scheduler_nodes() ++
-                  dron_config:master_nodes() ++
-                  dron_config:db_nodes() ++
-                  dron_config:worker_nodes(),
-  dron_mnesia:start(dron_config:db_nodes(), [{n_ram_copies, 2}], MnesiaNodes),
+  dron_mnesia:start(dron_config:db_nodes(), [{n_ram_copies, 2}]),
   error_logger:info_msg("~nMnesia is running!~n", []),
   {ok, Sup} = dron_sup:start(),
   dron_coordinator:auto_add_sched_workers(),
