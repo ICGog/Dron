@@ -34,7 +34,7 @@ start_new_workers(SName, Workers) ->
            fun(W) -> case rpc:call(SName, dron_pool, add_worker, [W]) of
                        ok  -> true;
                        Ret -> error_logger:error_msg(
-                                "Got ~p while starting ~p", [W, Ret]),
+                                "Got ~p while starting ~p", [Ret, W]),
                               false
                      end
            end, NewWs),
@@ -76,7 +76,7 @@ start_new_scheduler(Schedulers, SName, Workers) ->
                {ok, _Pid} ->
                    ets:insert(scheduler_heartbeat,
                               {SName, {alive, calendar:local_time()}}),
-                   timer:sleep(200),
+                   timer:sleep(400),
                    start_new_workers(SName, get_new_workers(Workers));
                Reason     ->
                    {error, Reason}

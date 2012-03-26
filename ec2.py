@@ -14,7 +14,7 @@ def get_connection():
         raise Exception('Regions have changes')
 
 def start_instances(imageId, instanceType, num):
-    conn = get_connection()    
+    conn = get_connection()
     reservation = conn.run_instances(image_id=imageId,
                                      security_groups=["icgog"],
                                      key_name="DronTest",
@@ -77,11 +77,11 @@ def write_exports(workers, wIps, wpn, schedulers, sIps):
         aSchedulers += scheduler + ' '
     file.write(aSchedulers + '"\n')
     file.write('export ADDR_MASTERS="' + schedulers[0] + '"\n\n')
-    file.write('export ERL_LIBS="~/Dron/lib"\n')
+    file.write('export ERL_LIBS="/home/ubuntu/Dron/lib"\n')
     file.close()
-    
+
 def stop_cluster():
-    instFile = open('dron_instances', 'r')    
+    instFile = open('dron_instances', 'r')
     conn = get_connection()
     instances = []
     for instance in instFile:
