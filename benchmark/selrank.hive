@@ -1,0 +1,1 @@
+INSERT OVERWRITE TABLE rankings_select SELECT pageRank, pageURL FROM rankings WHERE pageRank > 10;

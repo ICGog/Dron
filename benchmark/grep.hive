@@ -1,0 +1,1 @@
+INSERT OVERWRITE TABLE grep_select SELECT * FROM grep WHERE field LIKE '%XYZ%';

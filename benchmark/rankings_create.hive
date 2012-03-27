@@ -1,0 +1,4 @@
+DROP TABLE rankings_select;
+DROP TABLE rankings;
+CREATE EXTERNAL TABLE rankings (pageRank INT, pageURL STRING, avgDuration INT) ROW FORMAT DELIMITED FIELDS TERMINATED BY '|' STORED AS TEXTFILE LOCATION '/hive/input/rankings';
+CREATE TABLE rankings_select ( pageRank INT, pageURL STRING );

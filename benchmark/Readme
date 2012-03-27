@@ -1,0 +1,29 @@
+####### 1. Generate Data #######
+
+####### 2. Upload Data to HDFS for Hive #######
+
+2.1. Grep Data
+
+2.2. Rankings Data
+LOAD DATA LOCAL INPATH '$DATA_DIR/Rankings.dat' OVERWRITE INTO TABLE rankings;
+
+3.3. UserVisits Data
+LOAD DATA LOCAL INPATH '$DATA_DIR/UserVisits.dat' OVERWRITE INTO TABLE UserVisits;
+
+####### 3. Upload Data to HDFS for MapReduce #######
+
+3.1. Grep Data
+
+hadoop jar HADOOP_HOME/hadoop-examples.jar teragen 500000000 /input/grep/
+
+3.2. Rankings Data
+hadoop jar jars/dataloader.jar rankings "$DATA_DIR/Rankings.dat" /input/rankings/Rankings.dat
+
+3.3. UserVisits Data
+hadoop jar jars/dataloader.jar uservisits "$DATA_DIR/UserVisits.dat" /input/uservisits/UserVisits.dat
+
+####### 3. Clean Output #######
+hadoop fs -rmr /output/grep
+hadoop fs -rmr /output/rankings
+hadoop fs -rmr /output/uservisits_agg
+hadoop fs -rmr /output/uservisits_join
