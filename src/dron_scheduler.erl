@@ -207,7 +207,8 @@ handle_leader_call(stop, _From, State, _Election) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
-handle_leader_cast({schedule, Job = #job{name = JName, start_time = STime}},
+handle_leader_cast({schedule, Job = #job{name = JName, start_time = STime,
+                                         frequency = Frequency}},
                    State, _Election) ->
     % TODO(ionel): If the process fails while running old instances then
     % some of them may be re-run. Fix it.
@@ -216,9 +217,20 @@ handle_leader_cast({schedule, Job = #job{name = JName, start_time = STime}},
                self(),
                calendar:datetime_to_gregorian_seconds(calendar:local_time()),
                calendar:datetime_to_gregorian_seconds(STime)),
-    ets:insert(start_timers, {JName, erlang:send_after(AfterT * 1000, self(),
-                                                       {schedule, Job})}),
-    {ok, {schedule, Job, AfterT}, State};
+    case Frequency of
+      0 -> case AfterT of
+             ok -> {ok, State};
+             _  -> ets:insert(start_timers,
+                      {JName, erlang:send_after(AfterT * 1000, self(),
+                                                {run, Job})}),
+                   % TODO(ionel): This is potential point of unsynchronization.
+                   {ok, State}
+           end;
+      _ -> ets:insert(start_timers,
+                      {JName, erlang:send_after(AfterT * 1000, self(),
+                                                {schedule, Job})}),
+           {ok, {schedule, Job, AfterT}, State}
+    end;
 handle_leader_cast({unschedule, JName}, State, _Election) ->
     unschedule_job_inmemory(JName),
     ok = dron_db:archive_job(JName),
@@ -334,6 +346,11 @@ handle_info({schedule, Job = #job{name = JName, frequency = Freq}},
   ets:insert(schedule_timers, {JName, TRef}),
   ets:delete(start_timers, JName),
   {noreply, State};
+handle_info({run, Job = #job{name = JName}}, State) ->
+  ets:delete(start_timers, JName),
+  ets:insert(schedule_timers, {JName, no_timer}),
+  create_job_instance(Job, self(), true),
+  {noreply, State};
 handle_info({wait_timeout, JId}, State) ->
     case ets:lookup(wait_timers, JId) of
         [{JId, TRef}] -> erlang:cancel_timer(TRef),
@@ -445,22 +462,25 @@ run_job_instance(_JI, false) ->
 run_job_instance(JobInstance = #job_instance{timeout = Timeout}, true) ->
     #worker{name = WName} = get_worker_backoff(),
     WorkerJI = JobInstance#job_instance{worker = WName, state = running},
-    error_logger:info_msg("Worker aaaaa ~p", [WName]),
     ok = dron_db:store_job_instance(WorkerJI),
     dron_worker:run(WName, WorkerJI, Timeout).
         
-run_job_instances_up_to_now(Job = #job{frequency = Frequency}, SchedulerPid,
-                            Now, STime) ->
+run_job_instances_up_to_now(Job = #job{name = JName, frequency = Frequency},
+                            SchedulerPid, Now, STime) ->
     if STime < Now ->
             create_job_instance(
               Job, calendar:gregorian_seconds_to_datetime(STime),
               SchedulerPid, true),
-            run_job_instances_up_to_now(
-              Job,
-              SchedulerPid,
-              calendar:datetime_to_gregorian_seconds(calendar:local_time()),
-              STime + Frequency);
-       true        -> STime - Now
+            case Frequency of
+              0 -> ets:insert(schedule_timers, {JName, no_timer}),
+                   ok;
+              _ -> run_job_instances_up_to_now(
+                     Job, SchedulerPid,
+                     calendar:datetime_to_gregorian_seconds(
+                       calendar:local_time()),
+                     STime + Frequency)
+            end;
+       true -> STime - Now
     end.
 
 %%------------------------------------------------------------------------------

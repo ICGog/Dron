@@ -39,7 +39,6 @@ stop(WName) ->
 %% @end
 %%------------------------------------------------------------------------------
 run(WName, JobInstance, Timeout) ->
-  error_logger:info_msg("RUUUUUN"),
   gen_server:cast({global, WName}, {run, JobInstance, Timeout}).
 
 %%------------------------------------------------------------------------------

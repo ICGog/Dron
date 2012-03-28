@@ -23,7 +23,7 @@ register_job(Job) ->
 %%------------------------------------------------------------------------------
 unregister_job(JName) ->
   dron_coordinator:unschedule(JName).
-
+  
 %%------------------------------------------------------------------------------
 %% @doc
 %% @spec kill_job_instance(JobName, RunTime) -> ok
