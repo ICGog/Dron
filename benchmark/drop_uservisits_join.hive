@@ -1,0 +1,3 @@
+DROP TABLE rankings_uservisits_join;
+CREATE TABLE rankings_uservisits_join ( sourceIP STRING, avgPageRank DOUBLE, 
+totalRevenue DOUBLE);
