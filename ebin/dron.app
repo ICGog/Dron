@@ -2,6 +2,7 @@
                     {vsn, "1"},
                     {modules, [dron,
                                dron_api,
+                               dron_benchmark,
                                dron_config,
                                dron_consumer,
                                dron_coordinator,

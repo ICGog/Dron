@@ -2,8 +2,8 @@
 -author("Ionel Corneliu Gog").
 -include("dron.hrl").
 
--export([start/0, stop/0, register_hive/0, register_hadoop/0,
-         unregister_hive/0, unregister_hadoop/0]).
+-export([start/0, stop/0, register_hive/0, register_mapred/0,
+         unregister_hive/0, unregister_mapred/0]).
 
 %-------------------------------------------------------------------------------
 
@@ -44,7 +44,7 @@ test_path() ->
 
 grep_hive() ->
   StartTime = calendar:local_time(),
-  dron_api:register_job(#job{name = "GrepHive"
+  dron_api:register_job(#job{name = "GrepHive",
                              cmd_line = "hive -f " ++ test_path() ++ "grep.hive",
                              start_time = StartTime,
                              frequency = 0,
