@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/benchmarks/!svn/ver/5/datagen/teragen
+END
+teragen.pl
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/benchmarks/!svn/ver/1/datagen/teragen/teragen.pl
+END
+teragen.jar
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/benchmarks/!svn/ver/1/datagen/teragen/teragen.jar
+END
+teragen-grabber.pl
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/benchmarks/!svn/ver/5/datagen/teragen/teragen-grabber.pl
+END
+sortgrep-check.pl
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/benchmarks/!svn/ver/1/datagen/teragen/sortgrep-check.pl
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/benchmarks/!svn/ver/3/datagen/teragen/README
+END
+build.xml
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/benchmarks/!svn/ver/3/datagen/teragen/build.xml
+END
+sortgrep-copier.pl
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/benchmarks/!svn/ver/1/datagen/teragen/sortgrep-copier.pl
+END

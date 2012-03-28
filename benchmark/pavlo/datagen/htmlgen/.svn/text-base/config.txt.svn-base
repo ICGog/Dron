@@ -1,0 +1,28 @@
+
+# Configuration file with default values.
+
+# Place the output (docs directories, Rankings.dat, UserVisits.dat) 
+Output: /scratch.1/arasin/new_cacm_data
+
+# Prefix of the hostname
+NamePrefix: d- 
+
+# Range of machine IDs.  Should work beyond a 100
+ValRange: 01,100
+
+# Use this directory to store scripts and source data locally
+TempDir: /tmp/
+TempSubDir: datagen_temp/
+
+# Debug log
+Log: log.txt
+
+# Delimiter
+Delimiter: |
+
+# Row count for UserVisits.   155000000 = ~20G
+#UserVisits: 155000
+UserVisits: 155000000
+
+# Row count for Rankings (not explicitly specified, but 100000 is about 1G) 
+Rankings: 100000

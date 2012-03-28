@@ -1,0 +1,157 @@
+#!/bin/sh
+#/***************************************************************************
+# *   Copyright (C) 2009 by Andy Pavlo, Brown University                    *
+# *   http://www.cs.brown.edu/~pavlo/                                       *
+# *                                                                         *
+# *   Permission is hereby granted, free of charge, to any person obtaining *
+# *   a copy of this software and associated documentation files (the       *
+# *   "Software"), to deal in the Software without restriction, including   *
+# *   without limitation the rights to use, copy, modify, merge, publish,   *
+# *   distribute, sublicense, and/or sell copies of the Software, and to    *
+# *   permit persons to whom the Software is furnished to do so, subject to *
+# *   the following conditions:                                             *
+# *                                                                         *
+# *   The above copyright notice and this permission notice shall be        *
+# *   included in all copies or substantial portions of the Software.       *
+# *                                                                         *
+# *   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       *
+# *   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    *
+# *   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*
+# *   IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR     *
+# *   OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, *
+# *   ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR *
+# *   OTHER DEALINGS IN THE SOFTWARE.                                       *
+# ***************************************************************************/
+
+## =====================================================
+## CONFIGURATION
+## =====================================================
+BASE_DIR=`pwd`
+
+## =====================================================
+## CORE SERVICES
+## =====================================================
+
+##
+## Hadoop Core Services
+##
+HDFS_MASTER_HOST="example.com"
+JOB_TRACKER_HOST="example.com"
+
+##
+## SSH Options
+##
+SSH_OPTIONS="-x"
+
+##
+## Hadoop Exec Attempts
+##
+HADOOP_EXEC_ATTEMPTS=10
+HADOOP_EXEC_SLEEP=5
+
+##
+##
+##
+PRINTF_FORMAT="   %-20s"
+
+##
+##
+##
+WAIT_CHARACTER="."
+FAIL_CHARACTER="x"
+
+##
+## Success/Fail Messsages
+##
+SUCCESS_MSG="OK"
+FAIL_MSG="FAIL"
+
+## =====================================================
+## DIRECTORY PATHS
+## =====================================================
+
+##
+## Path to JAVA
+##
+JAVA_HOME="/usr/"
+
+##
+## The jar file that has all of our benchmarks
+##
+BENCHMARK_JAR="$BASE_DIR/jars/benchmarks.jar"
+
+##
+## Data loader jar
+##
+DATALOADER_JAR="$BASE_DIR/jars/dataloader.jar"
+
+##
+## Where the benchmarks will pull in and write out information in HDFS
+##
+BASE_HDFS_OUTPUT_DIR="/output"
+BASE_HDFS_INPUT_DIR="/data"
+
+##
+## We try to push all the Hadoop debugging information out to a file
+##
+BASE_CONSOLE_OUTPUT_DIR="$BASE_DIR/logs"
+BASE_CONSOLE_OUTPUT="$BASE_CONSOLE_OUTPUT_DIR/console"
+
+##
+## The data that we need to copy into the distributed file system
+## Each node must have these files in the same directory on their local disk
+##
+ORIG_SORTGREP_DATA_DIR="/path/to/local/data"
+ORIG_BENCHMARK2_DATA_DIR="/path/to/local/data"
+ORIG_DOCS_DATA_DIR="/path/to/local/data/combined_docs"
+
+##
+## Where the Hadoop DFS/MR files are stored on each slave node
+## We need to know this in order to properly reformat HDFS
+## This should be the same thing as 'hadoop.tmp.dir' in '$HADOOP_CONF_DIR/hadoop-site.xml'
+##
+INTERNAL_HADOOP_DIR="/path/to/local/hadoop/dir"
+
+##
+## Scripts Directory
+##
+SCRIPTS_DIR=`readlink -f "$BASE_DIR/../util"`
+
+## =====================================================
+## COMMAND PATHS
+## =====================================================
+
+##
+## The command to use to flush the cache on a node before each trial
+##
+CMD_FLUSH_CACHE="/usr/local/bin/drop_caches3"
+
+##
+## File Splitter Command
+##
+CMD_FILE_SPLIT="split --numeric-suffixes --suffix-length=4"
+
+##
+## Execute a command on multiple machines
+##
+CMD_EXEC_PUSHER="$SCRIPTS_DIR/pusher --show-host"
+
+##
+## Which time command to use
+##
+CMD_TIME="time -f %e"
+
+##
+## Compression Utility Command
+##
+CMD_COMPRESS="gzip --best --force"
+
+##
+## Utility script to grab the finish time of a trial
+##
+CMD_FINISH_TIME="$SCRIPTS_DIR/finish-time.pl"
+
+##
+## Base Hadoop Command
+##
+CMD_HADOOP="$HADOOP_HOME/bin/hadoop"

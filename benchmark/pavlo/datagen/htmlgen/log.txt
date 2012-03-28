@@ -1,0 +1,103 @@
+Begin thread execution for host icg
+Run ssh icg killall  genUserVisits.py > /dev/null 2>&1
+Run ssh icg killall  extractUrls.py > /dev/null 2>&1
+Run ssh icg killall  genhtml > /dev/null 2>&1
+Run ssh icg killall  parsehtml > /dev/null 2>&1
+Run scp genhtml/genhtml icg:/tmp//datagen_temp_ionel///genhtml > /dev/null 2>&1
+Run scp genhtml/parsehtml icg:/tmp//datagen_temp_ionel///parsehtml > /dev/null 2>&1
+Run scp extractUrls.py icg:/tmp//datagen_temp_ionel//extractUrls.py > /dev/null 2>&1
+Run scp duplicates.py icg:/tmp//datagen_temp_ionel//duplicates.py > /dev/null 2>&1
+Run scp genUserVisits.py icg:/tmp//datagen_temp_ionel//genUserVisits.py > /dev/null 2>&1
+Run scp ColumnGenerator.py icg:/tmp//datagen_temp_ionel//ColumnGenerator.py > /dev/null 2>&1
+Run scp TableGenerator.py icg:/tmp//datagen_temp_ionel//TableGenerator.py > /dev/null 2>&1
+Run scp redo_ip.py icg:/tmp//datagen_temp_ionel//redo_ip.py > /dev/null 2>&1
+Run scp data_files/user_agents.dat icg:/tmp//datagen_temp_ionel///user_agents.dat > /dev/null 2>&1
+Run scp data_files/country_codes.dat icg:/tmp//datagen_temp_ionel///country_codes.dat > /dev/null 2>&1
+Run scp data_files/country_codes_plus_languages.dat icg:/tmp//datagen_temp_ionel///country_codes_plus_languages.dat > /dev/null 2>&1
+Run scp data_files/keywords.dat icg:/tmp//datagen_temp_ionel///keywords.dat > /dev/null 2>&1
+Begin thread execution for host icg
+Run ssh icg killall  genUserVisits.py > /dev/null 2>&1
+Run ssh icg killall  extractUrls.py > /dev/null 2>&1
+Run ssh icg killall  genhtml > /dev/null 2>&1
+Run ssh icg killall  parsehtml > /dev/null 2>&1
+Run scp genhtml/genhtml icg:/tmp//datagen_temp_ionel///genhtml > /dev/null 2>&1
+Run scp genhtml/parsehtml icg:/tmp//datagen_temp_ionel///parsehtml > /dev/null 2>&1
+Run scp extractUrls.py icg:/tmp//datagen_temp_ionel//extractUrls.py > /dev/null 2>&1
+Run scp duplicates.py icg:/tmp//datagen_temp_ionel//duplicates.py > /dev/null 2>&1
+Run scp genUserVisits.py icg:/tmp//datagen_temp_ionel//genUserVisits.py > /dev/null 2>&1
+Run scp ColumnGenerator.py icg:/tmp//datagen_temp_ionel//ColumnGenerator.py > /dev/null 2>&1
+Run scp TableGenerator.py icg:/tmp//datagen_temp_ionel//TableGenerator.py > /dev/null 2>&1
+Run scp redo_ip.py icg:/tmp//datagen_temp_ionel//redo_ip.py > /dev/null 2>&1
+Run scp data_files/user_agents.dat icg:/tmp//datagen_temp_ionel///user_agents.dat > /dev/null 2>&1
+Run scp data_files/country_codes.dat icg:/tmp//datagen_temp_ionel///country_codes.dat > /dev/null 2>&1
+Run scp data_files/country_codes_plus_languages.dat icg:/tmp//datagen_temp_ionel///country_codes_plus_languages.dat > /dev/null 2>&1
+Run scp data_files/keywords.dat icg:/tmp//datagen_temp_ionel///keywords.dat > /dev/null 2>&1
+Generated data on site icg
+Parsed data on site icg
+Begin thread execution for host icg
+Run ssh icg killall  genUserVisits.py > /dev/null 2>&1
+Run ssh icg killall  extractUrls.py > /dev/null 2>&1
+Run ssh icg killall  genhtml > /dev/null 2>&1
+Run ssh icg killall  parsehtml > /dev/null 2>&1
+Run scp genhtml/genhtml icg:/tmp//datagen_temp_ionel///genhtml > /dev/null 2>&1
+Run scp genhtml/parsehtml icg:/tmp//datagen_temp_ionel///parsehtml > /dev/null 2>&1
+Run scp extractUrls.py icg:/tmp//datagen_temp_ionel//extractUrls.py > /dev/null 2>&1
+Run scp duplicates.py icg:/tmp//datagen_temp_ionel//duplicates.py > /dev/null 2>&1
+Run scp genUserVisits.py icg:/tmp//datagen_temp_ionel//genUserVisits.py > /dev/null 2>&1
+Run scp ColumnGenerator.py icg:/tmp//datagen_temp_ionel//ColumnGenerator.py > /dev/null 2>&1
+Run scp TableGenerator.py icg:/tmp//datagen_temp_ionel//TableGenerator.py > /dev/null 2>&1
+Run scp redo_ip.py icg:/tmp//datagen_temp_ionel//redo_ip.py > /dev/null 2>&1
+Run scp data_files/user_agents.dat icg:/tmp//datagen_temp_ionel///user_agents.dat > /dev/null 2>&1
+Run scp data_files/country_codes.dat icg:/tmp//datagen_temp_ionel///country_codes.dat > /dev/null 2>&1
+Run scp data_files/country_codes_plus_languages.dat icg:/tmp//datagen_temp_ionel///country_codes_plus_languages.dat > /dev/null 2>&1
+Run scp data_files/keywords.dat icg:/tmp//datagen_temp_ionel///keywords.dat > /dev/null 2>&1
+Generated data on site icg
+Parsed data on site icg
+UserVisits generated on site icg
+Run ssh icg rm -rf  /tmp//datagen_temp_ionel/// > /dev/null 2>&1
+Begin thread execution for host icg
+Run ssh icg killall  genUserVisits.py > /dev/null 2>&1
+Run ssh icg killall  extractUrls.py > /dev/null 2>&1
+Run ssh icg killall  genhtml > /dev/null 2>&1
+Run ssh icg killall  parsehtml > /dev/null 2>&1
+Run scp genhtml/genhtml icg:/tmp//datagen_temp_ionel///genhtml > /dev/null 2>&1
+Run scp genhtml/parsehtml icg:/tmp//datagen_temp_ionel///parsehtml > /dev/null 2>&1
+Run scp extractUrls.py icg:/tmp//datagen_temp_ionel//extractUrls.py > /dev/null 2>&1
+Run scp duplicates.py icg:/tmp//datagen_temp_ionel//duplicates.py > /dev/null 2>&1
+Run scp genUserVisits.py icg:/tmp//datagen_temp_ionel//genUserVisits.py > /dev/null 2>&1
+Begin thread execution for host icg
+Run ssh icg killall  genUserVisits.py > /dev/null 2>&1
+Run ssh icg killall  extractUrls.py > /dev/null 2>&1
+Run ssh icg killall  genhtml > /dev/null 2>&1
+Run ssh icg killall  parsehtml > /dev/null 2>&1
+Run scp genhtml/genhtml icg:/tmp//datagen_temp_ionel///genhtml > /dev/null 2>&1
+Run scp genhtml/parsehtml icg:/tmp//datagen_temp_ionel///parsehtml > /dev/null 2>&1
+Run scp extractUrls.py icg:/tmp//datagen_temp_ionel//extractUrls.py > /dev/null 2>&1
+Run scp duplicates.py icg:/tmp//datagen_temp_ionel//duplicates.py > /dev/null 2>&1
+Run scp genUserVisits.py icg:/tmp//datagen_temp_ionel//genUserVisits.py > /dev/null 2>&1
+Run scp ColumnGenerator.py icg:/tmp//datagen_temp_ionel//ColumnGenerator.py > /dev/null 2>&1
+Run scp TableGenerator.py icg:/tmp//datagen_temp_ionel//TableGenerator.py > /dev/null 2>&1
+Run scp redo_ip.py icg:/tmp//datagen_temp_ionel//redo_ip.py > /dev/null 2>&1
+Run scp data_files/user_agents.dat icg:/tmp//datagen_temp_ionel///user_agents.dat > /dev/null 2>&1
+Run scp data_files/country_codes.dat icg:/tmp//datagen_temp_ionel///country_codes.dat > /dev/null 2>&1
+Begin thread execution for host icg
+Run ssh icg killall  genUserVisits.py > /dev/null 2>&1
+Run ssh icg killall  extractUrls.py > /dev/null 2>&1
+Run ssh icg killall  genhtml > /dev/null 2>&1
+Run ssh icg killall  parsehtml > /dev/null 2>&1
+Run scp genhtml/genhtml icg:/tmp//datagen_temp_ionel///genhtml > /dev/null 2>&1
+Run scp genhtml/parsehtml icg:/tmp//datagen_temp_ionel///parsehtml > /dev/null 2>&1
+Run scp extractUrls.py icg:/tmp//datagen_temp_ionel//extractUrls.py > /dev/null 2>&1
+Run scp duplicates.py icg:/tmp//datagen_temp_ionel//duplicates.py > /dev/null 2>&1
+Run scp genUserVisits.py icg:/tmp//datagen_temp_ionel//genUserVisits.py > /dev/null 2>&1
+Run scp ColumnGenerator.py icg:/tmp//datagen_temp_ionel//ColumnGenerator.py > /dev/null 2>&1
+Run scp TableGenerator.py icg:/tmp//datagen_temp_ionel//TableGenerator.py > /dev/null 2>&1
+Run scp redo_ip.py icg:/tmp//datagen_temp_ionel//redo_ip.py > /dev/null 2>&1
+Run scp data_files/user_agents.dat icg:/tmp//datagen_temp_ionel///user_agents.dat > /dev/null 2>&1
+Run scp data_files/country_codes.dat icg:/tmp//datagen_temp_ionel///country_codes.dat > /dev/null 2>&1
+Run scp data_files/country_codes_plus_languages.dat icg:/tmp//datagen_temp_ionel///country_codes_plus_languages.dat > /dev/null 2>&1
+Run scp data_files/keywords.dat icg:/tmp//datagen_temp_ionel///keywords.dat > /dev/null 2>&1
+Generated data on site icg
+Parsed data on site icg
+UserVisits generated on site icg
+Run ssh icg rm -rf  /tmp//datagen_temp_ionel/// > /dev/null 2>&1

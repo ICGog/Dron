@@ -1,0 +1,71 @@
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/benchmarks/!svn/ver/77/datagen/htmlgen
+END
+CACM_projections.sql
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/benchmarks/!svn/ver/1/datagen/htmlgen/CACM_projections.sql
+END
+CACM_schema.sql
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/benchmarks/!svn/ver/1/datagen/htmlgen/CACM_schema.sql
+END
+genUserVisits.py
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/benchmarks/!svn/ver/1/datagen/htmlgen/genUserVisits.py
+END
+config.txt
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/benchmarks/!svn/ver/1/datagen/htmlgen/config.txt
+END
+duplicates.py
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/benchmarks/!svn/ver/1/datagen/htmlgen/duplicates.py
+END
+TableGenerator.py
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/benchmarks/!svn/ver/1/datagen/htmlgen/TableGenerator.py
+END
+extractUrls.py
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/benchmarks/!svn/ver/1/datagen/htmlgen/extractUrls.py
+END
+ColumnGenerator.py
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/benchmarks/!svn/ver/1/datagen/htmlgen/ColumnGenerator.py
+END
+README.txt
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/benchmarks/!svn/ver/1/datagen/htmlgen/README.txt
+END
+generateData.py
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/benchmarks/!svn/ver/1/datagen/htmlgen/generateData.py
+END
+combine-docs.pl
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/benchmarks/!svn/ver/2/datagen/htmlgen/combine-docs.pl
+END

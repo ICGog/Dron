@@ -1,0 +1,86 @@
+<?xml version="1.0" ?>
+<project default="compile" name="MapReduce">
+
+   <!-- make environment var FOO available as env.FOO -->
+   <property environment="env"/>
+   
+   <property name='build.dir'     location='bin/' />
+   <property name='src.dir'       location='src/' />
+   <property name='lib.dir'       location='lib/' />
+   <property name='jar.dir'       location='jars/' />
+   
+   <path id='project.classpath'>
+      <pathelement location='${build.dir}' />
+      <fileset dir='${env.HADOOP_HOME}/lib'>
+         <include name='*.jar' />
+      </fileset>
+      <fileset dir='${env.HADOOP_HOME}'>
+         <include name='*.jar' />
+      </fileset>
+      <pathelement path="${java.class.path}"/>
+   </path>
+   
+   
+   <!--
+   ***************************************
+   CLEANING
+   ***************************************
+   -->
+   
+   <target name='clean' description="remove all compiled files">
+      <delete includeemptydirs="true" failonerror='false'>
+         <fileset dir="${build.dir}" includes="**/*" />
+      </delete>
+   </target>
+   
+   <!--
+   ***************************************
+   JAR BUILDING
+   ***************************************
+   -->
+   
+   <target name="prepare">
+      <mkdir dir='${jar.dir}' />
+   </target>
+
+   <target name="jars" depends="benchmarks,dataloader"/>
+   
+   <target name="benchmarks" depends="compile, prepare">
+      <jar destfile="${jar.dir}/benchmarks.jar">
+         <fileset dir="${build.dir}" defaultexcludes="yes">
+            <include name="edu/**"/>
+            <exclude name="**/demo/**"/>
+         </fileset>
+         <manifest>
+            <attribute name="Main-Class" value="edu.brown.cs.mapreduce.BenchmarkBase" />
+         </manifest>
+      </jar>
+   </target>
+	
+   <target name="dataloader" depends="compile, prepare">
+      <jar destfile="${jar.dir}/dataloader.jar">
+         <fileset dir="${build.dir}" defaultexcludes="yes">
+            <include name="edu/**"/>
+            <exclude name="**/demo/**"/>
+            <exclude name="**/benchmarks/**"/>
+         </fileset>
+         <manifest>
+            <attribute name="Main-Class" value="edu.brown.cs.mapreduce.generator.DataLoader" />
+         </manifest>
+      </jar>
+   </target>
+   
+   <!--
+   ***************************************
+   JAVA COMPILATION
+   ***************************************
+   -->
+   
+   <target name="compile">
+      <mkdir dir='${build.dir}' />
+      <javac srcdir="${src.dir}" destdir='${build.dir}' debug='true'>
+         <classpath refid="project.classpath" />
+      </javac>
+   </target>
+
+</project>

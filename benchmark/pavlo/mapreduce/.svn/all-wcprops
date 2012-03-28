@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/benchmarks/!svn/ver/87/mapreduce
+END
+benchmarks.conf-sample
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/benchmarks/!svn/ver/85/mapreduce/benchmarks.conf-sample
+END
+runner-utils.sh
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/benchmarks/!svn/ver/87/mapreduce/runner-utils.sh
+END
+runner.sh
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/benchmarks/!svn/ver/87/mapreduce/runner.sh
+END
+runner.conf-sample
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/benchmarks/!svn/ver/84/mapreduce/runner.conf-sample
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/benchmarks/!svn/ver/4/mapreduce/README
+END
+build.xml
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/benchmarks/!svn/ver/76/mapreduce/build.xml
+END

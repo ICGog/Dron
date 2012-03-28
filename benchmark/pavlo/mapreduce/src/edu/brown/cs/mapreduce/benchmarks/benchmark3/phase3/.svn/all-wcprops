@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/benchmarks/!svn/ver/62/mapreduce/src/edu/brown/cs/mapreduce/benchmarks/benchmark3/phase3
+END
+BaseReduce.java
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/svn/benchmarks/!svn/ver/62/mapreduce/src/edu/brown/cs/mapreduce/benchmarks/benchmark3/phase3/BaseReduce.java
+END
+TupleWritableReduce.java
+K 25
+svn:wc:ra_dav:version-url
+V 118
+/svn/benchmarks/!svn/ver/61/mapreduce/src/edu/brown/cs/mapreduce/benchmarks/benchmark3/phase3/TupleWritableReduce.java
+END
+TextReduce.java
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/svn/benchmarks/!svn/ver/61/mapreduce/src/edu/brown/cs/mapreduce/benchmarks/benchmark3/phase3/TextReduce.java
+END

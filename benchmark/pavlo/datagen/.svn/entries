@@ -1,0 +1,34 @@
+9
+
+dir
+88
+http://graffiti.cs.brown.edu/svn/benchmarks/datagen
+http://graffiti.cs.brown.edu/svn/benchmarks
+
+
+
+2009-03-12T06:55:00.437545Z
+77
+alexr
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+4581610a-3be9-4eac-9299-e0a569c05546
+
+teragen
+dir
+
+htmlgen
+dir
+

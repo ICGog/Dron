@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/benchmarks/!svn/ver/83/mapreduce/src/edu/brown/cs/mapreduce/generator
+END
+IGenerator.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/benchmarks/!svn/ver/20/mapreduce/src/edu/brown/cs/mapreduce/generator/IGenerator.java
+END
+DataLoader.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/benchmarks/!svn/ver/83/mapreduce/src/edu/brown/cs/mapreduce/generator/DataLoader.java
+END
+GenerateData.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/benchmarks/!svn/ver/20/mapreduce/src/edu/brown/cs/mapreduce/generator/GenerateData.java
+END

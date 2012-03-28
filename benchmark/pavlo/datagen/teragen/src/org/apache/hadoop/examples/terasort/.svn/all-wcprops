@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/benchmarks/!svn/ver/3/datagen/teragen/src/org/apache/hadoop/examples/terasort
+END
+TeraSort.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/benchmarks/!svn/ver/3/datagen/teragen/src/org/apache/hadoop/examples/terasort/TeraSort.java
+END
+TeraInputFormat.java
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/benchmarks/!svn/ver/3/datagen/teragen/src/org/apache/hadoop/examples/terasort/TeraInputFormat.java
+END
+TeraGen.java
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/benchmarks/!svn/ver/3/datagen/teragen/src/org/apache/hadoop/examples/terasort/TeraGen.java
+END
+TeraOutputFormat.java
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/benchmarks/!svn/ver/3/datagen/teragen/src/org/apache/hadoop/examples/terasort/TeraOutputFormat.java
+END
+TeraValidate.java
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/benchmarks/!svn/ver/3/datagen/teragen/src/org/apache/hadoop/examples/terasort/TeraValidate.java
+END

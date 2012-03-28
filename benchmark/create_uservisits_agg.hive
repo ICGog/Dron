@@ -6,4 +6,4 @@ CREATE EXTERNAL TABLE uservisits (sourceIP STRING,destURL STRING,visitDate STRIN
 
 CREATE TABLE uservisits_aggre ( sourceIP STRING, sumAdRevenue DOUBLE);
 
-LOAD DATA LOCAL INPATH /home/ubuntu/data/uservisits/UserVisits.dat OVERWRITE INTO TABLE UserVisits;
+LOAD DATA LOCAL INPATH '/home/ionel/data/uservisits/UserVisits.dat' OVERWRITE INTO TABLE UserVisits;

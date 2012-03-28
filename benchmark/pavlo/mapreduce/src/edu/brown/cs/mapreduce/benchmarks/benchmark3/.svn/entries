@@ -1,0 +1,71 @@
+9
+
+dir
+88
+http://graffiti.cs.brown.edu/svn/benchmarks/mapreduce/src/edu/brown/cs/mapreduce/benchmarks/benchmark3
+http://graffiti.cs.brown.edu/svn/benchmarks
+
+
+
+2009-03-05T19:52:54.798902Z
+62
+pavlo
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+4581610a-3be9-4eac-9299-e0a569c05546
+
+phase1
+dir
+
+phase2
+dir
+
+phase3
+dir
+
+Benchmark3Base.java
+file
+
+
+
+
+2009-05-22T17:49:35.395532Z
+1e26cac1b362861660f768d8345727fe
+2009-03-05T19:52:54.798902Z
+62
+pavlo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+692
+

@@ -1,0 +1,31 @@
+9
+
+dir
+88
+http://graffiti.cs.brown.edu/svn/benchmarks/datagen/teragen/src/org/apache/hadoop/examples
+http://graffiti.cs.brown.edu/svn/benchmarks
+
+
+
+2009-01-26T14:41:26.732699Z
+3
+pavlo
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+4581610a-3be9-4eac-9299-e0a569c05546
+
+terasort
+dir
+

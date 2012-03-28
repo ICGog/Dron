@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/benchmarks/!svn/ver/86/mapreduce/src/edu/brown/cs/mapreduce
+END
+BenchmarkBase.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/benchmarks/!svn/ver/80/mapreduce/src/edu/brown/cs/mapreduce/BenchmarkBase.java
+END
+AbstractHadoopClient.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/benchmarks/!svn/ver/20/mapreduce/src/edu/brown/cs/mapreduce/AbstractHadoopClient.java
+END

@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/benchmarks/!svn/ver/75/mapreduce/src/edu/brown/cs/mapreduce/tuples
+END
+RankingsTuple.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/benchmarks/!svn/ver/75/mapreduce/src/edu/brown/cs/mapreduce/tuples/RankingsTuple.java
+END
+UserVisitsTuple.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/benchmarks/!svn/ver/75/mapreduce/src/edu/brown/cs/mapreduce/tuples/UserVisitsTuple.java
+END
+AbstractTuple.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/benchmarks/!svn/ver/75/mapreduce/src/edu/brown/cs/mapreduce/tuples/AbstractTuple.java
+END

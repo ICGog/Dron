@@ -1,0 +1,348 @@
+#!/usr/bin/env perl
+#/***************************************************************************
+# *   Copyright (C) 2008 by Andy Pavlo, Brown University                    *
+# *   http://www.cs.brown.edu/~pavlo/                                       *
+# *                                                                         *
+# *   Permission is hereby granted, free of charge, to any person obtaining *
+# *   a copy of this software and associated documentation files (the       *
+# *   "Software"), to deal in the Software without restriction, including   *
+# *   without limitation the rights to use, copy, modify, merge, publish,   *
+# *   distribute, sublicense, and/or sell copies of the Software, and to    *
+# *   permit persons to whom the Software is furnished to do so, subject to *
+# *   the following conditions:                                             *
+# *                                                                         *
+# *   The above copyright notice and this permission notice shall be        *
+# *   included in all copies or substantial portions of the Software.       *
+# *                                                                         *
+# *   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       *
+# *   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    *
+# *   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*
+# *   IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR     *
+# *   OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, *
+# *   ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR *
+# *   OTHER DEALINGS IN THE SOFTWARE.                                       *
+# ***************************************************************************/
+use strict;
+use warnings;
+
+## =====================================================================
+## PUSHER
+## Execute the same command on multiple hosts using SSH
+## =====================================================================
+
+use Getopt::Long;
+use POSIX;
+use POSIX ":sys_wait_h";
+use Cwd;
+use List::Util;
+use IPC::Shareable;
+use File::Basename;
+
+my $CUR_HOSTNAME = `hostname -s`;
+chomp($CUR_HOSTNAME);
+
+my $DATE_FORMAT = '%m-%d-%Y %H:%M:%S';
+
+## ---------------------------------------------------------------------
+## Default Options
+## ---------------------------------------------------------------------
+my $DEFAULT_SHUFFLE        = 0;
+my $DEFAULT_SLEEP          = 0;
+my $DEFAULT_RETRY          = 0;
+my $DEFAULT_SSH_OPTIONS    = "-x -o 'ConnectTimeout 5'";
+my $DEFAULT_STOP_ON_ERROR  = 0;
+my $DEFAULT_FORK_LIMIT     = -1;
+my $DEFAULT_NO_FORK        = 0;
+my $DEFAULT_NO_WAIT        = 0;
+my $DEFAULT_SHOW_SUCCESS   = 0;
+my $DEFAULT_SHOW_HOST      = 0;
+my $DEFAULT_SAVE           = 0;
+my $DEFAULT_SAVE_DIR       = ".";
+my $DEFAULT_SAVE_EXT       = "";
+my $DEFAULT_QUIET          = 0;
+my $DEFAULT_DEBUG          = 0;
+GetOptions("hosts=s"             => \$main::opt_hostsfile,
+           "commands=s"          => \$main::opt_cmdsfile,
+           "shuffle"             => \$main::opt_shuffle,
+           "sleep=s"             => \$main::opt_sleep,
+           "retry=s"             => \$main::opt_retry,
+           "ssh-options=s"       => \$main::opt_ssh,
+           "stop-on-error"       => \$main::opt_stop,
+           "fork-limit=s"        => \$main::opt_fork_limit,
+           "no-fork"             => \$main::opt_nofork,
+           "no-wait"             => \$main::opt_nowait,
+           "show-success"        => \$main::opt_show_success,
+           "show-host"           => \$main::opt_show_host,
+           "save-output"         => \$main::opt_save,
+           "save-output-dir=s"   => \$main::opt_save_dir,
+           "save-output-ext=s"   => \$main::opt_save_ext,
+           "quiet"               => \$main::opt_quiet,
+           "debug"               => \$main::opt_debug,
+           "verbose"             => \$main::opt_debug,
+           "help"                => \$main::opt_help,
+);
+$main::opt_shuffle      = $DEFAULT_SHUFFLE         unless (defined($main::opt_shuffle));
+$main::opt_sleep        = $DEFAULT_SLEEP           unless (defined($main::opt_sleep));
+$main::opt_retry        = $DEFAULT_RETRY           unless (defined($main::opt_retry));
+$main::opt_ssh          = $DEFAULT_SSH_OPTIONS     unless (defined($main::opt_ssh));
+$main::opt_stop         = $DEFAULT_STOP_ON_ERROR   unless (defined($main::opt_stop));
+$main::opt_fork_limit   = $DEFAULT_FORK_LIMIT      unless (defined($main::opt_fork_limit));
+$main::opt_nofork       = $DEFAULT_NO_FORK         unless ($main::opt_nofork);
+$main::opt_nowait       = $DEFAULT_NO_WAIT         unless ($main::opt_nowait);
+$main::opt_show_success = $DEFAULT_SHOW_SUCCESS    unless (defined($main::opt_show_success));
+$main::opt_show_host    = $DEFAULT_SHOW_HOST       unless (defined($main::opt_show_host));
+$main::opt_save         = $DEFAULT_SAVE            unless (defined($main::opt_save));
+$main::opt_save_dir     = $DEFAULT_SAVE_DIR        unless (defined($main::opt_save_dir));
+$main::opt_save_ext     = $DEFAULT_SAVE_EXT        unless (defined($main::opt_save_ext));
+$main::opt_debug        = $DEFAULT_DEBUG           unless ($main::opt_debug);
+$main::opt_quiet        = $DEFAULT_QUIET           unless ($main::opt_quiet);
+die(show_help()) if (defined($main::opt_help));
+
+## ---------------------------------------------------------------------
+## Setup
+## ---------------------------------------------------------------------
+
+##
+## The main command to execute on the remote hosts
+##
+my @commands = ( );
+if (defined($main::opt_cmdsfile)) {
+   die(debug_print("ERROR: The hosts file '$main::opt_cmdsfile' does not exist")) unless (-f $main::opt_cmdsfile);
+   @commands = split("\n", `cat $main::opt_cmdsfile`);
+} elsif ($#ARGV == -1) {
+   die(show_usage());
+} else {
+   push(@commands, shift(@ARGV));
+}
+my $num_of_commands = $#commands;
+
+##
+## Hosts
+## If the first argument is a file, then we'll use that
+##
+my @hosts = ( );
+$main::opt_hostsfile = $ARGV[0] if ($#ARGV >= 0 && ! defined($main::opt_hostsfile) && -f $ARGV[0]);
+if (defined($main::opt_hostsfile)) {
+   die(debug_print("ERROR: The hosts file '$main::opt_hostsfile' does not exist")) unless (-f $main::opt_hostsfile);
+   @hosts = split("\n", `cat $main::opt_hostsfile`);
+} elsif ($#ARGV >= 0) {
+   @hosts = @ARGV;
+}
+die(show_usage()) unless ($#commands >= 0 && $#hosts >= 0);
+die(debug_print("ERROR: There are $#commands but only $#hosts. Unable to execute")) if ($#commands > 0 && $#commands > $#hosts);
+
+##
+## Shared Memory
+##
+my @success_hosts = ( );
+my %command_hosts = ( );
+my $lock = tie @success_hosts, 'IPC::Shareable', { key => undef, destroy => 1 };
+
+##
+## Output Directory
+##
+if ($main::opt_save) {
+   $main::opt_save_dir = Cwd::realpath($main::opt_save_dir);
+   unless (-d $main::opt_save_dir) {
+      system("mkdir -p $main::opt_save_dir") == 0 || die(debug_print("ERROR: Failed to create output directory '$main::opt_save_dir' :: $1"));
+      print debug_print("Created directory '$main::opt_save_dir'") if ($main::opt_debug);
+   } # UNLESS
+   print debug_print("Saving execution output to directory '$main::opt_save_dir'") if ($main::opt_debug);
+}
+
+## ---------------------------------------------------------------------
+## Host Execution Loop
+## ---------------------------------------------------------------------
+my @children = ( );
+my %children_hosts = ( );
+my $child_pid = 0;
+print debug_print("Preparing to execute on ".($#hosts+1)." host".($#hosts > 0 ? "s" : "")) if ($main::opt_debug);
+@hosts = List::Util::shuffle(@hosts) if ($main::opt_shuffle);
+my $num_of_hosts = 0;
+foreach my $host (@hosts) {
+   last unless ($#commands >= 0);
+   $host = (split(" ", $host))[0];
+   my $remote_command = ($num_of_commands == 0 ? $commands[0] : shift(@commands));
+   my $cmd = "ssh $main::opt_ssh $host \"$remote_command\"";
+   
+   ## Save output to a file if asked
+   my $output_file = undef;
+   if ($main::opt_save) {
+      $output_file = Cwd::realpath($main::opt_save_dir."/$host$main::opt_save_ext");
+      $cmd .= " 2>&1";
+   }
+
+   ## Detach the process immediately
+   $cmd .= "&" if ($main::opt_nowait);
+
+   ## Debug information
+   $command_hosts{$host} = $remote_command;
+   if ($main::opt_debug) {
+      print debug_print("Executing command '$remote_command' on $host.");
+      print debug_print("Saving output to '$output_file'") if (defined($output_file));
+   } # IF
+   
+   ##
+   ## Executor
+   ## This will happen if nofork is enable or if this is the forked process
+   ##
+   $num_of_hosts++;
+   unless ($main::opt_nofork) {
+      print debug_print("Forking process for $host") if ($main::opt_debug);
+      $child_pid = fork();
+   } else {
+      print debug_print("Serialied execution for $host") if ($main::opt_debug);
+   } # UNLESS
+   ## ------------------------------------
+   ## Forked Process
+   ## ------------------------------------
+   if ($child_pid == 0 || $main::opt_nofork) {
+      my $child_host = $host;
+      
+      if ($main::opt_save) {
+         open(FILE, "> $output_file") || die(debug_print("ERROR: Failed to open output file '$output_file' for host '$child_host' :: $!"));
+      }
+      
+      unless (open(PIPE, "$cmd |")) {
+         print STDERR debug_print("ERROR: Failed to execute command on host '$child_host' :: $!");
+         exit(1) if (defined($main::opt_stop));
+      } else {
+         while (<PIPE>) {
+            print ($main::opt_show_host ? debug_print($_, $child_host, 1) : $_) unless ($main::opt_quiet);
+            print FILE $_ if ($main::opt_save);
+         } # WHILE
+         close(PIPE); # || print STDERR debug_print("ERROR: Unable to close pipe for host '$child_host' :: $!");
+         print debug_print("Execution completed for $child_host") if ($main::opt_debug);
+         $lock->shlock();
+         push(@success_hosts, $child_host);
+         $lock->shunlock();
+      }
+      close(FILE) if ($main::opt_save);
+      
+      exit(0) unless ($main::opt_nofork);
+   }
+   ## ------------------------------------
+   ## Parent Process
+   ## This is not necessary if nofork is enabled
+   ## ------------------------------------
+   unless ($main::opt_nofork) {
+      push(@children, $child_pid);
+      $children_hosts{$child_pid} = $host;
+      if ($main::opt_sleep > 0) {
+         print debug_print("Sleeping for $main::opt_sleep second" . ($main::opt_sleep > 1 ? "s" : "")) if ($main::opt_debug);
+         sleep($main::opt_sleep);
+      }
+   } # UNLESS
+   
+   ##
+   ## Limit the number of forks that are allowed to run concurrently
+   ##
+   unless ($main::opt_nofork || $main::opt_fork_limit <= 0) {
+      while (($#children + 1) >= $main::opt_fork_limit) {
+         $child_pid = shift(@children);
+         waitpid($child_pid, &WNOHANG);
+         unless (WIFEXITED($?)) {
+            push(@children, $child_pid);
+            sleep(1);
+         } else {
+            print debug_print("Caught zombie child for '$children_hosts{$child_pid}' - PID $child_pid") if ($main::opt_debug);
+         }
+      } # WHILE
+   } # UNLESS
+} # FOREACH
+
+## ---------------------------------------------------------------------
+## CLEAN UP
+## The parent process waits for all of our children to complete
+## ---------------------------------------------------------------------
+unless ($main::opt_nofork) {
+   my $child_cnt = ($#children + 1);
+   print debug_print("Forked off $child_cnt process".($child_cnt > 1 ? "es" : "").". Waiting for them to exit") if ($main::opt_debug);
+   while ($#children >= 0) {
+      my $child_pid = shift(@children);
+      waitpid($child_pid, &WNOHANG);
+      unless (WIFEXITED($?)) {
+         push(@children, $child_pid);
+         sleep(1);
+      } elsif ($main::opt_debug) {
+         print debug_print("Caught zombie child for '$children_hosts{$child_pid}' - PID $child_pid");
+         print debug_print("Waiting for ".($#children + 1)." more to finish") if ($#children >= 0);
+      }
+   } # WHILE
+} # UNLESS
+print debug_print("Successfully executed command on ".($#success_hosts + 1)." out of $num_of_hosts hosts") if ($main::opt_debug || $main::opt_show_success);
+if ($main::opt_show_success && $#success_hosts >= 0) {
+   for (0 .. $#success_hosts) {
+      my $host = $success_hosts[$_];
+      printf("   [%03d] %-20s", $_, $host);
+      print $command_hosts{$host} if ($main::opt_debug);
+      print "\n";
+   } # FOR
+}
+exit;
+
+## -----------------------------------------------------------
+## debug_print
+## -----------------------------------------------------------
+sub debug_print {
+   my ($str, $host, $no_newline) = @_;
+   $host = $CUR_HOSTNAME unless (defined($host));
+   return (($main::opt_debug || $main::opt_show_host ? strftime("$DATE_FORMAT ", localtime)."[$host] - " : "").
+           $str.
+           ($no_newline ? "" : "\n"));
+}
+
+## -----------------------------------------------------------
+## show_usage
+## -----------------------------------------------------------
+sub show_usage {
+   return ("USAGE: ".basename($0)." <command> [HOST_FILE] [HOST] [HOST]...\n");
+}
+
+## -----------------------------------------------------------
+## show_help
+## -----------------------------------------------------------
+sub show_help {
+   my $ret = show_usage();
+   
+   ## ------------------------------------
+   ## Execution Options
+   ## ------------------------------------
+   $ret .= "Execution Options:\n";
+   $ret .= "   --hosts=<FILE>          Path to the hosts file to use for executing commands.\n".
+           "                           Each hostname should be listed on a separate line.\n\n";
+   $ret .= "   --commands=<FILE>       Path to a file containing a list of commands to execute on\n".
+           "                           the remote hosts Each command should be listed on a separate line.\n\n";
+   $ret .= "   --shuffle               Shuffle the list of hosts\n\n";
+   $ret .= "   --sleep=<SECONDS>       The number of seconds to sleep after forking the command on each host.\n".
+           "                           Default: $DEFAULT_SLEEP seconds\n\n";
+   $ret .= "   --ssh-options=<OPTS>    The options to use by ssh for executing commands on remote hosts\n".
+           "                           See 'man ssh-config' for more information on available options.\n".
+           "                           Default: $DEFAULT_SSH_OPTIONS\n\n";
+   $ret .= "   --stop-on-error         Halt all commands on all running hosts if one of them fails.\n".
+           "                           Default: ".($DEFAULT_STOP_ON_ERROR ? "true" : "false")."\n\n";
+   $ret .= "   --fork-limit=<COUNT>    Limit the number of forked jobs that can be executing at the same time.\n\n";
+   $ret .= "   --no-fork               Execute commands sequentially (one at a time) on hosts, rather than in parallel.\n\n";
+   
+   ## ------------------------------------
+   ## Output Options
+   ## ------------------------------------
+   $ret .= "Output Options:\n";
+   
+   $ret .= "   --show-success          Show the list of hosts that executed commands successfully at the end.\n\n";
+   $ret .= "   --show-host             When printing the output produced by the commands on each host, include\n".
+           "                           the hostname of the process that generated each line.\n\n";
+   $ret .= "   --save-output           Save the output produced on each host into separate files. The output\n".
+           "                           will be stored in separate files named after the host\n\n";
+   $ret .= "   --save-output-dir=<DIR> Save the output files to the given directory.\n\n";
+   $ret .= "   --save-output-ext=<EXT> Append the string <EXT> to the end of the names for the host output files\n\n";
+   
+   ## ------------------------------------
+   ## General Options
+   ## ------------------------------------
+   $ret .= "General Options:\n";
+   $ret .= "   --verbose               Enable debug messages.\n\n";
+   $ret .= "   --quiet                 Use minimal output messages.\n\n";
+   $ret .= "   --help                  Display this help message.\n\n";
+   return ($ret);
+}

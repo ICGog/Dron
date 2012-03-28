@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/benchmarks/!svn/ver/86/mapreduce/src/edu/brown/cs/mapreduce/benchmarks
+END
+DummyJob.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/benchmarks/!svn/ver/50/mapreduce/src/edu/brown/cs/mapreduce/benchmarks/DummyJob.java
+END
+Sort.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/benchmarks/!svn/ver/50/mapreduce/src/edu/brown/cs/mapreduce/benchmarks/Sort.java
+END
+Benchmark1.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/benchmarks/!svn/ver/72/mapreduce/src/edu/brown/cs/mapreduce/benchmarks/Benchmark1.java
+END
+CompositeKey.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/benchmarks/!svn/ver/20/mapreduce/src/edu/brown/cs/mapreduce/benchmarks/CompositeKey.java
+END
+Benchmark2.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/benchmarks/!svn/ver/86/mapreduce/src/edu/brown/cs/mapreduce/benchmarks/Benchmark2.java
+END
+Benchmark3.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/benchmarks/!svn/ver/61/mapreduce/src/edu/brown/cs/mapreduce/benchmarks/Benchmark3.java
+END
+Grep.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/benchmarks/!svn/ver/81/mapreduce/src/edu/brown/cs/mapreduce/benchmarks/Grep.java
+END
+Benchmark4.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/benchmarks/!svn/ver/50/mapreduce/src/edu/brown/cs/mapreduce/benchmarks/Benchmark4.java
+END
