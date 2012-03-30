@@ -359,6 +359,8 @@ handle_leader_cast({unschedule, JName},
   {ok, State};
 handle_leader_cast({succeeded, JId = {Name, _Date}},
                    State = #state{schedulers = Schedulers}, _Election) ->
+  EndTime = calendar:local_time(),
+  error_logger:info_msg("Job Succeeded: ~p at ~p", [JId, EndTime]),
   dron_coordinator:dependency_satisfied(JId),
   rpc:call(dron_hash:hash(Name, Schedulers), dron_scheduler,
            job_instance_succeeded, [JId]),
@@ -387,7 +389,7 @@ handle_leader_cast({satisfied, RId}, State = #state{schedulers = Schedulers},
   {ok, State};
 %% Updates the load of a scheduler. It is called by the scheduler.
 handle_leader_cast({scheduler_heartbeat, SName, Time, Req}, State, _Election) ->
-  error_logger:info_msg("Got scheduler ~p heartbeat ~p", [SName, Req]),
+%  error_logger:info_msg("Got scheduler ~p heartbeat ~p", [SName, Req]),
   ets:insert(scheduler_heartbeat, {SName, {Req, Time}}),
   {ok, {scheduler_heartbeat, SName, Time, Req}, State};
 handle_leader_cast({new_scheduler_leader, OldSched, NewSched},
@@ -489,8 +491,8 @@ handle_info(balance_workers, State = #state{leader = false}) ->
   % Ignore the message.
   {noreply, State};
 handle_info(balance_workers, State = #state{leader = true}) ->
-  error_logger:info_msg("Balancing workers: ~p",
-                        [ets:tab2list(scheduler_assig)]),
+%  error_logger:info_msg("Balancing workers: ~p",
+%                        [ets:tab2list(scheduler_assig)]),
   erlang:spawn_link(dron_monitor, balance_workers,
                     [ets:tab2list(scheduler_heartbeat)]),
   erlang:send_after(dron_config:scheduler_heartbeat_interval(), self(),

@@ -447,6 +447,8 @@ create_job_instance(#job{name = Name, cmd_line = Cmd, timeout = Timeout,
 run_instance(_JId, false) ->
     ok;
 run_instance(JId, true) ->
+    RunTime = calendar:local_time(),
+    error_logger:info_msg("Job Started: ~p at ~p:", [JId, RunTime]),
     {ok, NoWorkerJI = #job_instance{timeout = Timeout}} =
         dron_db:get_job_instance_unsync(JId),
     #worker{name = WName} = get_worker_backoff(),
@@ -459,7 +461,10 @@ run_instance(JId, true) ->
 %%------------------------------------------------------------------------------
 run_job_instance(_JI, false) ->
     ok;
-run_job_instance(JobInstance = #job_instance{timeout = Timeout}, true) ->
+run_job_instance(JobInstance = #job_instance{jid = JId,
+                                             timeout = Timeout}, true) ->
+    RunTime = calendar:local_time(),
+    error_logger:info_msg("Job Started: ~p at ~p:", [JId, RunTime]),
     #worker{name = WName} = get_worker_backoff(),
     WorkerJI = JobInstance#job_instance{worker = WName, state = running},
     ok = dron_db:store_job_instance(WorkerJI),
