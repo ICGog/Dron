@@ -1,1 +1,2 @@
+set mapred.map.tasks=40;
 INSERT OVERWRITE TABLE grep_select SELECT * FROM grep WHERE field LIKE '%XYZ%';
