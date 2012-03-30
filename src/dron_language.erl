@@ -51,8 +51,16 @@ today_dep({today, {DPrev, DNext}}, JName, STime, Freq) ->
            {calendar:gregorian_days_to_date(CDay - DPrev), {0, 0, 0}}),
   NSec = calendar:datetime_to_gregorian_seconds(
            {calendar:gregorian_days_to_date(CDay + DNext), {23, 59, 59}}),
-  compute_deps(JName, SSec + (PSec - SSec) div Freq * Freq,
-               PSec, NSec, Freq, []).
+  case Freq of
+    0 -> if
+           SSec >= PSec andalso SSec =< NSec ->
+             [{JName, calendar:gregorian_seconds_to_datetime(SSec)}];
+           true ->
+             []
+         end;
+    _ -> compute_deps(JName, SSec + (PSec - SSec) div Freq * Freq,
+                      PSec, NSec, Freq, [])
+  end.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -64,8 +72,16 @@ hour_dep({hour, {HPrev, HNext}}, JName, STime, Freq) ->
   SSec = calendar:datetime_to_gregorian_seconds(STime),
   PSec = CSec - HPrev * 3600,
   NSec = CSec + HNext * 3600 + 3559,
-  compute_deps(JName, SSec + (PSec - SSec) div Freq * Freq,
-               PSec, NSec, Freq, []).
+  case Freq of
+    0 -> if
+           SSec >= PSec andalso SSec =< NSec ->
+             [{JName, calendar:gregorian_seconds_to_datetime(SSec)}];
+           true ->
+             []
+         end;
+    _ -> compute_deps(JName, SSec + (PSec - SSec) div Freq * Freq,
+                      PSec, NSec, Freq, [])
+  end.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -77,8 +93,16 @@ minute_dep({minute, {MPrev, MNext}}, JName, STime, Freq) ->
   SSec = calendar:datetime_to_gregorian_seconds(STime),
   PSec = CSec - MPrev * 60,
   NSec = CSec + MNext * 60 + 59,
-  compute_deps(JName, SSec + (PSec - SSec) div Freq * Freq,
-               PSec, NSec, Freq, []).
+  case Freq of
+    0 -> if
+           SSec >= PSec andalso SSec =< NSec ->
+             [{JName, calendar:gregorian_seconds_to_datetime(SSec)}];
+           true ->
+             []
+         end;
+    _ -> compute_deps(JName, SSec + (PSec - SSec) div Freq * Freq,
+                      PSec, NSec, Freq, [])
+  end.
 
 %%------------------------------------------------------------------------------
 %% @private
@@ -90,8 +114,16 @@ second_dep({second, {SPrev, SNext}}, JName, STime, Freq) ->
   SSec = calendar:datetime_to_gregorian_seconds(STime),
   PSec = CSec - SPrev,
   NSec = CSec + SNext,
-  compute_deps(JName, SSec + (PSec - SSec) div Freq * Freq,
-               PSec, NSec, Freq, []).
+  case Freq of
+    0 -> if
+           SSec >= PSec andalso SSec =< NSec ->
+             [{JName, calendar:gregorian_seconds_to_datetime(SSec)}];
+           true ->
+             []
+         end;
+    _ -> compute_deps(JName, SSec + (PSec - SSec) div Freq * Freq,
+                      PSec, NSec, Freq, [])
+  end.
 
 %%------------------------------------------------------------------------------
 %% @private

@@ -18,7 +18,8 @@
                                dron_scheduler,
                                dron_sup,
                                dron_worker,
-                               dron_test]},
+                               dron_test,
+                               dron_test_small]},
                     {env, []},
                     {mod, {dron, []}},
                     {applications, [kernel, stdlib, sasl]}]}.
