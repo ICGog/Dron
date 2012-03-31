@@ -367,7 +367,7 @@ create_grep() ->
   StartTime = calendar:local_time(),
   dron_api:register_job(
     #job{name = "CreateGrep",
-         cmd_line = "hadoop jar \"$HADOOP_HOME\"/hadoop-examples.jar teragen 10000000 /input/grep",
+         cmd_line = "hadoop jar \"$HADOOP_HOME\"/hadoop-examples.jar teragen 500000000 /input/grep",
          start_time = StartTime,
          frequency = 0,
          timeout = 10000,
