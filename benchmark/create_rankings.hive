@@ -5,4 +5,4 @@ CREATE EXTERNAL TABLE rankings (pageRank INT, pageURL STRING, avgDuration INT) R
 
 CREATE TABLE rankings_select ( pageRank INT, pageURL STRING );
 
-LOAD DATA LOCAL INPATH '/home/ionel/data/rankings/Rankings.dat' OVERWRITE INTO TABLE rankings;
+LOAD DATA LOCAL INPATH '/home/ubuntu/data/rankings/Rankings.dat' OVERWRITE INTO TABLE rankings;
