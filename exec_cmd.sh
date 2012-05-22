@@ -6,5 +6,5 @@ echo "$ADDR_NODES"
 
 for instance in $ADDR_NODES
 do
-    ssh ubuntu@$instance "$DRON_EXEC_CMD"
+    ssh whirr@$instance "$DRON_EXEC_CMD"
 done
