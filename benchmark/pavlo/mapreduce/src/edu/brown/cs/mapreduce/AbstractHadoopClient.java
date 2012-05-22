@@ -34,7 +34,7 @@ import org.apache.hadoop.fs.Path;
  *
  */
 public abstract class AbstractHadoopClient {
-   public static final String CONFIG_FILES[] = { "mapred-site.xml", "core-site.xml", "hdfs-site.xml" };
+   public static final String CONFIG_FILES[] = { "hadoop-site.xml" };
    public static final String ENV_HADOOP_HOME = "HADOOP_HOME";
    public static final String ENV_HADOOP_CONF = "HADOOP_CONF_DIR";
    public static final Map<String, String> conf = new Hashtable<String, String>();
