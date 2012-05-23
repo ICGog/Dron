@@ -1,0 +1,125 @@
+Eshell V5.8.3  (abort with ^G)
+(dron@ip-10-82-199-203)1> 
+=INFO REPORT==== 23-May-2012::12:10:18 ===
+Create schema returned ok
+=INFO REPORT==== 23-May-2012::12:10:18 ===
+Got ok while starting mnesia on 'dron@ip-10-82-199-203'
+=INFO REPORT==== 23-May-2012::12:10:18 ===
+Got ok while starting mnesia on 's@ip-10-82-199-203'
+=INFO REPORT==== 23-May-2012::12:10:18 ===
+
+Mnesia is running!
+
+=INFO REPORT==== 23-May-2012::12:10:18 ===
+'dron@ip-10-82-199-203' elected as master
+=INFO REPORT==== 23-May-2012::12:10:18 ===
+Pinging workers: [{ok,'w@ip-10-82-199-203'}]
+
+=INFO REPORT==== 23-May-2012::12:10:18 ===
+
+Dron schedulers assignments: [{'s@ip-10-82-199-203',['w@ip-10-82-199-203']}]
+
+=INFO REPORT==== 23-May-2012::12:10:18 ===
+
+Dron schedulers are starting...
+
+=INFO REPORT==== 23-May-2012::12:10:18 ===
+Reconstructing state: {ok,[]}** at node s@ip-10-82-199-203 **
+
+=INFO REPORT==== 23-May-2012::12:10:19 ===
+Start worker 'w@ip-10-82-199-203' returned {ok,<10471.49.0>}** at node s@ip-10-82-199-203 **
+
+=INFO REPORT==== 23-May-2012::12:10:19 ===
+New workers ['w@ip-10-82-199-203'] added to 's@ip-10-82-199-203'
+=INFO REPORT==== 23-May-2012::12:10:19 ===
+Started workers ['w@ip-10-82-199-203'] for scheduler 's@ip-10-82-199-203'
+=INFO REPORT==== 23-May-2012::12:10:19 ===
+
+Started schedulers: [{'s@ip-10-82-199-203',['w@ip-10-82-199-203']}]
+dron_benchmark:start().
+
+=INFO REPORT==== 23-May-2012::12:11:42 ===
+Job Started: {"CopyRankings",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                           {12,11,42}}:** at node s@ip-10-82-199-203 **
+
+=INFO REPORT==== 23-May-2012::12:11:42 ===
+Job Started: {"CreateGrep",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                         {12,11,42}}:** at node s@ip-10-82-199-203 **
+ok
+(dron@ip-10-82-199-203)2> 
+=INFO REPORT==== 23-May-2012::12:11:42 ===
+Job Started: {"CopyUV",{{2012,5,23},{12,11,42}}} at {{2012,5,23},{12,11,42}}:** at node s@ip-10-82-199-203 **
+
+=INFO REPORT==== 23-May-2012::12:14:17 ===
+Job Succeeded: {"CopyRankings",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                             {12,14,17}}
+=INFO REPORT==== 23-May-2012::12:14:17 ===
+Job Started: {"CreateSelRankH",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                             {12,14,17}}:** at node s@ip-10-82-199-203 **
+
+=INFO REPORT==== 23-May-2012::12:14:17 ===
+Job Started: {"SelRankMR",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                        {12,14,17}}:** at node s@ip-10-82-199-203 **
+
+=INFO REPORT==== 23-May-2012::12:16:31 ===
+Job Succeeded: {"CreateSelRankH",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                               {12,16,31}}
+=INFO REPORT==== 23-May-2012::12:16:31 ===
+Job Started: {"SelRankHive",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                          {12,16,31}}:** at node s@ip-10-82-199-203 **
+
+=INFO REPORT==== 23-May-2012::12:16:53 ===
+Job Succeeded: {"SelRankMR",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                          {12,16,53}}
+=INFO REPORT==== 23-May-2012::12:17:31 ===
+Job Succeeded: {"SelRankHive",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                            {12,17,31}}
+=INFO REPORT==== 23-May-2012::12:25:35 ===
+Job Succeeded: {"CreateGrep",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                           {12,25,35}}
+=INFO REPORT==== 23-May-2012::12:25:35 ===
+Job Started: {"CopyGrep",{{2012,5,23},{12,11,42}}} at {{2012,5,23},{12,25,35}}:** at node s@ip-10-82-199-203 **
+
+=INFO REPORT==== 23-May-2012::12:51:03 ===
+Job Succeeded: {"CopyUV",{{2012,5,23},{12,11,42}}} at {{2012,5,23},{12,51,3}}
+=INFO REPORT==== 23-May-2012::12:51:03 ===
+Job Started: {"CreateJoinUVH",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                            {12,51,3}}:** at node s@ip-10-82-199-203 **
+
+=INFO REPORT==== 23-May-2012::12:51:03 ===
+Job Started: {"CreateAggUVH",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                           {12,51,3}}:** at node s@ip-10-82-199-203 **
+
+=INFO REPORT==== 23-May-2012::12:51:03 ===
+Job Started: {"JoinUVMR",{{2012,5,23},{12,11,42}}} at {{2012,5,23},{12,51,3}}:** at node s@ip-10-82-199-203 **
+
+=INFO REPORT==== 23-May-2012::12:51:03 ===
+Job Started: {"AggUVMR",{{2012,5,23},{12,11,42}}} at {{2012,5,23},{12,51,3}}:** at node s@ip-10-82-199-203 **
+
+=INFO REPORT==== 23-May-2012::12:51:31 ===
+Job Succeeded: {"CreateJoinUVH",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                              {12,51,31}}
+=INFO REPORT==== 23-May-2012::12:51:31 ===
+Job Started: {"JoinUVHive",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                         {12,51,31}}:** at node s@ip-10-82-199-203 **
+
+=INFO REPORT==== 23-May-2012::12:54:11 ===
+Job Succeeded: {"AggUVMR",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                        {12,54,11}}
+=INFO REPORT==== 23-May-2012::12:56:21 ===
+Job Succeeded: {"JoinUVMR",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                         {12,56,21}}
+=INFO REPORT==== 23-May-2012::12:57:04 ===
+Job Succeeded: {"JoinUVHive",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                           {12,57,4}}
+=INFO REPORT==== 23-May-2012::13:24:39 ===
+Job Succeeded: {"CreateAggUVH",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                             {13,24,39}}
+=INFO REPORT==== 23-May-2012::13:24:39 ===
+Job Started: {"AggUVHive",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                        {13,24,39}}:** at node s@ip-10-82-199-203 **
+
+=INFO REPORT==== 23-May-2012::13:27:03 ===
+Job Succeeded: {"AggUVHive",{{2012,5,23},{12,11,42}}} at {{2012,5,23},
+                                                          {13,27,3}}
+

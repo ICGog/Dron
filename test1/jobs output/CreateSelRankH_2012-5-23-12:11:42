@@ -1,0 +1,16 @@
+12/05/23 12:14:23 WARN conf.Configuration: DEPRECATED: hadoop-site.xml found in the classpath. Usage of hadoop-site.xml is deprecated. Instead use core-site.xml, mapred-site.xml and hdfs-site.xml to override properties of core-default.xml, mapred-default.xml and hdfs-default.xml respectively
+Hive history file=/tmp/ubuntu/hive_job_log_ubuntu_201205231214_1193131639.txt
+OK
+Time taken: 7.17 seconds
+OK
+Time taken: 0.079 seconds
+OK
+Time taken: 1.149 seconds
+OK
+Time taken: 0.071 seconds
+Copying data from file:/vol/data/rankings/Rankings.dat
+Copying file: file:/vol/data/rankings/Rankings.dat
+Loading data to table default.rankings
+Deleted hdfs://ec2-23-20-138-219.compute-1.amazonaws.com/hive/input/rankings
+OK
+Time taken: 117.26 seconds

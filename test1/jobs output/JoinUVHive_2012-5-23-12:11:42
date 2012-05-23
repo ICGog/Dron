@@ -1,0 +1,91 @@
+12/05/23 12:51:33 WARN conf.Configuration: DEPRECATED: hadoop-site.xml found in the classpath. Usage of hadoop-site.xml is deprecated. Instead use core-site.xml, mapred-site.xml and hdfs-site.xml to override properties of core-default.xml, mapred-default.xml and hdfs-default.xml respectively
+Hive history file=/tmp/ubuntu/hive_job_log_ubuntu_201205231251_32104820.txt
+Total MapReduce jobs = 4
+Launching Job 1 out of 4
+Number of reduce tasks not specified. Defaulting to jobconf value of: 10
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapred.reduce.tasks=<number>
+Starting Job = job_201205231152_0006, Tracking URL = http://ec2-23-20-138-219.compute-1.amazonaws.com:50030/jobdetails.jsp?jobid=job_201205231152_0006
+Kill Command = /usr/lib/hadoop-0.20//bin/hadoop job  -Dmapred.job.tracker=ec2-23-20-138-219.compute-1.amazonaws.com:8021 -kill job_201205231152_0006
+2012-05-23 12:52:15,695 Stage-1 map = 0%,  reduce = 0%
+2012-05-23 12:53:15,823 Stage-1 map = 0%,  reduce = 0%
+2012-05-23 12:54:16,882 Stage-1 map = 0%,  reduce = 0%
+2012-05-23 12:54:42,962 Stage-1 map = 11%,  reduce = 0%
+2012-05-23 12:54:44,591 Stage-1 map = 33%,  reduce = 0%
+2012-05-23 12:54:46,218 Stage-1 map = 42%,  reduce = 0%
+2012-05-23 12:54:49,887 Stage-1 map = 71%,  reduce = 0%
+2012-05-23 12:54:51,328 Stage-1 map = 80%,  reduce = 2%
+2012-05-23 12:54:52,547 Stage-1 map = 84%,  reduce = 7%
+2012-05-23 12:54:53,565 Stage-1 map = 93%,  reduce = 10%
+2012-05-23 12:54:54,902 Stage-1 map = 95%,  reduce = 10%
+2012-05-23 12:54:56,664 Stage-1 map = 95%,  reduce = 17%
+2012-05-23 12:54:58,289 Stage-1 map = 95%,  reduce = 21%
+2012-05-23 12:54:59,995 Stage-1 map = 98%,  reduce = 23%
+2012-05-23 12:55:01,802 Stage-1 map = 100%,  reduce = 26%
+2012-05-23 12:55:04,713 Stage-1 map = 100%,  reduce = 27%
+2012-05-23 12:55:07,025 Stage-1 map = 100%,  reduce = 28%
+2012-05-23 12:55:11,680 Stage-1 map = 100%,  reduce = 29%
+2012-05-23 12:55:13,569 Stage-1 map = 100%,  reduce = 33%
+2012-05-23 12:55:15,215 Stage-1 map = 100%,  reduce = 55%
+2012-05-23 12:55:16,828 Stage-1 map = 100%,  reduce = 69%
+2012-05-23 12:55:18,671 Stage-1 map = 100%,  reduce = 80%
+2012-05-23 12:55:20,538 Stage-1 map = 100%,  reduce = 95%
+2012-05-23 12:55:22,207 Stage-1 map = 100%,  reduce = 99%
+2012-05-23 12:55:23,857 Stage-1 map = 100%,  reduce = 100%
+Ended Job = job_201205231152_0006
+Launching Job 2 out of 4
+Number of reduce tasks not specified. Defaulting to jobconf value of: 10
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapred.reduce.tasks=<number>
+Starting Job = job_201205231152_0008, Tracking URL = http://ec2-23-20-138-219.compute-1.amazonaws.com:50030/jobdetails.jsp?jobid=job_201205231152_0008
+Kill Command = /usr/lib/hadoop-0.20//bin/hadoop job  -Dmapred.job.tracker=ec2-23-20-138-219.compute-1.amazonaws.com:8021 -kill job_201205231152_0008
+2012-05-23 12:55:36,992 Stage-2 map = 0%,  reduce = 0%
+2012-05-23 12:55:38,186 Stage-2 map = 13%,  reduce = 0%
+2012-05-23 12:55:39,787 Stage-2 map = 100%,  reduce = 0%
+2012-05-23 12:55:46,954 Stage-2 map = 100%,  reduce = 3%
+2012-05-23 12:55:48,740 Stage-2 map = 100%,  reduce = 100%
+Ended Job = job_201205231152_0008
+Launching Job 3 out of 4
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapred.reduce.tasks=<number>
+Starting Job = job_201205231152_0010, Tracking URL = http://ec2-23-20-138-219.compute-1.amazonaws.com:50030/jobdetails.jsp?jobid=job_201205231152_0010
+Kill Command = /usr/lib/hadoop-0.20//bin/hadoop job  -Dmapred.job.tracker=ec2-23-20-138-219.compute-1.amazonaws.com:8021 -kill job_201205231152_0010
+2012-05-23 12:56:12,121 Stage-3 map = 0%,  reduce = 0%
+2012-05-23 12:56:15,608 Stage-3 map = 38%,  reduce = 0%
+2012-05-23 12:56:17,223 Stage-3 map = 88%,  reduce = 0%
+2012-05-23 12:56:18,937 Stage-3 map = 100%,  reduce = 0%
+2012-05-23 12:56:23,915 Stage-3 map = 100%,  reduce = 17%
+2012-05-23 12:56:27,545 Stage-3 map = 100%,  reduce = 100%
+Ended Job = job_201205231152_0010
+Launching Job 4 out of 4
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapred.reduce.tasks=<number>
+Starting Job = job_201205231152_0011, Tracking URL = http://ec2-23-20-138-219.compute-1.amazonaws.com:50030/jobdetails.jsp?jobid=job_201205231152_0011
+Kill Command = /usr/lib/hadoop-0.20//bin/hadoop job  -Dmapred.job.tracker=ec2-23-20-138-219.compute-1.amazonaws.com:8021 -kill job_201205231152_0011
+2012-05-23 12:56:45,225 Stage-4 map = 0%,  reduce = 0%
+2012-05-23 12:56:48,193 Stage-4 map = 100%,  reduce = 0%
+2012-05-23 12:56:57,427 Stage-4 map = 100%,  reduce = 100%
+Ended Job = job_201205231152_0011
+Loading data to table default.rankings_uservisits_join
+Deleted hdfs://ec2-23-20-138-219.compute-1.amazonaws.com/user/hive/warehouse/rankings_uservisits_join
+Table default.rankings_uservisits_join stats: [num_partitions: 0, num_files: 1, num_rows: 0, total_size: 0]
+OK
+Time taken: 329.44 seconds
