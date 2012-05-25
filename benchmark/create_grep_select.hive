@@ -1,0 +1,3 @@
+DROP TABLE grep_select;
+
+CREATE TABLE grep_select ( key STRING, field STRING );

@@ -1,0 +1,7 @@
+DROP TABLE uservisits;
+set mapred.reduce.tasks=60;
+
+CREATE EXTERNAL TABLE uservisits (sourceIP STRING,destURL STRING,visitDate STRING,adRevenue DOUBLE,userAgent STRING,countryCode STRING,languageCode STRING,searchWord STRING,duration INT ) ROW FORMAT DELIMITED FIELDS TERMINATED BY '|' STORED AS TEXTFILE LOCATION '/hive/input/uservisits';
+
+LOAD DATA LOCAL INPATH '/vol/data/uservisits/UserVisits.dat' OVERWRITE INTO TABLE UserVisits;
+

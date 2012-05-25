@@ -11,6 +11,7 @@
                                dron_frag,
                                dron_hash,
                                dron_language,
+                               dron_load,
                                dron_mnesia,
                                dron_monitor,
                                dron_pubsub,
@@ -19,7 +20,8 @@
                                dron_sup,
                                dron_worker,
                                dron_test,
-                               dron_test_small]},
+                               dron_test_small,
+                               dron_unload]},
                     {env, []},
                     {mod, {dron, []}},
                     {applications, [kernel, stdlib, sasl]}]}.

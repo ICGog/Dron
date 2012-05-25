@@ -1,9 +1,4 @@
-DROP TABLE uservisits;
 DROP TABLE uservisits_aggre;
-set mapred.reduce.tasks=60;
-
-CREATE EXTERNAL TABLE uservisits (sourceIP STRING,destURL STRING,visitDate STRING,adRevenue DOUBLE,userAgent STRING,countryCode STRING,languageCode STRING,searchWord STRING,duration INT ) ROW FORMAT DELIMITED FIELDS TERMINATED BY '|' STORED AS TEXTFILE LOCATION '/hive/input/uservisits';
 
 CREATE TABLE uservisits_aggre ( sourceIP STRING, sumAdRevenue DOUBLE);
 
-LOAD DATA LOCAL INPATH '/home/ubuntu/data/uservisits/UserVisits.dat' OVERWRITE INTO TABLE UserVisits;

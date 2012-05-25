@@ -1,0 +1,3 @@
+DROP TABLE uv_ad;
+CREATE TABLE uv_ad (visitDate STRING, sumAdRevenue DOUBLE);
+

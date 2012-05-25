@@ -1,4 +1,15 @@
 DRON: ip-10-82-199-203
 JobTracker/NameNode: ip-10-114-55-248, ec2-23-20-138-219
 
+CreateGrep - TeraGen
+SelRankMR - Benchmark1
+AggUVMR - Benchmark2
+JoinUVMR - Benchmark3
+SelRankH - INSERT OVERWRITE TABLE rankings_select ...10(Stage-1)
+JoinUVHive - INSERT OVERWRITE TABLE rankings_uservisi...1(Stage-1)
+	   - INSERT OVERWRITE TABLE rankings_uservisi...1(Stage-2)
+	   - INSERT OVERWRITE TABLE rankings_uservisi...1(Stage-3)
+	   - INSERT OVERWRITE TABLE rankings_uservisi...1(Stage-4)
+AggUVHive - INSERT OVERWRITE TABLE uservisits...sourceIP(Stage-1)
+
 export ADDR_NODES="ec2-23-20-138-219.compute-1.amazonaws.com ec2-23-22-129-98.compute-1.amazonaws.com ec2-184-73-96-133.compute-1.amazonaws.com ec2-23-20-56-140.compute-1.amazonaws.com ec2-107-20-78-42.compute-1.amazonaws.com ec2-23-21-17-103.compute-1.amazonaws.com ec2-23-20-109-103.compute-1.amazonaws.com ec2-23-20-156-88.compute-1.amazonaws.com ec2-23-20-32-159.compute-1.amazonaws.com ec2-174-129-66-26.compute-1.amazonaws.com ec2-23-22-6-105.compute-1.amazonaws.com ec2-50-17-100-219.compute-1.amazonaws.com ec2-184-73-81-210.compute-1.amazonaws.com ec2-174-129-110-60.compute-1.amazonaws.com ec2-50-16-150-231.compute-1.amazonaws.com ec2-23-22-37-162.compute-1.amazonaws.com ec2-184-73-41-84.compute-1.amazonaws.com ec2-50-19-152-38.compute-1.amazonaws.com ec2-23-22-134-128.compute-1.amazonaws.com ec2-23-20-60-155.compute-1.amazonaws.com ec2-23-22-91-188.compute-1.amazonaws.com ec2-23-20-135-45.compute-1.amazonaws.com ec2-23-20-202-24.compute-1.amazonaws.com ec2-174-129-87-78.compute-1.amazonaws.com ec2-50-16-83-227.compute-1.amazonaws.com ec2-23-20-169-31.compute-1.amazonaws.com ec2-107-20-13-104.compute-1.amazonaws.com ec2-184-73-10-239.compute-1.amazonaws.com ec2-184-72-75-40.compute-1.amazonaws.com ec2-23-22-130-149.compute-1.amazonaws.com ec2-23-21-18-182.compute-1.amazonaws.com"
