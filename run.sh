@@ -1,7 +1,7 @@
 #!/bin/bash
 # If DRON_STOP is set then it stops all the nodes.
 
-source "~/code/Dron/dron_exports"
+source "/home/ionel/code/Dron/dron_exports"
 export ERL_MAX_ETS_TABLES=65536
 export ERL_MAX_PORTS=16384
 

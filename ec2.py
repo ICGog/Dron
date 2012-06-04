@@ -68,16 +68,16 @@ def write_exports(workers, wIps, wpn, schedulers, sIps):
 
     file.write('export ADDR_NODES_PER_WORKER=' + str(wpn) + '\n')
 
-    aWorkers = 'export ADDR_WORKERS="'
+    aWorkers = ''
     for worker in workers:
         aWorkers += worker + ' '
-    file.write(aWorkers + '"\n')
-    aSchedulers = 'export ADDR_SCHEDULERS="'
+    file.write('export ADDR_WORKERS="' + aWorkers + '"\n')
+    aSchedulers = ''
     for scheduler in schedulers:
         aSchedulers += scheduler + ' '
-    file.write(aSchedulers + '"\n')
+    file.write('export ADDR_SCHEDULERS="' + aSchedulers + '"\n')
     file.write('export ADDR_MASTERS="' + schedulers[0] + '"\n')
-    file.write('export ADDR_NODES="' + achedulers + ' ' + aWorkers + '"\n\n')
+    file.write('export ADDR_NODES="' + aSchedulers + ' ' + aWorkers + '"\n\n')
     file.write('export ERL_LIBS="/home/ubuntu/Dron/lib"\n')
     file.close()
 

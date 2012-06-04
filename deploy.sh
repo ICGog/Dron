@@ -4,7 +4,7 @@
 
 if [ -z "$DRON_NEW" ]; then
     for instance in $DRON_NODES; do
-        ssh ubuntu@$instance "cd Dron; make clean; git pull origin $DRON_BRANCH; ./rebar get-deps; make compile"
+        ssh ubuntu@$instance "cd Dron; make clean; git checkout benchmark/; git pull origin $DRON_BRANCH; ./rebar get-deps; make compile"
     done
 else
     for instance in $DRON_NODES; do
