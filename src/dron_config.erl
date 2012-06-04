@@ -24,7 +24,7 @@ db_nodes() ->
   end.    
 
 max_slots() ->
-  2000.
+  20000.
 
 exchanges() ->
   [{<<"dron_events">>, <<"fanout">>},
