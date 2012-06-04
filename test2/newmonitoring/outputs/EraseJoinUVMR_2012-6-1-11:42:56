@@ -1,0 +1,3 @@
+12/06/01 11:42:58 WARN conf.Configuration: DEPRECATED: hadoop-site.xml found in the classpath. Usage of hadoop-site.xml is deprecated. Instead use core-site.xml, mapred-site.xml and hdfs-site.xml to override properties of core-default.xml, mapred-default.xml and hdfs-default.xml respectively
+12/06/01 11:43:01 INFO security.UserGroupInformation: JAAS Configuration already set up for Hadoop, not re-installing.
+Deleted hdfs://ec2-184-73-62-174.compute-1.amazonaws.com/output/uservisits_join

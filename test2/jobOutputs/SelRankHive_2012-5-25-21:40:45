@@ -1,0 +1,35 @@
+12/05/25 21:41:22 WARN conf.Configuration: DEPRECATED: hadoop-site.xml found in the classpath. Usage of hadoop-site.xml is deprecated. Instead use core-site.xml, mapred-site.xml and hdfs-site.xml to override properties of core-default.xml, mapred-default.xml and hdfs-default.xml respectively
+Hive history file=/tmp/ubuntu/hive_job_log_ubuntu_201205252141_970213040.txt
+Total MapReduce jobs = 2
+Launching Job 1 out of 2
+Number of reduce tasks is set to 0 since there's no reduce operator
+Starting Job = job_201205252023_0028, Tracking URL = http://ec2-50-19-196-189.compute-1.amazonaws.com:50030/jobdetails.jsp?jobid=job_201205252023_0028
+Kill Command = /usr/lib/hadoop-0.20//bin/hadoop job  -Dmapred.job.tracker=ec2-50-19-196-189.compute-1.amazonaws.com:8021 -kill job_201205252023_0028
+2012-05-25 21:42:09,854 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 21:43:10,224 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 21:44:10,573 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 21:45:11,178 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 21:46:11,539 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 21:47:11,885 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 21:47:54,140 Stage-1 map = 9%,  reduce = 0%
+2012-05-25 21:47:59,205 Stage-1 map = 17%,  reduce = 0%
+2012-05-25 21:48:02,225 Stage-1 map = 21%,  reduce = 0%
+2012-05-25 21:48:04,239 Stage-1 map = 26%,  reduce = 0%
+2012-05-25 21:48:05,246 Stage-1 map = 33%,  reduce = 0%
+2012-05-25 21:48:06,253 Stage-1 map = 47%,  reduce = 0%
+2012-05-25 21:48:09,315 Stage-1 map = 56%,  reduce = 0%
+2012-05-25 21:48:10,325 Stage-1 map = 65%,  reduce = 0%
+2012-05-25 21:48:11,367 Stage-1 map = 68%,  reduce = 0%
+2012-05-25 21:48:12,374 Stage-1 map = 86%,  reduce = 0%
+2012-05-25 21:48:13,381 Stage-1 map = 91%,  reduce = 0%
+2012-05-25 21:48:14,388 Stage-1 map = 100%,  reduce = 0%
+2012-05-25 21:48:16,401 Stage-1 map = 100%,  reduce = 100%
+Ended Job = job_201205252023_0028
+Ended Job = -1171795272, job is filtered out (removed at runtime).
+Moving data to: hdfs://ec2-50-19-196-189.compute-1.amazonaws.com/tmp/hive-ubuntu/hive_2012-05-25_21-41-26_332_5495601763979130089/-ext-10000
+Loading data to table default.rankings_select
+Deleted hdfs://ec2-50-19-196-189.compute-1.amazonaws.com/user/hive/warehouse/rankings_select
+Table default.rankings_select stats: [num_partitions: 0, num_files: 11, num_rows: 0, total_size: 1009786713]
+17530287 Rows loaded to rankings_select
+OK
+Time taken: 410.766 seconds

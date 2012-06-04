@@ -1,0 +1,60 @@
+500 jobs, 250 and 250
+
+{2012,6,4},{17,29,28}}}   - delay 1 second
+
+
+At {"short496",{{2012,6,4},{17,30,48}}} at {{2012,6,4},{17,30,49}}( typed: 
+
+dron_test:register_short_jobs(501,1000,250)
+
+
+Actually at this time:
+"short928",{{2012,6,4},{17,32,23}}} at {{2012,6,4},{17,32,24}}(dron@ip-1
+
+
+At" 17:33:26
+
+dron_test:register_short_jobs(1001,1500,250).
+
+
+At 17:34:23
+dron_test:register_short_jobs(1501,2000,250).
+
+
+At 17:35:8
+dron_test:register_short_jobs(2001,2500,250).
+
+
+At 17:35:48
+dron_test:register_short_jobs(2501,3000,250).
+
+
+
+
+
+-------------------------------------------------------------------------------------
+
+At: 16:44:30
+dron_test:register_short_jobs(1,500,250).
+
+At: 16:45:00
+dron_test:register_short_jobs(501,1000,250).
+
+At: 16:45:32
+dron_test:register_short_jobs(1001,1500,250).
+
+At: 16:46:02
+dron_test:register_short_jobs(1501,2000,250).
+
+At: 16:46:34
+dron_test:register_short_jobs(2001,2500,250).
+
+dron_test:register_short_jobs(2501,3000,250).  2 s
+
+dron_test:register_short_jobs(3001,3500,250). 2 s
+
+dron_test:register_short_jobs(3501,4000,250). 2 s
+
+=ERROR REPORT==== 4-Jun-2012::17:48:26 ===
+Error in process <0.22205.3> on node 's@ip-10-101-34-136' with exit value: {{badmatch,{error,{system_limit,"Cannot create an ets table for the local transaction store",{system_limit,[{ets,new,[mnesia_trans_store,[bag,public]]},{mnesia_tm,doit_loop,1},{mnesia_sp,init_proc,4},{proc_lib... 
+

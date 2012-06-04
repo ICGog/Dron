@@ -1,0 +1,116 @@
+start4().
+
+start4() ->
+  create_agg_uv_hive(),
+  create_ad_uv_hive(),
+  agg_uv_hive(),
+  ad_uv_hive(),
+  join_uv_mapred(),
+  timer:sleep(90000),
+  create_grep_hive(),
+  create_select_rank_hive(),
+  create_join_uv_hive(),
+  grep_mapred(),
+  select_rank_mapred(),
+  agg_uv_mapred(),
+  grep_hive(),
+  select_rank_hive(),
+  join_uv_hive().
+
+
+dron_benchmark:start4().
+
+=INFO REPORT==== 25-May-2012::23:27:34 ===
+Job Started: {"CreateAggUVH",{{2012,5,25},{23,27,34}}} at {{2012,5,25},
+                                                           {23,27,34}}:** at node s@ip-10-101-6-41 **
+
+=INFO REPORT==== 25-May-2012::23:27:34 ===
+Job Started: {"CreateAdUVH",{{2012,5,25},{23,27,34}}} at {{2012,5,25},
+                                                          {23,27,34}}:** at node s@ip-10-101-6-41 **
+
+=INFO REPORT==== 25-May-2012::23:27:34 ===
+Job Started: {"JoinUVMR",{{2012,5,25},{23,27,34}}} at {{2012,5,25},{23,27,34}}:** at node s@ip-10-101-6-41 **
+
+=INFO REPORT==== 25-May-2012::23:27:48 ===
+Job Succeeded: {"CreateAggUVH",{{2012,5,25},{23,27,34}}} at {{2012,5,25},
+                                                             {23,27,48}}
+=INFO REPORT==== 25-May-2012::23:27:48 ===
+Job Started: {"AggUVHive",{{2012,5,25},{23,27,34}}} at {{2012,5,25},
+                                                        {23,27,48}}:** at node s@ip-10-101-6-41 **
+
+=INFO REPORT==== 25-May-2012::23:27:48 ===
+Job Succeeded: {"CreateAdUVH",{{2012,5,25},{23,27,34}}} at {{2012,5,25},
+                                                            {23,27,48}}
+=INFO REPORT==== 25-May-2012::23:29:04 ===
+Job Started: {"CreateGrepSel",{{2012,5,25},{23,29,4}}} at {{2012,5,25},
+                                                           {23,29,4}}:** at node s@ip-10-101-6-41 **
+
+=INFO REPORT==== 25-May-2012::23:29:04 ===
+Job Started: {"CreateSelRankH",{{2012,5,25},{23,29,4}}} at {{2012,5,25},
+                                                            {23,29,4}}:** at node s@ip-10-101-6-41 **
+
+=INFO REPORT==== 25-May-2012::23:29:04 ===
+Job Started: {"CreateJoinUVH",{{2012,5,25},{23,29,4}}} at {{2012,5,25},
+                                                           {23,29,4}}:** at node s@ip-10-101-6-41 **
+ok
+(dron@ip-10-101-6-41)2> 
+=INFO REPORT==== 25-May-2012::23:29:04 ===
+Job Started: {"GrepMR",{{2012,5,25},{23,29,4}}} at {{2012,5,25},{23,29,4}}:** at node s@ip-10-101-6-41 **
+
+=INFO REPORT==== 25-May-2012::23:29:04 ===
+Job Started: {"AggUVMR",{{2012,5,25},{23,29,4}}} at {{2012,5,25},{23,29,4}}:** at node s@ip-10-101-6-41 **
+
+=INFO REPORT==== 25-May-2012::23:29:04 ===
+Job Started: {"SelRankMR",{{2012,5,25},{23,29,4}}} at {{2012,5,25},{23,29,4}}:** at node s@ip-10-101-6-41 **
+
+=INFO REPORT==== 25-May-2012::23:29:28 ===
+Job Succeeded: {"CreateSelRankH",{{2012,5,25},{23,29,4}}} at {{2012,5,25},
+                                                              {23,29,28}}
+=INFO REPORT==== 25-May-2012::23:29:28 ===
+Job Started: {"SelRankHive",{{2012,5,25},{23,29,4}}} at {{2012,5,25},
+                                                         {23,29,28}}:** at node s@ip-10-101-6-41 **
+
+=INFO REPORT==== 25-May-2012::23:29:28 ===
+Job Succeeded: {"CreateGrepSel",{{2012,5,25},{23,29,4}}} at {{2012,5,25},
+                                                             {23,29,28}}
+=INFO REPORT==== 25-May-2012::23:29:28 ===
+Job Started: {"GrepHive",{{2012,5,25},{23,29,4}}} at {{2012,5,25},{23,29,28}}:** at node s@ip-10-101-6-41 **
+
+=INFO REPORT==== 25-May-2012::23:29:29 ===
+Job Succeeded: {"CreateJoinUVH",{{2012,5,25},{23,29,4}}} at {{2012,5,25},
+                                                             {23,29,29}}
+=INFO REPORT==== 25-May-2012::23:29:29 ===
+Job Started: {"JoinUVHive",{{2012,5,25},{23,29,4}}} at {{2012,5,25},
+                                                        {23,29,29}}:** at node s@ip-10-101-6-41 **
+
+=INFO REPORT==== 25-May-2012::23:34:49 ===
+Job Succeeded: {"AggUVMR",{{2012,5,25},{23,29,4}}} at {{2012,5,25},{23,34,49}}
+=INFO REPORT==== 25-May-2012::23:35:37 ===
+Job Succeeded: {"AggUVHive",{{2012,5,25},{23,27,34}}} at {{2012,5,25},
+                                                          {23,35,37}}
+=INFO REPORT==== 25-May-2012::23:35:37 ===
+Job Started: {"AdUVHive",{{2012,5,25},{23,27,34}}} at {{2012,5,25},{23,35,37}}:** at node s@ip-10-101-6-41 **
+
+=INFO REPORT==== 25-May-2012::23:36:56 ===
+Job Succeeded: {"GrepMR",{{2012,5,25},{23,29,4}}} at {{2012,5,25},{23,36,56}}
+=INFO REPORT==== 25-May-2012::23:38:54 ===
+Job Succeeded: {"SelRankMR",{{2012,5,25},{23,29,4}}} at {{2012,5,25},
+                                                         {23,38,54}}
+=INFO REPORT==== 25-May-2012::23:40:18 ===
+Job Succeeded: {"SelRankHive",{{2012,5,25},{23,29,4}}} at {{2012,5,25},
+                                                           {23,40,18}}
+=INFO REPORT==== 25-May-2012::23:41:52 ===
+Job Succeeded: {"JoinUVMR",{{2012,5,25},{23,27,34}}} at {{2012,5,25},
+                                                         {23,41,52}}
+=INFO REPORT==== 25-May-2012::23:42:17 ===
+Job Succeeded: {"AdUVHive",{{2012,5,25},{23,27,34}}} at {{2012,5,25},
+                                                         {23,42,17}}
+=INFO REPORT==== 25-May-2012::23:42:18 ===
+Job Succeeded: {"GrepHive",{{2012,5,25},{23,29,4}}} at {{2012,5,25},
+                                                        {23,42,18}}
+=INFO REPORT==== 25-May-2012::23:43:05 ===
+Job Succeeded: {"JoinUVHive",{{2012,5,25},{23,29,4}}} at {{2012,5,25},
+                                                          {23,43,5}}
+
+
+Duration: 15:31

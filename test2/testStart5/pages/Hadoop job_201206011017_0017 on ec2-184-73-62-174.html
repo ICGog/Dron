@@ -1,0 +1,350 @@
+
+
+
+
+
+
+       
+
+
+
+<html>
+<head>
+  
+<title>Hadoop job_201206011017_0017 on ec2-184-73-62-174</title>
+<link rel="stylesheet" type="text/css" href="/static/hadoop.css">
+<link rel="icon" type="image/vnd.microsoft.icon" href="/static/images/favicon.ico" />
+</head>
+<body>
+<h1>Hadoop job_201206011017_0017 on <a href="jobtracker.jsp">ec2-184-73-62-174</a></h1>
+
+<b>User:</b> ubuntu<br>
+<b>Job Name:</b> INSERT OVERWRITE TABLE uservisits...sourceIP(Stage-1)<br>
+<b>Job File:</b> <a href="jobconf.jsp?jobid=job_201206011017_0017">hdfs://ec2-184-73-62-174.compute-1.amazonaws.com/user/ubuntu/.staging/job_201206011017_0017/job.xml</a><br>
+<b>Submit Host:</b> ip-10-98-54-194<br>
+<b>Submit Host Address:</b> 127.0.1.1<br>
+<b>Job-ACLs: All users are allowed</b><br><b>Job Setup:</b><a href="jobtasks.jsp?jobid=job_201206011017_0017&type=setup&pagenum=1&state=completed"> Successful</a><br>
+<b>Status:</b> Succeeded<br>
+<b>Started at:</b> Fri Jun 01 11:16:00 UTC 2012<br>
+<b>Finished at:</b> Fri Jun 01 11:23:03 UTC 2012<br>
+<b>Finished in:</b> 7mins, 3sec<br>
+<b>Job Cleanup:</b><a href="jobtasks.jsp?jobid=job_201206011017_0017&type=cleanup&pagenum=1&state=completed"> Successful</a><br>
+<hr>
+<table border=2 cellpadding="5" cellspacing="2"><tr><th>Kind</th><th>% Complete</th><th>Num Tasks</th><th>Pending</th><th>Running</th><th>Complete</th><th>Killed</th><th><a href="jobfailures.jsp?jobid=job_201206011017_0017">Failed/Killed<br>Task Attempts</a></th></tr>
+<tr><th><a href="jobtasks.jsp?jobid=job_201206011017_0017&type=map&pagenum=1">map</a></th><td align="right">100.00%<table border="1px" width="80px"><tr><td cellspacing="0" class="perc_filled" width="100%"></td></tr></table></td><td align="right">82</td><td align="right">0</td><td align="right">0</td><td align="right"><a href="jobtasks.jsp?jobid=job_201206011017_0017&type=map&pagenum=1&state=completed">82</a></td><td align="right">0</td><td align="right">0 / <a href="jobfailures.jsp?jobid=job_201206011017_0017&kind=map&cause=killed">21</a></td></tr>
+<tr><th><a href="jobtasks.jsp?jobid=job_201206011017_0017&type=reduce&pagenum=1">reduce</a></th><td align="right">100.00%<table border="1px" width="80px"><tr><td cellspacing="0" class="perc_filled" width="100%"></td></tr></table></td><td align="right">10</td><td align="right">0</td><td align="right">0</td><td align="right"><a href="jobtasks.jsp?jobid=job_201206011017_0017&type=reduce&pagenum=1&state=completed">10</a></td><td align="right">0</td><td align="right">0 / <a href="jobfailures.jsp?jobid=job_201206011017_0017&kind=reduce&cause=killed">4</a></td></tr>
+</table>
+
+    <p/>
+    <table border=2 cellpadding="5" cellspacing="2">
+    <tr>
+      <th><br/></th>
+      <th>Counter</th>
+      <th>Map</th>
+      <th>Reduce</th>
+      <th>Total</th>
+    </tr>
+    
+        <tr>
+          
+            <td rowspan="1">
+            org.apache.hadoop.hive.ql.exec.Operator$ProgressCounter</td>
+            
+          <td>CREATED_FILES</td>
+          <td align="right">0</td>
+          <td align="right">10</td>
+          <td align="right">10</td>
+        </tr>
+        
+        <tr>
+          
+            <td rowspan="8">
+            Job Counters </td>
+            
+          <td>SLOTS_MILLIS_MAPS</td>
+          <td align="right">0</td>
+          <td align="right">0</td>
+          <td align="right">8,066,088</td>
+        </tr>
+        
+        <tr>
+          
+          <td>Launched reduce tasks</td>
+          <td align="right">0</td>
+          <td align="right">0</td>
+          <td align="right">14</td>
+        </tr>
+        
+        <tr>
+          
+          <td>Total time spent by all reduces waiting after reserving slots (ms)</td>
+          <td align="right">0</td>
+          <td align="right">0</td>
+          <td align="right">0</td>
+        </tr>
+        
+        <tr>
+          
+          <td>Rack-local map tasks</td>
+          <td align="right">0</td>
+          <td align="right">0</td>
+          <td align="right">56</td>
+        </tr>
+        
+        <tr>
+          
+          <td>Total time spent by all maps waiting after reserving slots (ms)</td>
+          <td align="right">0</td>
+          <td align="right">0</td>
+          <td align="right">0</td>
+        </tr>
+        
+        <tr>
+          
+          <td>Launched map tasks</td>
+          <td align="right">0</td>
+          <td align="right">0</td>
+          <td align="right">103</td>
+        </tr>
+        
+        <tr>
+          
+          <td>Data-local map tasks</td>
+          <td align="right">0</td>
+          <td align="right">0</td>
+          <td align="right">47</td>
+        </tr>
+        
+        <tr>
+          
+          <td>SLOTS_MILLIS_REDUCES</td>
+          <td align="right">0</td>
+          <td align="right">0</td>
+          <td align="right">2,247,192</td>
+        </tr>
+        
+        <tr>
+          
+            <td rowspan="1">
+            org.apache.hadoop.hive.ql.exec.FileSinkOperator$TableIdEnum</td>
+            
+          <td>TABLE_ID_1_ROWCOUNT</td>
+          <td align="right">0</td>
+          <td align="right">2,419,200</td>
+          <td align="right">2,419,200</td>
+        </tr>
+        
+        <tr>
+          
+            <td rowspan="4">
+            FileSystemCounters</td>
+            
+          <td>FILE_BYTES_READ</td>
+          <td align="right">5,372,201,042</td>
+          <td align="right">5,361,082,611</td>
+          <td align="right">10,733,283,653</td>
+        </tr>
+        
+        <tr>
+          
+          <td>HDFS_BYTES_READ</td>
+          <td align="right">20,208,569,478</td>
+          <td align="right">0</td>
+          <td align="right">20,208,569,478</td>
+        </tr>
+        
+        <tr>
+          
+          <td>FILE_BYTES_WRITTEN</td>
+          <td align="right">10,728,892,595</td>
+          <td align="right">5,361,894,865</td>
+          <td align="right">16,090,787,460</td>
+        </tr>
+        
+        <tr>
+          
+          <td>HDFS_BYTES_WRITTEN</td>
+          <td align="right">0</td>
+          <td align="right">77,914,461</td>
+          <td align="right">77,914,461</td>
+        </tr>
+        
+        <tr>
+          
+            <td rowspan="1">
+            org.apache.hadoop.hive.ql.exec.MapOperator$Counter</td>
+            
+          <td>DESERIALIZE_ERRORS</td>
+          <td align="right">0</td>
+          <td align="right">0</td>
+          <td align="right">0</td>
+        </tr>
+        
+        <tr>
+          
+            <td rowspan="16">
+            Map-Reduce Framework</td>
+            
+          <td>Map input records</td>
+          <td align="right">155,000,000</td>
+          <td align="right">0</td>
+          <td align="right">155,000,000</td>
+        </tr>
+        
+        <tr>
+          
+          <td>Reduce shuffle bytes</td>
+          <td align="right">0</td>
+          <td align="right">5,361,087,147</td>
+          <td align="right">5,361,087,147</td>
+        </tr>
+        
+        <tr>
+          
+          <td>Spilled Records</td>
+          <td align="right">309,665,892</td>
+          <td align="right">154,832,946</td>
+          <td align="right">464,498,838</td>
+        </tr>
+        
+        <tr>
+          
+          <td>Map output bytes</td>
+          <td align="right">5,051,416,335</td>
+          <td align="right">0</td>
+          <td align="right">5,051,416,335</td>
+        </tr>
+        
+        <tr>
+          
+          <td>CPU time spent (ms)</td>
+          <td align="right">2,263,280</td>
+          <td align="right">485,830</td>
+          <td align="right">2,749,110</td>
+        </tr>
+        
+        <tr>
+          
+          <td>Total committed heap usage (bytes)</td>
+          <td align="right">15,578,038,272</td>
+          <td align="right">1,627,783,168</td>
+          <td align="right">17,205,821,440</td>
+        </tr>
+        
+        <tr>
+          
+          <td>Map input bytes</td>
+          <td align="right">14,763,950,080</td>
+          <td align="right">0</td>
+          <td align="right">14,763,950,080</td>
+        </tr>
+        
+        <tr>
+          
+          <td>Combine input records</td>
+          <td align="right">0</td>
+          <td align="right">0</td>
+          <td align="right">0</td>
+        </tr>
+        
+        <tr>
+          
+          <td>SPLIT_RAW_BYTES</td>
+          <td align="right">27,460</td>
+          <td align="right">0</td>
+          <td align="right">27,460</td>
+        </tr>
+        
+        <tr>
+          
+          <td>Reduce input records</td>
+          <td align="right">0</td>
+          <td align="right">154,832,946</td>
+          <td align="right">154,832,946</td>
+        </tr>
+        
+        <tr>
+          
+          <td>Reduce input groups</td>
+          <td align="right">0</td>
+          <td align="right">2,419,200</td>
+          <td align="right">2,419,200</td>
+        </tr>
+        
+        <tr>
+          
+          <td>Combine output records</td>
+          <td align="right">0</td>
+          <td align="right">0</td>
+          <td align="right">0</td>
+        </tr>
+        
+        <tr>
+          
+          <td>Physical memory (bytes) snapshot</td>
+          <td align="right">20,152,774,656</td>
+          <td align="right">2,506,629,120</td>
+          <td align="right">22,659,403,776</td>
+        </tr>
+        
+        <tr>
+          
+          <td>Reduce output records</td>
+          <td align="right">0</td>
+          <td align="right">0</td>
+          <td align="right">0</td>
+        </tr>
+        
+        <tr>
+          
+          <td>Virtual memory (bytes) snapshot</td>
+          <td align="right">52,944,695,296</td>
+          <td align="right">6,369,947,648</td>
+          <td align="right">59,314,642,944</td>
+        </tr>
+        
+        <tr>
+          
+          <td>Map output records</td>
+          <td align="right">154,832,946</td>
+          <td align="right">0</td>
+          <td align="right">154,832,946</td>
+        </tr>
+        
+    </table>
+
+<hr>Map Completion Graph - 
+ 
+<a href="/jobdetails.jsp?jobid=job_201206011017_0017&refresh=0&map.graph=off" > close </a>
+<br><embed src="/taskgraph?type=map&jobid=job_201206011017_0017" 
+       width="760" 
+       height="260"
+       style="width:100%" type="image/svg+xml" pluginspage="http://www.adobe.com/svg/viewer/install/" />
+
+
+
+<hr>Reduce Completion Graph -
+ 
+<a href="/jobdetails.jsp?jobid=job_201206011017_0017&refresh=0&reduce.graph=off" > close </a>
+ 
+ <br><embed src="/taskgraph?type=reduce&jobid=job_201206011017_0017" 
+       width="760" 
+       height="260" 
+       style="width:100%" type="image/svg+xml" pluginspage="http://www.adobe.com/svg/viewer/install/" />
+
+
+<hr>
+
+
+<table border="0"> <tr>
+    
+
+
+<hr>
+
+<hr>
+<a href="jobtracker.jsp">Go back to JobTracker</a><br>
+<hr />
+<a href="http://www.cloudera.com/hadoop/">Cloudera's Distribution including Apache Hadoop</a>, 2012.
+</body></html>
+

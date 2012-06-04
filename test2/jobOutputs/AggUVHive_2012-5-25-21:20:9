@@ -1,0 +1,149 @@
+12/05/25 21:20:52 WARN conf.Configuration: DEPRECATED: hadoop-site.xml found in the classpath. Usage of hadoop-site.xml is deprecated. Instead use core-site.xml, mapred-site.xml and hdfs-site.xml to override properties of core-default.xml, mapred-default.xml and hdfs-default.xml respectively
+Hive history file=/tmp/ubuntu/hive_job_log_ubuntu_201205252120_918668637.txt
+Total MapReduce jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks not specified. Defaulting to jobconf value of: 10
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapred.reduce.tasks=<number>
+Starting Job = job_201205252023_0013, Tracking URL = http://ec2-50-19-196-189.compute-1.amazonaws.com:50030/jobdetails.jsp?jobid=job_201205252023_0013
+Kill Command = /usr/lib/hadoop-0.20//bin/hadoop job  -Dmapred.job.tracker=ec2-50-19-196-189.compute-1.amazonaws.com:8021 -kill job_201205252023_0013
+2012-05-25 21:21:35,481 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 21:22:35,870 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 21:23:36,206 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 21:24:36,477 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 21:25:36,822 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 21:26:37,123 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 21:27:37,534 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 21:28:10,024 Stage-1 map = 1%,  reduce = 0%
+2012-05-25 21:28:11,032 Stage-1 map = 3%,  reduce = 0%
+2012-05-25 21:28:12,041 Stage-1 map = 5%,  reduce = 0%
+2012-05-25 21:28:13,050 Stage-1 map = 6%,  reduce = 0%
+2012-05-25 21:28:16,065 Stage-1 map = 7%,  reduce = 0%
+2012-05-25 21:28:17,072 Stage-1 map = 8%,  reduce = 0%
+2012-05-25 21:28:18,077 Stage-1 map = 9%,  reduce = 0%
+2012-05-25 21:28:19,085 Stage-1 map = 10%,  reduce = 0%
+2012-05-25 21:28:22,100 Stage-1 map = 12%,  reduce = 0%
+2012-05-25 21:28:24,112 Stage-1 map = 14%,  reduce = 0%
+2012-05-25 21:28:25,119 Stage-1 map = 15%,  reduce = 0%
+2012-05-25 21:28:26,126 Stage-1 map = 18%,  reduce = 0%
+2012-05-25 21:28:27,131 Stage-1 map = 20%,  reduce = 0%
+2012-05-25 21:28:28,137 Stage-1 map = 23%,  reduce = 0%
+2012-05-25 21:28:29,146 Stage-1 map = 25%,  reduce = 0%
+2012-05-25 21:28:30,152 Stage-1 map = 28%,  reduce = 0%
+2012-05-25 21:28:31,158 Stage-1 map = 30%,  reduce = 0%
+2012-05-25 21:28:32,163 Stage-1 map = 31%,  reduce = 0%
+2012-05-25 21:28:33,169 Stage-1 map = 33%,  reduce = 0%
+2012-05-25 21:28:34,174 Stage-1 map = 35%,  reduce = 0%
+2012-05-25 21:28:35,180 Stage-1 map = 36%,  reduce = 0%
+2012-05-25 21:28:36,185 Stage-1 map = 37%,  reduce = 0%
+2012-05-25 21:28:38,231 Stage-1 map = 38%,  reduce = 0%
+2012-05-25 21:28:40,244 Stage-1 map = 39%,  reduce = 0%
+2012-05-25 21:28:41,250 Stage-1 map = 41%,  reduce = 0%
+2012-05-25 21:28:42,256 Stage-1 map = 44%,  reduce = 1%
+2012-05-25 21:28:43,263 Stage-1 map = 46%,  reduce = 1%
+2012-05-25 21:28:44,270 Stage-1 map = 48%,  reduce = 1%
+2012-05-25 21:28:45,276 Stage-1 map = 50%,  reduce = 2%
+2012-05-25 21:28:46,282 Stage-1 map = 53%,  reduce = 2%
+2012-05-25 21:28:47,288 Stage-1 map = 54%,  reduce = 2%
+2012-05-25 21:28:48,294 Stage-1 map = 56%,  reduce = 2%
+2012-05-25 21:28:49,302 Stage-1 map = 57%,  reduce = 2%
+2012-05-25 21:28:50,308 Stage-1 map = 60%,  reduce = 2%
+2012-05-25 21:28:51,314 Stage-1 map = 61%,  reduce = 2%
+2012-05-25 21:28:52,320 Stage-1 map = 62%,  reduce = 2%
+2012-05-25 21:28:53,326 Stage-1 map = 63%,  reduce = 2%
+2012-05-25 21:28:55,338 Stage-1 map = 65%,  reduce = 2%
+2012-05-25 21:28:56,348 Stage-1 map = 67%,  reduce = 2%
+2012-05-25 21:28:57,355 Stage-1 map = 68%,  reduce = 3%
+2012-05-25 21:28:58,379 Stage-1 map = 70%,  reduce = 3%
+2012-05-25 21:28:59,389 Stage-1 map = 71%,  reduce = 3%
+2012-05-25 21:29:00,396 Stage-1 map = 71%,  reduce = 4%
+2012-05-25 21:29:01,404 Stage-1 map = 73%,  reduce = 4%
+2012-05-25 21:29:02,412 Stage-1 map = 74%,  reduce = 4%
+2012-05-25 21:29:03,423 Stage-1 map = 75%,  reduce = 4%
+2012-05-25 21:29:04,430 Stage-1 map = 77%,  reduce = 5%
+2012-05-25 21:29:05,494 Stage-1 map = 79%,  reduce = 5%
+2012-05-25 21:29:06,500 Stage-1 map = 79%,  reduce = 6%
+2012-05-25 21:29:07,506 Stage-1 map = 81%,  reduce = 6%
+2012-05-25 21:29:08,524 Stage-1 map = 83%,  reduce = 7%
+2012-05-25 21:29:10,535 Stage-1 map = 84%,  reduce = 7%
+2012-05-25 21:29:12,546 Stage-1 map = 85%,  reduce = 8%
+2012-05-25 21:29:13,587 Stage-1 map = 86%,  reduce = 9%
+2012-05-25 21:29:14,594 Stage-1 map = 88%,  reduce = 10%
+2012-05-25 21:29:15,600 Stage-1 map = 89%,  reduce = 10%
+2012-05-25 21:29:16,606 Stage-1 map = 90%,  reduce = 10%
+2012-05-25 21:29:17,635 Stage-1 map = 92%,  reduce = 10%
+2012-05-25 21:29:19,645 Stage-1 map = 93%,  reduce = 10%
+2012-05-25 21:29:20,651 Stage-1 map = 94%,  reduce = 10%
+2012-05-25 21:29:21,657 Stage-1 map = 95%,  reduce = 11%
+2012-05-25 21:29:22,663 Stage-1 map = 96%,  reduce = 11%
+2012-05-25 21:29:24,674 Stage-1 map = 97%,  reduce = 12%
+2012-05-25 21:29:26,719 Stage-1 map = 98%,  reduce = 12%
+2012-05-25 21:29:27,725 Stage-1 map = 99%,  reduce = 13%
+2012-05-25 21:29:28,731 Stage-1 map = 99%,  reduce = 14%
+2012-05-25 21:29:31,748 Stage-1 map = 99%,  reduce = 15%
+2012-05-25 21:29:35,770 Stage-1 map = 100%,  reduce = 16%
+2012-05-25 21:29:36,777 Stage-1 map = 100%,  reduce = 17%
+2012-05-25 21:29:39,798 Stage-1 map = 100%,  reduce = 18%
+2012-05-25 21:29:44,823 Stage-1 map = 100%,  reduce = 19%
+2012-05-25 21:29:45,828 Stage-1 map = 100%,  reduce = 20%
+2012-05-25 21:29:47,839 Stage-1 map = 100%,  reduce = 21%
+2012-05-25 21:29:52,897 Stage-1 map = 100%,  reduce = 22%
+2012-05-25 21:29:55,914 Stage-1 map = 100%,  reduce = 23%
+2012-05-25 21:29:57,925 Stage-1 map = 100%,  reduce = 25%
+2012-05-25 21:30:00,941 Stage-1 map = 100%,  reduce = 26%
+2012-05-25 21:30:03,958 Stage-1 map = 100%,  reduce = 27%
+2012-05-25 21:30:06,974 Stage-1 map = 100%,  reduce = 28%
+2012-05-25 21:30:08,986 Stage-1 map = 100%,  reduce = 29%
+2012-05-25 21:30:12,002 Stage-1 map = 100%,  reduce = 30%
+2012-05-25 21:30:13,008 Stage-1 map = 100%,  reduce = 34%
+2012-05-25 21:30:16,060 Stage-1 map = 100%,  reduce = 35%
+2012-05-25 21:30:18,071 Stage-1 map = 100%,  reduce = 38%
+2012-05-25 21:30:19,077 Stage-1 map = 100%,  reduce = 42%
+2012-05-25 21:30:22,096 Stage-1 map = 100%,  reduce = 43%
+2012-05-25 21:30:25,112 Stage-1 map = 100%,  reduce = 47%
+2012-05-25 21:30:31,198 Stage-1 map = 100%,  reduce = 48%
+2012-05-25 21:30:36,222 Stage-1 map = 100%,  reduce = 52%
+2012-05-25 21:30:37,228 Stage-1 map = 100%,  reduce = 59%
+2012-05-25 21:30:38,233 Stage-1 map = 100%,  reduce = 62%
+2012-05-25 21:30:40,244 Stage-1 map = 100%,  reduce = 63%
+2012-05-25 21:30:43,260 Stage-1 map = 100%,  reduce = 66%
+2012-05-25 21:30:44,266 Stage-1 map = 100%,  reduce = 67%
+2012-05-25 21:30:47,282 Stage-1 map = 100%,  reduce = 68%
+2012-05-25 21:30:48,289 Stage-1 map = 100%,  reduce = 69%
+2012-05-25 21:30:50,300 Stage-1 map = 100%,  reduce = 70%
+2012-05-25 21:30:53,315 Stage-1 map = 100%,  reduce = 71%
+2012-05-25 21:30:55,325 Stage-1 map = 100%,  reduce = 75%
+2012-05-25 21:30:56,331 Stage-1 map = 100%,  reduce = 76%
+2012-05-25 21:30:57,336 Stage-1 map = 100%,  reduce = 77%
+2012-05-25 21:30:59,349 Stage-1 map = 100%,  reduce = 78%
+2012-05-25 21:31:00,355 Stage-1 map = 100%,  reduce = 79%
+2012-05-25 21:31:02,367 Stage-1 map = 100%,  reduce = 80%
+2012-05-25 21:31:03,373 Stage-1 map = 100%,  reduce = 81%
+2012-05-25 21:31:05,384 Stage-1 map = 100%,  reduce = 83%
+2012-05-25 21:31:06,390 Stage-1 map = 100%,  reduce = 84%
+2012-05-25 21:31:08,401 Stage-1 map = 100%,  reduce = 86%
+2012-05-25 21:31:10,411 Stage-1 map = 100%,  reduce = 87%
+2012-05-25 21:31:11,416 Stage-1 map = 100%,  reduce = 88%
+2012-05-25 21:31:12,422 Stage-1 map = 100%,  reduce = 89%
+2012-05-25 21:31:14,469 Stage-1 map = 100%,  reduce = 90%
+2012-05-25 21:31:18,489 Stage-1 map = 100%,  reduce = 91%
+2012-05-25 21:31:21,504 Stage-1 map = 100%,  reduce = 92%
+2012-05-25 21:31:28,540 Stage-1 map = 100%,  reduce = 93%
+2012-05-25 21:31:31,581 Stage-1 map = 100%,  reduce = 94%
+2012-05-25 21:31:35,603 Stage-1 map = 100%,  reduce = 95%
+2012-05-25 21:31:37,688 Stage-1 map = 100%,  reduce = 96%
+2012-05-25 21:31:43,766 Stage-1 map = 100%,  reduce = 97%
+2012-05-25 21:31:49,799 Stage-1 map = 100%,  reduce = 98%
+2012-05-25 21:31:54,824 Stage-1 map = 100%,  reduce = 99%
+2012-05-25 21:32:07,011 Stage-1 map = 100%,  reduce = 100%
+Ended Job = job_201205252023_0013
+Loading data to table default.uservisits_aggre
+Deleted hdfs://ec2-50-19-196-189.compute-1.amazonaws.com/user/hive/warehouse/uservisits_aggre
+Table default.uservisits_aggre stats: [num_partitions: 0, num_files: 10, num_rows: 0, total_size: 77914272]
+2177277 Rows loaded to uservisits_aggre
+OK
+Time taken: 680.128 seconds

@@ -1,0 +1,14 @@
+export DRON_WORKERS="w1@ip-10-72-250-177 w2@ip-10-72-250-177 w3@ip-10-72-250-177 w1@ip-10-111-22-20 w2@ip-10-111-22-20 w3@ip-10-111-22-20"
+export DRON_MASTERS="dron@ip-10-110-42-151"
+export DRON_SCHEDULERS="s@ip-10-110-42-151 s@ip-10-72-239-72 s@ip-10-70-87-212 s@ip-10-68-34-156"
+export DRON_DB="dron@ip-10-110-42-151 s@ip-10-110-42-151 s@ip-10-72-239-72 s@ip-10-70-87-212 s@ip-10-68-34-156 "
+export DRON_NODES="ec2-204-236-201-253.compute-1.amazonaws.com ec2-174-129-54-227.compute-1.amazonaws.com ec2-23-22-137-224.compute-1.amazonaws.com ec2-107-20-6-1.compute-1.amazonaws.com ec2-23-20-78-162.compute-1.amazonaws.com ec2-107-22-93-193.compute-1.amazonaws.com"
+
+export ADDR_NODES_PER_WORKER=3
+export ADDR_WORKERS="ec2-204-236-201-253.compute-1.amazonaws.com ec2-23-20-78-162.compute-1.amazonaws.com"
+export ADDR_SCHEDULERS="ec2-174-129-54-227.compute-1.amazonaws.com ec2-23-22-137-224.compute-1.amazonaws.com ec2-107-20-6-1.compute-1.amazonaws.com ec2-107-22-93-193.compute-1.amazonaws.com"
+export ADDR_MASTERS="ec2-174-129-54-227.compute-1.amazonaws.com"
+export ADDR_NODES="ec2-174-129-54-227.compute-1.amazonaws.com ec2-23-22-137-224.compute-1.amazonaws.com ec2-107-20-6-1.compute-1.amazonaws.com  ec2-204-236-201-253.compute-1.amazonaws.com ec2-23-20-78-162.compute-1.amazonaws.com ec2-107-22-93-193.compute-1.amazonaws.com"
+
+export ERL_LIBS="/home/ubuntu/Dron/lib"
+

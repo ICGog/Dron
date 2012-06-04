@@ -1,0 +1,37 @@
+12/06/01 11:00:44 WARN conf.Configuration: DEPRECATED: hadoop-site.xml found in the classpath. Usage of hadoop-site.xml is deprecated. Instead use core-site.xml, mapred-site.xml and hdfs-site.xml to override properties of core-default.xml, mapred-default.xml and hdfs-default.xml respectively
+Hive history file=/tmp/ubuntu/hive_job_log_ubuntu_201206011100_1957581732.txt
+Total MapReduce jobs = 2
+Launching Job 1 out of 2
+Number of reduce tasks is set to 0 since there's no reduce operator
+Starting Job = job_201206011017_0008, Tracking URL = http://ec2-184-73-62-174.compute-1.amazonaws.com:50030/jobdetails.jsp?jobid=job_201206011017_0008
+Kill Command = /usr/lib/hadoop-0.20//bin/hadoop job  -Dmapred.job.tracker=ec2-184-73-62-174.compute-1.amazonaws.com:8021 -kill job_201206011017_0008
+2012-06-01 11:01:04,336 Stage-1 map = 0%,  reduce = 0%
+2012-06-01 11:02:05,252 Stage-1 map = 0%,  reduce = 0%
+2012-06-01 11:03:05,275 Stage-1 map = 0%,  reduce = 0%
+2012-06-01 11:04:05,924 Stage-1 map = 0%,  reduce = 0%
+2012-06-01 11:05:06,793 Stage-1 map = 0%,  reduce = 0%
+2012-06-01 11:06:07,700 Stage-1 map = 0%,  reduce = 0%
+2012-06-01 11:06:41,194 Stage-1 map = 5%,  reduce = 0%
+2012-06-01 11:06:43,222 Stage-1 map = 15%,  reduce = 0%
+2012-06-01 11:06:45,279 Stage-1 map = 25%,  reduce = 0%
+2012-06-01 11:06:46,291 Stage-1 map = 30%,  reduce = 0%
+2012-06-01 11:06:49,322 Stage-1 map = 40%,  reduce = 0%
+2012-06-01 11:06:50,335 Stage-1 map = 60%,  reduce = 0%
+2012-06-01 11:06:51,347 Stage-1 map = 70%,  reduce = 0%
+2012-06-01 11:06:55,390 Stage-1 map = 78%,  reduce = 0%
+2012-06-01 11:06:57,414 Stage-1 map = 83%,  reduce = 0%
+2012-06-01 11:07:06,513 Stage-1 map = 88%,  reduce = 0%
+2012-06-01 11:07:08,536 Stage-1 map = 93%,  reduce = 0%
+2012-06-01 11:07:16,622 Stage-1 map = 95%,  reduce = 0%
+2012-06-01 11:07:34,998 Stage-1 map = 98%,  reduce = 0%
+2012-06-01 11:07:53,190 Stage-1 map = 100%,  reduce = 0%
+2012-06-01 11:08:00,268 Stage-1 map = 100%,  reduce = 100%
+Ended Job = job_201206011017_0008
+Ended Job = -1224009516, job is filtered out (removed at runtime).
+Moving data to: hdfs://ec2-184-73-62-174.compute-1.amazonaws.com/tmp/hive-ubuntu/hive_2012-06-01_11-00-45_439_6717379469233888810/-ext-10000
+Loading data to table default.rankings_select
+Deleted hdfs://ec2-184-73-62-174.compute-1.amazonaws.com/user/hive/warehouse/rankings_select
+Table default.rankings_select stats: [num_partitions: 0, num_files: 10, num_rows: 0, total_size: 1009786713]
+17530287 Rows loaded to rankings_select
+OK
+Time taken: 435.57 seconds

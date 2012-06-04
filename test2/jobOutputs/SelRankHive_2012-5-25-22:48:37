@@ -1,0 +1,39 @@
+12/05/25 22:49:18 WARN conf.Configuration: DEPRECATED: hadoop-site.xml found in the classpath. Usage of hadoop-site.xml is deprecated. Instead use core-site.xml, mapred-site.xml and hdfs-site.xml to override properties of core-default.xml, mapred-default.xml and hdfs-default.xml respectively
+Hive history file=/tmp/ubuntu/hive_job_log_ubuntu_201205252249_1374534676.txt
+Total MapReduce jobs = 2
+Launching Job 1 out of 2
+Number of reduce tasks is set to 0 since there's no reduce operator
+Starting Job = job_201205252023_0076, Tracking URL = http://ec2-50-19-196-189.compute-1.amazonaws.com:50030/jobdetails.jsp?jobid=job_201205252023_0076
+Kill Command = /usr/lib/hadoop-0.20//bin/hadoop job  -Dmapred.job.tracker=ec2-50-19-196-189.compute-1.amazonaws.com:8021 -kill job_201205252023_0076
+2012-05-25 22:50:08,927 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 22:51:09,338 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 22:52:09,661 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 22:53:09,937 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 22:54:10,239 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 22:55:10,504 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 22:56:10,806 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 22:57:11,406 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 22:57:57,691 Stage-1 map = 5%,  reduce = 0%
+2012-05-25 22:58:00,713 Stage-1 map = 14%,  reduce = 0%
+2012-05-25 22:58:03,736 Stage-1 map = 23%,  reduce = 0%
+2012-05-25 22:58:04,743 Stage-1 map = 27%,  reduce = 0%
+2012-05-25 22:58:07,766 Stage-1 map = 41%,  reduce = 0%
+2012-05-25 22:58:09,778 Stage-1 map = 44%,  reduce = 0%
+2012-05-25 22:58:10,786 Stage-1 map = 49%,  reduce = 0%
+2012-05-25 22:58:24,858 Stage-1 map = 53%,  reduce = 0%
+2012-05-25 22:58:25,866 Stage-1 map = 58%,  reduce = 0%
+2012-05-25 22:58:31,901 Stage-1 map = 61%,  reduce = 0%
+2012-05-25 22:58:44,010 Stage-1 map = 70%,  reduce = 0%
+2012-05-25 22:58:45,017 Stage-1 map = 79%,  reduce = 0%
+2012-05-25 22:58:46,024 Stage-1 map = 88%,  reduce = 0%
+2012-05-25 22:58:54,065 Stage-1 map = 100%,  reduce = 0%
+2012-05-25 22:59:01,170 Stage-1 map = 100%,  reduce = 100%
+Ended Job = job_201205252023_0076
+Ended Job = -2000835400, job is filtered out (removed at runtime).
+Moving data to: hdfs://ec2-50-19-196-189.compute-1.amazonaws.com/tmp/hive-ubuntu/hive_2012-05-25_22-49-23_056_1657920521198036764/-ext-10000
+Loading data to table default.rankings_select
+Deleted hdfs://ec2-50-19-196-189.compute-1.amazonaws.com/user/hive/warehouse/rankings_select
+Table default.rankings_select stats: [num_partitions: 0, num_files: 11, num_rows: 0, total_size: 1009786713]
+17530287 Rows loaded to rankings_select
+OK
+Time taken: 579.053 seconds

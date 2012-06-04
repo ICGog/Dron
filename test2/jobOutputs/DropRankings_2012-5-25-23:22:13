@@ -1,0 +1,4 @@
+12/05/25 23:22:20 WARN conf.Configuration: DEPRECATED: hadoop-site.xml found in the classpath. Usage of hadoop-site.xml is deprecated. Instead use core-site.xml, mapred-site.xml and hdfs-site.xml to override properties of core-default.xml, mapred-default.xml and hdfs-default.xml respectively
+Hive history file=/tmp/ubuntu/hive_job_log_ubuntu_201205252322_1956034182.txt
+FAILED: Error in metadata: MetaException(message:Got exception: java.io.IOException Call to ec2-50-19-196-189.compute-1.amazonaws.com/10.80.73.40:8020 failed on local exception: java.net.SocketException: Connection refused)
+FAILED: Execution Error, return code 1 from org.apache.hadoop.hive.ql.exec.DDLTask

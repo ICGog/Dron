@@ -1,0 +1,32 @@
+12/05/25 22:31:00 WARN conf.Configuration: DEPRECATED: hadoop-site.xml found in the classpath. Usage of hadoop-site.xml is deprecated. Instead use core-site.xml, mapred-site.xml and hdfs-site.xml to override properties of core-default.xml, mapred-default.xml and hdfs-default.xml respectively
+Hive history file=/tmp/ubuntu/hive_job_log_ubuntu_201205252231_470997386.txt
+Total MapReduce jobs = 2
+Launching Job 1 out of 2
+Number of reduce tasks is set to 0 since there's no reduce operator
+Starting Job = job_201205252023_0056, Tracking URL = http://ec2-50-19-196-189.compute-1.amazonaws.com:50030/jobdetails.jsp?jobid=job_201205252023_0056
+Kill Command = /usr/lib/hadoop-0.20//bin/hadoop job  -Dmapred.job.tracker=ec2-50-19-196-189.compute-1.amazonaws.com:8021 -kill job_201205252023_0056
+2012-05-25 22:31:48,210 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 22:32:48,507 Stage-1 map = 0%,  reduce = 0%
+2012-05-25 22:33:31,717 Stage-1 map = 9%,  reduce = 0%
+2012-05-25 22:33:33,755 Stage-1 map = 12%,  reduce = 0%
+2012-05-25 22:33:34,765 Stage-1 map = 21%,  reduce = 0%
+2012-05-25 22:33:44,817 Stage-1 map = 26%,  reduce = 0%
+2012-05-25 22:33:46,829 Stage-1 map = 44%,  reduce = 0%
+2012-05-25 22:33:47,837 Stage-1 map = 53%,  reduce = 0%
+2012-05-25 22:33:48,844 Stage-1 map = 67%,  reduce = 0%
+2012-05-25 22:33:50,861 Stage-1 map = 72%,  reduce = 0%
+2012-05-25 22:33:52,873 Stage-1 map = 84%,  reduce = 0%
+2012-05-25 22:34:06,011 Stage-1 map = 88%,  reduce = 0%
+2012-05-25 22:34:07,017 Stage-1 map = 92%,  reduce = 0%
+2012-05-25 22:34:08,024 Stage-1 map = 97%,  reduce = 0%
+2012-05-25 22:34:12,046 Stage-1 map = 100%,  reduce = 0%
+2012-05-25 22:34:19,083 Stage-1 map = 100%,  reduce = 100%
+Ended Job = job_201205252023_0056
+Ended Job = 1356552212, job is filtered out (removed at runtime).
+Moving data to: hdfs://ec2-50-19-196-189.compute-1.amazonaws.com/tmp/hive-ubuntu/hive_2012-05-25_22-31-04_310_1310812748414237526/-ext-10000
+Loading data to table default.rankings_select
+Deleted hdfs://ec2-50-19-196-189.compute-1.amazonaws.com/user/hive/warehouse/rankings_select
+Table default.rankings_select stats: [num_partitions: 0, num_files: 11, num_rows: 0, total_size: 1009786713]
+17530287 Rows loaded to rankings_select
+OK
+Time taken: 195.609 seconds

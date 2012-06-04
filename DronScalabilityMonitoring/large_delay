@@ -1,0 +1,142 @@
+
+dron_test:register_short_jobs(1,500, 250).
+22:05:24
+dron_test:register_short_jobs(501,1000, 250).
+22:07:58
+dron_test:register_short_jobs(1001,1500, 250).
+22:07:58
+dron_test:register_short_jobs(1501,2000, 250).
+22:08:58
+dron_test:register_short_jobs(2001,2500, 250).
+22:09:58
+dron_test:register_short_jobs(2501,3000, 250).
+22:10:58
+dron_test:register_short_jobs(3001,3500, 250).
+22:11:58
+dron_test:register_short_jobs(3501,4000, 250).
+22:12:58
+dron_test:register_short_jobs(4001,4500, 250).
+22:13:58
+dron_test:register_short_jobs(4501,5000, 250).
+22:14:32
+dron_test:register_short_jobs(5001,5500, 250).
+
+dron_test:register_short_jobs(5501,6000, 250).
+
+dron_test:register_short_jobs(6001,6500, 250).
+
+dron_test:register_short_jobs(6501,7000, 250).
+
+-------------------------------------------------------------------------
+22:22:00
+dron_test:register_short_jobs(1,2500, 250).
+22:23:00
+dron_test:register_short_jobs(2501,5000, 250).
+22:23:30
+dron_test:register_short_jobs(5001,7500, 250).
+22:24:45
+Stopped at 7500
+dron_test:register_short_jobs(7501,10000, 250).
+22:26:00
+dron_test:register_short_jobs(10001,12500, 250).
+22:27:00
+dron_test:register_short_jobs(12501,15000, 250).
+22:28:31
+dron_test:register_short_jobs(15001,17500, 250).
+22:30:00
+dron_test:register_short_jobs(17501,20000, 250).
+22:31:00
+dron_test:register_short_jobs(20001,22500, 250).
+22:32:00
+dron_test:register_short_jobs(22501,25000, 250).
+22:33:00
+dron_test:register_short_jobs(25001,27500, 250).
+22:34:00
+dron_test:register_short_jobs(27501,30000, 250).
+22:36:30
+dron_test:register_short_jobs(30001,32500, 250).
+
+
+----------------------------------------------------------------------------
+22:59:30
+dron_test:register_short_jobs(1,2500, 250).
+23:00:00
+dron_test:register_short_jobs(2501,5000, 250).
+23:00:30
+dron_test:register_short_jobs(5001,7500, 250).
+
+Delay because of DB - 2 mins!
+dron_test:register_short_jobs(7501,10000, 250).
+
+dron_test:register_short_jobs(10001,12500, 250).
+
+3 x3 workers
+------------------------------------------------------------------------------
+23:09:00
+dron_test:register_short_jobs(1,2500, 250).
+23:09:30
+dron_test:register_short_jobs(2501,5000, 250).
+23:10:00
+dron_test:register_short_jobs(5001,7500, 250).
+23:11:30
+dron_test:register_short_jobs(7501,10000, 250).
+
+dron_test:register_short_jobs(10001,12500, 250).
+
+4 sched, 2 x 3 workers
+
+
+----------------------------------------------------------------------------------
+5x3 workers
+23:30:00
+dron_test:register_long_jobs(1,2500, 250).
+23:30:30
+dron_test:register_long_jobs(2501,5000, 250).
+23:31:00
+dron_test:register_long_jobs(5001,7500, 250).
+23:31:30
+dron_test:register_long_jobs(7501,10000, 250).
+23:32:00
+dron_test:register_long_jobs(10001,12500, 250).
+23:32:30
+dron_test:register_long_jobs(12501,15000, 250).
+23:33:00
+dron_test:register_long_jobs(15001,17500, 250).
+Worker terminated - because of too many open ports.
+
+
+ERROR REPORT==== 4-Jun-2012::22:33:18 ===
+** Generic server 'w1@ip-10-70-87-212' terminating 
+** Last message in was {'EXIT',<5975.1307.0>,
+                           {emfile,
+                               [{erlang,open_port,
+                                    [{spawn,"/bin/sh -s unix:cmd 2>&1"},
+                                     [stream]]},
+                                {os,start_port_srv_handle,1},
+                                {os,start_port_srv_loop,0}]}}
+
+
+Approx 1500 procs on it.
+
+-------------------------------------------------------------------------------------
+
+dron_test:register_long_jobs(1,10000, 250).
+
+dron_test:register_long_jobs(10001,20000, 250).
+
+dron_test:register_long_jobs(20001,30000, 250).
+
+dron_test:register_long_jobs(15001,17500, 250).
+
+dron_test:register_long_jobs(17501,20000, 250).
+
+dron_test:register_long_jobs(20001,22500, 250).
+
+dron_test:register_long_jobs(22501,25000, 250).
+
+dron_test:register_long_jobs(25001,27500, 250).
+
+dron_test:register_long_jobs(27501,30000, 250).
+
+dron_test:register_long_jobs(30001,32500, 250).
+

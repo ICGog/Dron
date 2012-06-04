@@ -1,0 +1,13 @@
+12/05/25 23:22:16 WARN conf.Configuration: DEPRECATED: hadoop-site.xml found in the classpath. Usage of hadoop-site.xml is deprecated. Instead use core-site.xml, mapred-site.xml and hdfs-site.xml to override properties of core-default.xml, mapred-default.xml and hdfs-default.xml respectively
+12/05/25 23:22:18 INFO security.UserGroupInformation: JAAS Configuration already set up for Hadoop, not re-installing.
+12/05/25 23:22:23 INFO ipc.Client: Retrying connect to server: ec2-50-19-196-189.compute-1.amazonaws.com/10.80.73.40:8020. Already tried 0 time(s).
+12/05/25 23:22:24 INFO ipc.Client: Retrying connect to server: ec2-50-19-196-189.compute-1.amazonaws.com/10.80.73.40:8020. Already tried 1 time(s).
+12/05/25 23:22:25 INFO ipc.Client: Retrying connect to server: ec2-50-19-196-189.compute-1.amazonaws.com/10.80.73.40:8020. Already tried 2 time(s).
+12/05/25 23:22:26 INFO ipc.Client: Retrying connect to server: ec2-50-19-196-189.compute-1.amazonaws.com/10.80.73.40:8020. Already tried 3 time(s).
+12/05/25 23:22:27 INFO ipc.Client: Retrying connect to server: ec2-50-19-196-189.compute-1.amazonaws.com/10.80.73.40:8020. Already tried 4 time(s).
+12/05/25 23:22:28 INFO ipc.Client: Retrying connect to server: ec2-50-19-196-189.compute-1.amazonaws.com/10.80.73.40:8020. Already tried 5 time(s).
+12/05/25 23:22:29 INFO ipc.Client: Retrying connect to server: ec2-50-19-196-189.compute-1.amazonaws.com/10.80.73.40:8020. Already tried 6 time(s).
+12/05/25 23:22:30 INFO ipc.Client: Retrying connect to server: ec2-50-19-196-189.compute-1.amazonaws.com/10.80.73.40:8020. Already tried 7 time(s).
+12/05/25 23:22:31 INFO ipc.Client: Retrying connect to server: ec2-50-19-196-189.compute-1.amazonaws.com/10.80.73.40:8020. Already tried 8 time(s).
+12/05/25 23:22:32 INFO ipc.Client: Retrying connect to server: ec2-50-19-196-189.compute-1.amazonaws.com/10.80.73.40:8020. Already tried 9 time(s).
+Bad connection to FS. command aborted. exception: Call to ec2-50-19-196-189.compute-1.amazonaws.com/10.80.73.40:8020 failed on local exception: java.net.SocketException: Connection refused
