@@ -175,7 +175,8 @@ run_job_instance(#job_instance{jid = JId, name = Name, cmd_line = Cmd}) ->
 %  FileName = io_lib:format("~s_~p-~p-~p-~p:~p:~p",
 %                           [Name, Y, M, D, H, Min, Sec]),
 %  file:write_file(FileName, io_lib:fwrite("~s", [os:cmd(Cmd)]), [write]),
-    os:cmd(Cmd),
+%    os:cmd(Cmd),
+  timer:sleep(600000),
   WPid ! {JId, self(), ok}.
 
 clear_timeout(JId, JITimeout) ->
