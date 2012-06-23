@@ -242,6 +242,7 @@ init([]) ->
   ets:new(scheduler_heartbeat, [named_table]),
   ets:new(scheduler_assig, [named_table]),
   ets:new(worker_scheduler, [named_table]),
+  ets:new(scheduler_jobs, [named_table]),
   {ok, #state{schedulers = []}}.
 
 %%------------------------------------------------------------------------------
@@ -298,6 +299,12 @@ handle_leader_call({add_scheduler, SName, Workers}, _From,
   end;
 handle_leader_call({remove_scheduler, SName}, _From,
                    State = #state{schedulers = Schedulers}, _Election) ->
+  JNames = case ets:lookup(scheduler_jobs, SName) of
+             [] -> [];
+             [{_, Js}] -> Js
+           end,
+  ets:delete(scheduler_jobs, SName),
+  reassign_jobs(JNames, lists:delete(SName, Schedulers)),
   case dron_monitor:remove_scheduler(Schedulers, SName) of
     {error, Reason} -> {reply, {error, Reason}, State};
     RemWs           -> {reply, RemWs, {remove_scheduler, SName, RemWs},
@@ -350,13 +357,24 @@ handle_leader_call({get_workers, SName}, _From,
 %%------------------------------------------------------------------------------
 handle_leader_cast({schedule, Job = #job{name = Name}},
                    State = #state{schedulers = Schedulers}, _Election) ->
-  rpc:call(dron_hash:hash(Name, Schedulers), dron_scheduler, schedule, [Job]),
-  {ok, State};
+  SName = dron_hash:hash(Name, Schedulers),
+  JNames = case ets:lookup(scheduler_jobs, SName) of
+             [] -> [];
+             [{_, Js}] -> Js
+           end,
+  ets:insert(scheduler_jobs, {SName, [Name | JNames]}),
+  rpc:call(SName, dron_scheduler, schedule, [Job]),
+  {ok, {schedule, Name}, State};
 handle_leader_cast({unschedule, JName},
                    State = #state{schedulers = Schedulers}, _Election) ->
-  rpc:call(dron_hash:hash(JName, Schedulers), dron_scheduler, unschedule,
-           [JName]),
-  {ok, State};
+  SName = dron_hash:hash(JName, Schedulers),
+  JNames = case ets:lookup(scheduler_jobs, SName) of
+             [] -> [];
+             [{_, Js}] -> Js
+           end,
+  ets:insert(scheduler_jobs, {SName, lists:delete(JName, JNames)}),
+  rpc:call(SName, dron_scheduler, unschedule, [JName]),
+  {ok, {unschedule, JName}, State};
 handle_leader_cast({succeeded, JId = {Name, _Date}},
                    State = #state{schedulers = Schedulers}, _Election) ->
   EndTime = calendar:local_time(),
@@ -416,6 +434,24 @@ handle_leader_cast({release_slot, WName}, State, _Election) ->
 %%------------------------------------------------------------------------------
 %% @private
 %%------------------------------------------------------------------------------
+from_leader({schedule, JName}, State = #state{schedulers = Schedulers},
+            _Election) ->
+  SName = dron_hash:hash(JName, Schedulers),
+  JNames = case ets:lookup(scheduler_jobs, SName) of
+             [] -> [];
+             [{_, Js}] -> Js
+           end,
+  ets:insert(scheduler_jobs, {SName, [JName | JNames]}),
+  {ok, State};
+from_leader({unschedule, JName}, State = #state{schedulers = Schedulers},
+            _Election) ->
+  SName = dron_hash:hash(JName, Schedulers),
+  JNames = case ets:lookup(scheduler_jobs, SName) of
+             [] -> [];
+             [{_, Js}] -> Js
+           end,
+  ets:insert(scheduler_jobs, {SName, lists:delete(JName, JNames)}),
+  {ok, State};
 from_leader({scheduler_heartbeat, SName, Time, Req}, State, _Election) ->
   ets:insert(scheduler_heartbeat, {SName, {Req, Time}}),
   {ok, State};
@@ -442,6 +478,7 @@ from_leader({add_scheduler, SName, AddedWs},
   {ok, State#state{schedulers = [SName | Schedulers]}};    
 from_leader({remove_scheduler, SName, RemWs},
             State = #state{schedulers = Schedulers}, _Election) ->
+  ets:delete(scheduler_jobs, SName),
   ets:delete(scheduler_heartbeat, SName),
   ets:delete(scheduler_assig, SName),
   lists:map(fun(W) ->
@@ -530,3 +567,18 @@ dependency_satisfied(RId, Schedulers) ->
                     rpc:cast(dron_hash:hash(Name, Schedulers),
                              dron_scheduler, dependency_satisfied, [RId, JId])
             end, JIds).
+
+%%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
+reassign_jobs([], _) ->
+  ok;
+reassign_jobs([JName | JNames], Schedulers) ->
+  SName = dron_hash:hash(JName, Schedulers),
+  Js = case ets:lookup(scheduler_jobs, SName) of
+             [] -> [];
+             [{_, Jobs}] -> Jobs
+           end,
+  ets:insert(scheduler_jobs, {SName, [JName, Js]}),
+  rpc:call(SName, dron_scheduler, take_job, [JName]),
+  reassign_jobs(JNames, Schedulers).

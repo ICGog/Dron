@@ -119,36 +119,20 @@ ERROR REPORT==== 4-Jun-2012::22:33:18 ===
 Approx 1500 procs on it.
 
 -------------------------------------------------------------------------------------
-3x3 workers, 1 scheduler(ip-10-111-15-73)
+5x3 workers, 1 scheduler(ip-10-111-15-73) 150 000 slots
 
 
+12:11:00
 dron_test:register_long_jobs(1,25000, 250).
-
+12:13:30
 dron_test:register_long_jobs(25001,50000, 250).
-
+12:16:00
 dron_test:register_long_jobs(50001,75000, 250).
-
+12:18:38
 dron_test:register_long_jobs(75001,100000, 250).
+12:21:30
+dron_test:register_long_jobs(100001,125000, 250).
+11:24:03
+dron_test:register_long_jobs(125001,150000, 250).
 
-
-
-dron_test:register_long_jobs(20001,30000, 250).
-
-dron_test:register_long_jobs(30001,40000, 250).
-
-dron_test:register_long_jobs(40001,50000, 250).
-
-dron_test:register_long_jobs(50001,60000, 250).
-
-dron_test:register_long_jobs(60001,25000, 250).
-
-dron_test:register_long_jobs(70001,27500, 250).
-
-dron_test:register_long_jobs(27501,30000, 250).
-
-dron_test:register_long_jobs(30001,32500, 250).
-
-
-
-
-
+stopped at 11:34

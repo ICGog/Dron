@@ -12,7 +12,7 @@
 
 -export([start/3, stop/0, schedule/1, unschedule/1]).
 
--export([job_instance_succeeded/1, job_instance_failed/2,
+-export([take_job/1, job_instance_succeeded/1, job_instance_failed/2,
          job_instance_timeout/1, job_instance_killed/1,
          dependency_satisfied/2, worker_disabled/1,
          store_waiting_job_instance_timer/2,
@@ -51,6 +51,9 @@ schedule(Job) ->
 %%------------------------------------------------------------------------------
 unschedule(JName) ->
     gen_leader:leader_cast(?MODULE, {unschedule, JName}).
+
+take_job(JName) ->
+    gen_leader:leader_cast(?MODULE, {take_job, JName}).
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -235,6 +238,12 @@ handle_leader_cast({unschedule, JName}, State, _Election) ->
     unschedule_job_inmemory(JName),
     ok = dron_db:archive_job(JName),
     {ok, {unschedule, JName}, State};
+handle_leader_cast({take_job, JName}, State, _Election) ->
+  RunTime = dron_db:get_last_run_time(JName),
+  {ok, Job = #job{frequency = Freq}} = dron_db:get_job(JName),
+  STime = calendar:gregorian_seconds_to_datetime(calendar:datetime_to_gregorian_seconds(RunTime) + Freq),
+  schedule(Job#job{start_time = STime}),
+  {noreply, State};
 % A failing leader can potentially take down many processes that are running
 % ji_succeeded,ji_failed... Fix it.
 handle_leader_cast({succeeded, JId}, State, _Election) ->

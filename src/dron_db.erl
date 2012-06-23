@@ -6,7 +6,7 @@
 -export([store_job/1, get_job/1, get_job_unsync/1, store_job_instance/1,
          get_job_instance/1, get_job_instance_unsync/1, get_job_instance/2,
          set_job_instance_state/2, archive_job/1, store_worker/1,
-         delete_worker/1, get_worker/1, get_workers/1,
+         delete_worker/1, get_worker/1, get_workers/1, get_last_run_time/1,
          update_workers_scheduler/2, get_workers_of_scheduler/1,
          get_job_instances_on_worker/1, get_dependants/1, store_dependant/2,
          set_resource_state/2, adjust_slot/2]).
@@ -121,6 +121,24 @@ get_job_instance(JName, RTime) ->
     {atomic, []}            -> {error, no_job_instance};
     {atomic, _JobInstances} -> {error, multiple_job_instances};
     {aborted, Reason}       -> {error, Reason}
+  end.
+
+get_last_run_time(JName) ->
+  Trans = fun() ->
+              qlc:eval(qlc:q([JI || JI <- mnesia:table(job_instances),
+                                    JI#job_instance.name == JName]))
+          end,
+  {atomic, JIs} = mnesia:transaction(Trans),
+  get_last_run(JIs, {{1970, 1, 1}, {1, 0, 0}}).
+
+get_last_run([], RT) ->
+  RT;
+get_last_run([#job_instance{run_time = JRT} | JIs], RT) ->
+  if
+    JRT > RT ->
+      get_last_run(JIs, JRT);
+    true ->
+      get_last_run(JIs, RT)
   end.
 
 %%------------------------------------------------------------------------------
