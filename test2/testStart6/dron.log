@@ -1,25 +1,4 @@
 start6() ->                         Basic deep first combined with biggest first.
-  create_agg_uv_hive(),
-  create_ad_uv_hive(),
-  create_join_uv_hive(),
-  agg_uv_hive(),
-  grep_mapred(),
-  create_grep_hive(),
-  create_select_rank_hive(),
-  timer:sleep(60000),
-  join_uv_mapred(),
-  timer:sleep(10000),
-  agg_uv_mapred(),
-  timer:sleep(10000),
-  grep_hive(),
-  timer:sleep(40000),
-  join_uv_hive(),
-  timer:sleep(40000),
-  ad_uv_hive(),
-  select_rank_mapred(),
-  select_rank_hive().
-
-
 
 
 

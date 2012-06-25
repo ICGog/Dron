@@ -1,0 +1,13 @@
+start5()                         Clever deep first
+
+start6() Basic deep first combined with biggest first.
+
+
+start() - default - prioritizes MR because they take to time to transform.
+
+start4() - deep first + but keep some for later in order to improve efficiency
+
+
+http://ec2-184-73-62-174.compute-1.amazonaws.com/ - ip-10-108-22-119.ec2 - JT
+ec2-23-20-26-138.compute-1.amazonaws.com
+ip-10-98-54-194 - Dron

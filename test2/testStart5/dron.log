@@ -1,20 +1,5 @@
 start5() ->                        Clever deep first
-  create_agg_uv_hive(),
-  create_ad_uv_hive(),
-  create_join_uv_hive(),
-  agg_uv_hive(),
-  ad_uv_hive(),
-  join_uv_mapred(),
-  join_uv_hive(),
-  timer:sleep(90000),
-  create_grep_hive(),
-  create_select_rank_hive(),
-  select_rank_mapred(),
-  agg_uv_mapred(),
-  select_rank_hive(),
-  timer:sleep(70000),
-  grep_mapred(),
-  grep_hive().
+
 
 
 Started schedulers: [{'s@ip-10-98-54-194',['w@ip-10-98-54-194']}]

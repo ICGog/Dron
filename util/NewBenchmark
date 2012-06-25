@@ -1,0 +1,34 @@
+
+git pull origin dron3
+
+cd Dron;./rebar get-deps
+
+scp ~/code/amazon/DronTest.pem
+
+scp ~/down/collectl
+
+ssh-agent
+
+ssh-add DronTest.pem
+
+copy AWS stuff
+
+source ~/.bashrc
+
+~/whirr-0.7.1/bin/whirr launch-cluster --config ~/Dron/hadoop.properties --private-key-file ~/.ssh/id_rsa_whirr
+
+export HADOOP_CONF_DIR=~/.whirr/dron
+
+. ~/.whirr/dron/hadoop-proxy.sh
+
+change security group
+
+ssh-add ~/.ssh/id_rsa_whirr
+
+~/whirr-0.7.1/bin/whirr list-cluster --config ~/Dron/hadoop.properties
+
+deploy collectl on local as well
+
+make DRON_MASTERS="dron" DRON_SCHEDULERS="s" DRON_WORKERS="w" DRON_DB="dron s" DRON_NODES="s w" run
+ 
+python ec2.py start ami-d2e640bb m1.large 3 3 ami-d2e640bb m1.large 1

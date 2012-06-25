@@ -1,22 +1,5 @@
 start4().
 
-start4() ->
-  create_agg_uv_hive(),
-  create_ad_uv_hive(),
-  agg_uv_hive(),
-  ad_uv_hive(),
-  join_uv_mapred(),
-  timer:sleep(90000),
-  create_grep_hive(),
-  create_select_rank_hive(),
-  create_join_uv_hive(),
-  grep_mapred(),
-  select_rank_mapred(),
-  agg_uv_mapred(),
-  grep_hive(),
-  select_rank_hive(),
-  join_uv_hive().
-
 
 dron_benchmark:start4().
 

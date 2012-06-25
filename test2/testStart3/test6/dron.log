@@ -1,11 +1,4 @@
-start3() ->
-  create_hive(),
-  agg_uv_mapred(),
-  register_hive(),
-  timer:sleep(70000),
-  grep_mapred(),
-  select_rank_mapred(),
-  join_uv_mapred().
+start3() 
 
 
 =INFO REPORT==== 25-May-2012::22:30:25 ===

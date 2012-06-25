@@ -1,0 +1,714 @@
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=latex 2011.10.13)  18 JUN 2012 14:18
+entering extended mode
+ %&-line parsing enabled.
+**\input report.tex
+(./report.tex (/usr/share/texmf-texlive/tex/latex/base/report.cls
+Document Class: report 2007/10/19 v1.4h Standard LaTeX document class
+(/usr/share/texmf-texlive/tex/latex/base/size11.clo
+File: size11.clo 2007/10/19 v1.4h Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@chapter=\count80
+\c@section=\count81
+\c@subsection=\count82
+\c@subsubsection=\count83
+\c@paragraph=\count84
+\c@subparagraph=\count85
+\c@figure=\count86
+\c@table=\count87
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+(/usr/share/texmf-texlive/tex/latex/graphics/graphicx.sty
+Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf-texlive/tex/latex/graphics/keyval.sty
+Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
+\KV@toks@=\toks14
+)
+(/usr/share/texmf-texlive/tex/latex/graphics/graphics.sty
+Package: graphics 2009/02/05 v1.0o Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf-texlive/tex/latex/graphics/trig.sty
+Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
+)
+(/etc/texmf/tex/latex/config/graphics.cfg
+File: graphics.cfg 2009/08/28 v1.8 graphics configuration of TeX Live
+)
+Package graphics Info: Driver file: dvips.def on input line 91.
+
+(/usr/share/texmf-texlive/tex/latex/graphics/dvips.def
+File: dvips.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
+))
+\Gin@req@height=\dimen103
+\Gin@req@width=\dimen104
+)
+(/usr/share/texmf-texlive/tex/latex/tools/tabularx.sty
+Package: tabularx 1999/01/07 v2.07 `tabularx' package (DPC)
+
+(/usr/share/texmf-texlive/tex/latex/tools/array.sty
+Package: array 2008/09/09 v2.4c Tabular extension package (FMi)
+\col@sep=\dimen105
+\extrarowheight=\dimen106
+\NC@list=\toks15
+\extratabsurround=\skip43
+\backup@length=\skip44
+)
+\TX@col@width=\dimen107
+\TX@old@table=\dimen108
+\TX@old@col=\dimen109
+\TX@target=\dimen110
+\TX@delta=\dimen111
+\TX@cols=\count88
+\TX@ftn=\toks16
+)
+(/usr/share/texmf-texlive/tex/latex/listings/listings.sty
+\lst@mode=\count89
+\lst@gtempboxa=\box26
+\lst@token=\toks17
+\lst@length=\count90
+\lst@currlwidth=\dimen112
+\lst@column=\count91
+\lst@pos=\count92
+\lst@lostspace=\dimen113
+\lst@width=\dimen114
+\lst@newlines=\count93
+\lst@lineno=\count94
+\lst@maxwidth=\dimen115
+
+(/usr/share/texmf-texlive/tex/latex/listings/lstmisc.sty
+File: lstmisc.sty 2007/02/22 1.4 (Carsten Heinz)
+\c@lstnumber=\count95
+\lst@skipnumbers=\count96
+\lst@framebox=\box27
+)
+(/usr/share/texmf-texlive/tex/latex/listings/listings.cfg
+File: listings.cfg 2007/02/22 1.4 listings configuration
+))
+Package: listings 2007/02/22 1.4 (Carsten Heinz)
+
+(/usr/share/texmf-texlive/tex/latex/graphics/color.sty
+Package: color 2005/11/14 v1.0j Standard LaTeX Color (DPC)
+
+(/etc/texmf/tex/latex/config/color.cfg
+File: color.cfg 2007/01/18 v1.5 color configuration of teTeX/TeXLive
+)
+Package color Info: Driver file: dvips.def on input line 130.
+
+(/usr/share/texmf-texlive/tex/latex/graphics/dvipsnam.def
+File: dvipsnam.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
+))
+(/usr/share/texmf-texlive/tex/latex/tools/layout.sty
+Package: layout 2000/09/25 v1.2c Show layout parameters
+\oneinch=\count97
+\cnt@paperwidth=\count98
+\cnt@paperheight=\count99
+\cnt@hoffset=\count100
+\cnt@voffset=\count101
+\cnt@textheight=\count102
+\cnt@textwidth=\count103
+\cnt@topmargin=\count104
+\cnt@oddsidemargin=\count105
+\cnt@evensidemargin=\count106
+\cnt@headheight=\count107
+\cnt@headsep=\count108
+\cnt@marginparsep=\count109
+\cnt@marginparwidth=\count110
+\cnt@marginparpush=\count111
+\cnt@footskip=\count112
+\fheight=\count113
+\ref@top=\count114
+\ref@hoffset=\count115
+\ref@voffset=\count116
+\ref@head=\count117
+\ref@body=\count118
+\ref@foot=\count119
+\ref@margin=\count120
+\ref@marginwidth=\count121
+\ref@marginpar=\count122
+\Interval=\count123
+\ExtraYPos=\count124
+\PositionX=\count125
+\PositionY=\count126
+\ArrowLength=\count127
+)
+(/usr/share/texmf-texlive/tex/latex/fancyhdr/fancyhdr.sty
+\fancy@headwidth=\skip45
+\f@ncyO@elh=\skip46
+\f@ncyO@erh=\skip47
+\f@ncyO@olh=\skip48
+\f@ncyO@orh=\skip49
+\f@ncyO@elf=\skip50
+\f@ncyO@erf=\skip51
+\f@ncyO@olf=\skip52
+\f@ncyO@orf=\skip53
+)
+(/usr/share/texmf-texlive/tex/latex/amsmath/amsmath.sty
+Package: amsmath 2000/07/18 v2.13 AMS math features
+\@mathmargin=\skip54
+
+For additional information on amsmath, use the `?' option.
+(/usr/share/texmf-texlive/tex/latex/amsmath/amstext.sty
+Package: amstext 2000/06/29 v2.01
+
+(/usr/share/texmf-texlive/tex/latex/amsmath/amsgen.sty
+File: amsgen.sty 1999/11/30 v2.0
+\@emptytoks=\toks18
+\ex@=\dimen116
+))
+(/usr/share/texmf-texlive/tex/latex/amsmath/amsbsy.sty
+Package: amsbsy 1999/11/29 v1.2d
+\pmbraise@=\dimen117
+)
+(/usr/share/texmf-texlive/tex/latex/amsmath/amsopn.sty
+Package: amsopn 1999/12/14 v2.01 operator names
+)
+\inf@bad=\count128
+LaTeX Info: Redefining \frac on input line 211.
+\uproot@=\count129
+\leftroot@=\count130
+LaTeX Info: Redefining \overline on input line 307.
+\classnum@=\count131
+\DOTSCASE@=\count132
+LaTeX Info: Redefining \ldots on input line 379.
+LaTeX Info: Redefining \dots on input line 382.
+LaTeX Info: Redefining \cdots on input line 467.
+\Mathstrutbox@=\box28
+\strutbox@=\box29
+\big@size=\dimen118
+LaTeX Font Info:    Redeclaring font encoding OML on input line 567.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 568.
+\macc@depth=\count133
+\c@MaxMatrixCols=\count134
+\dotsspace@=\muskip10
+\c@parentequation=\count135
+\dspbrk@lvl=\count136
+\tag@help=\toks19
+\row@=\count137
+\column@=\count138
+\maxfields@=\count139
+\andhelp@=\toks20
+\eqnshift@=\dimen119
+\alignsep@=\dimen120
+\tagshift@=\dimen121
+\tagwidth@=\dimen122
+\totwidth@=\dimen123
+\lineht@=\dimen124
+\@envbody=\toks21
+\multlinegap=\skip55
+\multlinetaggap=\skip56
+\mathdisplay@stack=\toks22
+LaTeX Info: Redefining \[ on input line 2666.
+LaTeX Info: Redefining \] on input line 2667.
+)
+(/usr/share/texmf-texlive/tex/latex/mdwtools/syntax.sty
+Package: syntax 1996/05/17 1.07 Syntax typesetting (MDW)
+\grammarparsep=\skip57
+\grammarindent=\dimen125
+\sdstartspace=\skip58
+\sdendspace=\skip59
+\sdmidskip=\skip60
+\sdtokskip=\skip61
+\sdfinalskip=\skip62
+\sdrulewidth=\dimen126
+\sdcirclediam=\dimen127
+\sdindent=\dimen128
+) (./report.aux
+
+LaTeX Warning: Label `lst:OozieMR' multiply defined.
+
+)
+\openout1 = `report.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
+\c@lstlisting=\count140
+ [1
+
+] [2]
+Underfull \hbox (badness 10000) in paragraph at lines 81--83
+
+ []
+
+[3] [4]
+Underfull \hbox (badness 10000) in paragraph at lines 99--101
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 102--104
+
+ []
+
+[5] [6] (./report.toc [7
+
+]
+
+Package Fancyhdr Warning: \headheight is too small (12.0pt): 
+ Make it at least 13.59999pt.
+ We now make it that large for the rest of the document.
+ This may cause the page layout to be inconsistent, however.
+
+[8])
+\tf@toc=\write3
+\openout3 = `report.toc'.
+
+ [9]
+Chapter 1.
+[10
+
+]
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 140.
+
+ (/usr/share/texmf-texlive/tex/latex/base/omscmr.fd
+File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10.95> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 140.
+ [11] [12] [13]
+Chapter 2.
+[14
+
+]
+Overfull \hbox (3.04211pt too wide) in paragraph at lines 204--205
+[]\OT1/cmr/m/n/10.95 Together with MapRe-duce, Google has de-vel-oped \OT1/cmr/
+bx/n/10.95 Google File Sys-tem (GFS)
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 214--215
+
+ []
+
+[15] (/usr/share/texmf-texlive/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2004/09/05 1.3 listings language file
+)
+LaTeX Font Info:    Try loading font information for OML+cmr on input line 219.
+
+
+(/usr/share/texmf-texlive/tex/latex/base/omlcmr.fd
+File: omlcmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OML/cmr/m/n' in size <9> not available
+(Font)              Font shape `OML/cmm/m/it' tried instead on input line 219.
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <9> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 220.
+
+Underfull \hbox (badness 10000) in paragraph at lines 239--240
+
+ []
+
+[16]
+File: HadoopMR.eps Graphic file (type eps)
+ <HadoopMR.eps>
+Overfull \hbox (1.84827pt too wide) in paragraph at lines 274--276
+\OT1/cmr/m/n/10.95 data an-a-lyz-ing MapRe-duce jobs. Thus, the em-pha-sis was 
+set on high through-
+ []
+
+[17]
+File: HDFS.eps Graphic file (type eps)
+ <HDFS.eps>
+Overfull \hbox (18.08685pt too wide) in paragraph at lines 286--287
+ [][] 
+ []
+
+[18]
+Underfull \hbox (badness 10000) in paragraph at lines 312--313
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 322--323
+
+ []
+
+[19] [20]
+Underfull \vbox (badness 1337) has occurred while \output is active []
+
+ [21]
+[22] [23]
+File: Dryad.eps Graphic file (type eps)
+ <Dryad.eps>
+Overfull \hbox (0.67896pt too wide) in paragraph at lines 428--429
+ [][] 
+ []
+
+[24]
+File: Mesos.eps Graphic file (type eps)
+ <Mesos.eps>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[25]
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+Underfull \hbox (badness 1783) in paragraph at lines 503--504
+[]|\OT1/cmr/m/n/10.95 converts a PT-able into a col-lec-tion of type PT-able
+ []
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[26] [27]
+Underfull \hbox (badness 10000) in paragraph at lines 534--535
+
+ []
+
+(/usr/share/texmf-texlive/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2004/09/05 1.3 listings language file
+)
+(/usr/share/texmf-texlive/tex/latex/listings/lstmisc.sty
+File: lstmisc.sty 2007/02/22 1.4 (Carsten Heinz)
+) [28] [29]
+Underfull \hbox (badness 10000) in paragraph at lines 609--610
+
+ []
+
+File: DAGMan.eps Graphic file (type eps)
+<DAGMan.eps>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[30]
+File: Gearman.eps Graphic file (type eps)
+ <Gearman.eps>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[31] [32] [33]
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[34] [35]
+Chapter 3.
+[36
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 804--805
+
+ []
+
+(/usr/share/texmf-texlive/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2004/09/05 1.3 listings language file
+)
+(/usr/share/texmf-texlive/tex/latex/listings/lstlang2.sty
+File: lstlang2.sty 2004/09/05 1.3 listings language file
+)
+(/usr/share/texmf-texlive/tex/latex/listings/lstlang3.sty
+File: lstlang3.sty 2004/09/05 1.3 listings language file
+)
+Underfull \hbox (badness 10000) in paragraph at lines 832--833
+
+ []
+
+[37] [38] [39]
+File: DronDesign1.eps Graphic file (type eps)
+ <DronDesign1.eps> [40] [41] [42]
+File: ZooKeeper.eps Graphic file (type eps)
+ <ZooKeeper.eps> [43]
+File: DronErlang.eps Graphic file (type eps)
+
+<DronErlang.eps> [44] [45]
+Overfull \hbox (4.2674pt too wide) in paragraph at lines 1019--1020
+[]\OT1/cmr/m/n/10.95 In an ini-tial ver-sion, we have stored all the timers in 
+the state of the gen[]server
+ []
+
+[46]
+File: JobStates.eps Graphic file (type eps)
+ <JobStates.eps> [47] [48] [49] [50] [51] [52] [53] [54] [55] [56] [57]
+File: DronDesign2.eps Graphic file (type eps)
+
+<DronDesign2.eps>
+Overfull \hbox (3.72093pt too wide) in paragraph at lines 1333--1334
+ [][] 
+ []
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[58] [59]
+Underfull \hbox (badness 2762) in paragraph at lines 1385--1386
+[]|\OT1/cmr/m/n/10.95 A sched-uler is of-fer-ing Num-ber
+ []
+
+File: DronWorkers.eps Graphic file (type eps)
+<DronWorkers.eps>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[60] [61] [62]
+Chapter 4.
+[63
+
+]
+File: AdaptFramework.eps Graphic file (type eps)
+ <AdaptFramework.eps>
+Overfull \hbox (27.81093pt too wide) in paragraph at lines 1453--1454
+ [][] 
+ []
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[64] [65] [66]
+File: HadoopAdapt.eps Graphic file (type eps)
+ <HadoopAdapt.eps> [67]
+Underfull \hbox (badness 10000) in paragraph at lines 1583--1584
+
+ []
+
+[68]
+Underfull \hbox (badness 10000) in paragraph at lines 1614--1616
+
+ []
+
+[69] [70]
+Chapter 5.
+[71
+
+]
+File: ooziedelay.eps Graphic file (type eps)
+ <ooziedelay.eps>
+File: drondelay.eps Graphic file (type eps)
+ <drondelay.eps>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+File: ooziedelaybig.eps Graphic file (type eps)
+<ooziedelaybig.eps>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+File: drondelaybig.eps Graphic file (type eps)
+<drondelaybig.eps>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[72] [73] [74]
+File: latency-one-cpu.eps Graphic file (type eps)
+ <latency-one-cpu.eps>
+Overfull \hbox (10.5214pt too wide) in paragraph at lines 1738--1739
+ [][] 
+ []
+
+File: latency-one-mem.eps Graphic file (type eps)
+<latency-one-mem.eps>
+Overfull \hbox (18.32306pt too wide) in paragraph at lines 1745--1746
+ [][] 
+ []
+
+
+Underfull \hbox (badness 1533) in paragraph at lines 1746--1746
+[]\OT1/cmr/m/n/10.95 Figure 5.6: Mem-ory us-age on the
+ []
+
+[75] [76]
+File: dron-large-cpu.eps Graphic file (type eps)
+ <dron-large-cpu.eps>
+Overfull \hbox (10.5214pt too wide) in paragraph at lines 1774--1775
+ [][] 
+ []
+
+File: dron-large-mem.eps Graphic file (type eps)
+<dron-large-mem.eps>
+Overfull \hbox (18.32306pt too wide) in paragraph at lines 1781--1782
+ [][] 
+ []
+
+[77]
+File: TestDAG.eps Graphic file (type eps)
+ <TestDAG.eps>
+Overfull \hbox (0.86241pt too wide) in paragraph at lines 1817--1818
+ [][] 
+ []
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[78] [79]
+Underfull \hbox (badness 1975) in paragraph at lines 1848--1851
+[]|\OT1/cmr/bx/n/10.95 uservisits\OT1/cmr/m/n/10.95 (sourceIp var-char(16), des
+tUrl var-char(100),
+ []
+
+[80]
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[81]
+File: MultiJoin.eps Graphic file (type eps)
+ <MultiJoin.eps>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[82]
+File: benchmark-duration.eps Graphic file (type eps)
+ <benchmark-duration.eps> [83]
+File: dron-cpu.eps Graphic file (type eps)
+ <dron-cpu.eps>
+Overfull \hbox (28.08963pt too wide) in paragraph at lines 1998--1999
+ [][] 
+ []
+
+File: dron-mem.eps Graphic file (type eps)
+<dron-mem.eps>
+Overfull \hbox (16.3901pt too wide) in paragraph at lines 2005--2006
+ [][] 
+ []
+
+[84]
+File: jtnn-cpu.eps Graphic file (type eps)
+ <jtnn-cpu.eps>
+Overfull \hbox (28.08963pt too wide) in paragraph at lines 2023--2024
+ [][] 
+ []
+
+File: jtnn-mem.eps Graphic file (type eps)
+<jtnn-mem.eps>
+Overfull \hbox (16.3901pt too wide) in paragraph at lines 2030--2031
+ [][] 
+ []
+
+File: avg-cpu-w.eps Graphic file (type eps)
+<avg-cpu-w.eps>
+Overfull \hbox (28.08963pt too wide) in paragraph at lines 2042--2043
+ [][] 
+ []
+
+File: sd-cpu-w.eps Graphic file (type eps)
+<sd-cpu-w.eps>
+Overfull \hbox (16.3901pt too wide) in paragraph at lines 2049--2050
+ [][] 
+ []
+
+[85]
+File: avg-mem-w.eps Graphic file (type eps)
+ <avg-mem-w.eps>
+Overfull \hbox (28.08963pt too wide) in paragraph at lines 2062--2063
+ [][] 
+ []
+
+File: sd-mem-w.eps Graphic file (type eps)
+<sd-mem-w.eps>
+Overfull \hbox (16.3901pt too wide) in paragraph at lines 2069--2070
+ [][] 
+ []
+
+[86]
+File: avg-net-w.eps Graphic file (type eps)
+ <avg-net-w.eps>
+Overfull \hbox (28.08963pt too wide) in paragraph at lines 2082--2083
+ [][] 
+ []
+
+File: avg-dsk-w.eps Graphic file (type eps)
+<avg-dsk-w.eps>
+Overfull \hbox (16.3901pt too wide) in paragraph at lines 2089--2090
+ [][] 
+ []
+
+
+Underfull \hbox (badness 1406) in paragraph at lines 2090--2090
+[]\OT1/cmr/m/n/10.95 Figure 5.21: Av-er-age disk us-age on
+ []
+
+[87] [88]
+Chapter 6.
+
+Underfull \hbox (badness 10000) in paragraph at lines 2148--2149
+
+ []
+
+(/usr/share/texmf-texlive/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2004/09/05 1.3 listings language file
+) [89
+
+]
+Underfull \hbox (badness 10000) in paragraph at lines 2161--2162
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2173--2174
+
+ []
+
+File: Recommender.eps Graphic file (type eps)
+<Recommender.eps>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[90] (/usr/share/texmf-texlive/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2004/09/05 1.3 listings language file
+)
+(/usr/share/texmf-texlive/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2004/09/05 1.3 listings language file
+) [91] [92]
+Chapter 7.
+[93
+
+]
+Overfull \hbox (0.99654pt too wide) in paragraph at lines 2245--2247
+\OT1/cmr/m/n/10.95 Further re-search into schedul-ing al-go-rithms could be con
+-ducted. The schedul-
+ []
+
+[94] [95]
+Underfull \hbox (badness 10000) in paragraph at lines 2271--2273
+\OT1/cmr/m/it/10.95 https://sites.google.com/site/io/underneath-the-covers-at-g
+oogle-current-
+ []
+
+[96
+
+] [97] [98] [99] [100]
+Appendix A.
+File: dron-4-sched-lat-cpu.eps Graphic file (type eps)
+<dron-4-sched-lat-cpu.eps>
+Overfull \hbox (28.08963pt too wide) in paragraph at lines 2502--2503
+ [][] 
+ []
+
+File: dron-4-sched-lat-mem.eps Graphic file (type eps)
+<dron-4-sched-lat-mem.eps>
+Overfull \hbox (16.3901pt too wide) in paragraph at lines 2509--2510
+ [][] 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2516--2517
+
+ []
+
+[101
+
+] [102] [103] (./report.aux)
+
+LaTeX Warning: There were multiply-defined labels.
+
+ ) 
+Here is how much of TeX's memory you used:
+ 4076 strings out of 495062
+ 53272 string characters out of 1182643
+ 321422 words of memory out of 3000000
+ 7182 multiletter control sequences out of 15000+50000
+ 11493 words of font info for 41 fonts, out of 3000000 for 9000
+ 28 hyphenation exceptions out of 8191
+ 30i,14n,51p,1189b,1772s stack positions out of 5000i,500n,10000p,200000b,50000s
+
+Output written on report.dvi (103 pages, 484900 bytes).

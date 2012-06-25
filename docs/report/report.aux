@@ -1,0 +1,397 @@
+\relax 
+\citation{IDC}
+\citation{MapReduce}
+\citation{Hadoop}
+\citation{Dryad}
+\citation{DryadLinq}
+\citation{Hive}
+\citation{Pig}
+\citation{Sawzall}
+\citation{FlumeJava}
+\@writefile{toc}{\contentsline {chapter}{\numberline {1}Introduction}{10}}
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\@writefile{toc}{\contentsline {section}{\numberline {1.1}Motivation}{10}}
+\citation{FacebookWarehouse}
+\citation{Scribe}
+\citation{HDFS}
+\@writefile{toc}{\contentsline {section}{\numberline {1.2}Contributions}{11}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.3}Outline of this report}{12}}
+\citation{MapReduce}
+\@writefile{toc}{\contentsline {chapter}{\numberline {2}Background}{14}}
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\@writefile{toc}{\contentsline {section}{\numberline {2.1}MapReduce}{14}}
+\newlabel{sec:MapReduce}{{2.1}{14}}
+\citation{GFS}
+\citation{MapReduce}
+\citation{Hadoop}
+\@writefile{toc}{\contentsline {section}{\numberline {2.2}Hadoop Ecosystem}{15}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.1}MapReduce}{15}}
+\newlabel{lst:MapFunction}{{2.1}{16}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {2.1}Word Count Map Function}{16}}
+\newlabel{lst:ReduceFunction}{{2.2}{16}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {2.2}Word Count Reduce Function}{16}}
+\citation{HDFS}
+\citation{ClusterFailure}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.1}{\ignorespaces Hadoop MapReduce Overview}}{17}}
+\newlabel{fig:HadoopMR}{{2.1}{17}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.2}Hadoop Distributed File System}{17}}
+\citation{Mahout}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.2}{\ignorespaces HDFS Overview}}{18}}
+\newlabel{fig:HDFS}{{2.2}{18}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.3}Mahout}{18}}
+\newlabel{sec:Mahout}{{2.2.3}{18}}
+\citation{Hive}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.4}Dron and Hadoop}{19}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.3}Query Engines on Top of MapReduce}{19}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3.1}Hive}{19}}
+\newlabel{lst:HiveDataDef}{{2.3}{19}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {2.3}Example of a Hive Data Definition Statement}{19}}
+\citation{Thrift}
+\citation{Pig}
+\citation{Sawzall}
+\newlabel{lst:HiveQuery}{{2.4}{20}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {2.4}Example of a Hive Query}{20}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3.2}Pig}{20}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3.3}Google's Solutions}{20}}
+\citation{Dremel}
+\citation{Bigtable}
+\citation{Tenzing}
+\citation{Spark}
+\citation{Spark2}
+\citation{HaLoop}
+\citation{Twister}
+\@writefile{toc}{\contentsline {subsubsection}{Sawzall}{21}}
+\@writefile{toc}{\contentsline {subsubsection}{Dremel}{21}}
+\@writefile{toc}{\contentsline {subsubsection}{Tenzing}{21}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.4}Iterative Computation}{22}}
+\newlabel{sec:IterativeMapReduce}{{2.4}{22}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.1}Spark}{22}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.2}HaLoop}{22}}
+\citation{Dryad}
+\citation{DryadLinq}
+\citation{Pregel}
+\citation{Percolator}
+\citation{Boom}
+\citation{Ciel}
+\@writefile{toc}{\contentsline {section}{\numberline {2.5}Non-MapReduce Systems}{23}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5.1}Dryad}{23}}
+\citation{DryadInc}
+\citation{Ciel}
+\citation{Skywriting}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.3}{\ignorespaces Dryad Operators}}{24}}
+\newlabel{fig:Dryad}{{2.3}{24}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5.2}CIEL}{24}}
+\citation{Mesos}
+\citation{Mesos2}
+\@writefile{toc}{\contentsline {section}{\numberline {2.6}Mesos}{25}}
+\citation{FlumeJava}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.4}{\ignorespaces Resource Offering Overview}}{26}}
+\newlabel{fig:Mesos}{{2.4}{26}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.7}Related Work}{26}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.1}FlumeJava}{26}}
+\citation{Oozie}
+\@writefile{lot}{\contentsline {table}{\numberline {2.1}{\ignorespaces FlumeJava's Collections}}{27}}
+\newlabel{tab:FlumeJavaCol}{{2.1}{27}}
+\@writefile{lot}{\contentsline {table}{\numberline {2.2}{\ignorespaces FlumeJava's Operators}}{27}}
+\newlabel{tab:FlumeJavaOp}{{2.2}{27}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.2}Oozie}{27}}
+\newlabel{lst:OozieMR}{{2.5}{28}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {2.5}Example of an Oozie Pig Job}{28}}
+\newlabel{lst:OozieMR}{{2.6}{29}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {2.6}Example of an Oozie MapReduce Job}{29}}
+\citation{Nova}
+\citation{Condor}
+\citation{DAGMan}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.3}Condor and DAGMan}{30}}
+\newlabel{lst:DAGManLan}{{2.7}{30}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {2.7}Example of DAGMan's supported language}{30}}
+\citation{Gearman}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.5}{\ignorespaces Example of a DAGMan Job Graph}}{31}}
+\newlabel{fig:DAGMan}{{2.5}{31}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.4}Gearman}{31}}
+\citation{Cascading}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.6}{\ignorespaces Gearman Overview}}{32}}
+\newlabel{fig:Gearman}{{2.6}{32}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.5}Cascading}{32}}
+\citation{Quartz}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.6}Quartz}{33}}
+\citation{Moab}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.7}Moab}{34}}
+\@writefile{lot}{\contentsline {table}{\numberline {2.3}{\ignorespaces Job States}}{35}}
+\newlabel{tab:Moab}{{2.3}{35}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {3}Dron Architecture and Implementation}{36}}
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\@writefile{toc}{\contentsline {section}{\numberline {3.1}Overview}{36}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.2}Dron API}{37}}
+\newlabel{lst:JobReg}{{3.1}{37}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3.1}Example of job registration}{37}}
+\newlabel{lst:JobDepReg}{{3.2}{38}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3.2}Example of registration of a job with dependencies}{38}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.3}Architecture}{38}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.1}{\ignorespaces Architecture Overview}}{40}}
+\newlabel{fig:DronDesign1}{{3.1}{40}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.4}Erlang Background}{41}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.5}First Iteration}{41}}
+\citation{Zookeeper}
+\@writefile{toc}{\contentsline {subsubsection}{Single Master With a Database}{42}}
+\@writefile{toc}{\contentsline {subsubsection}{Multiple Masters Organized in a ZooKeeper Quorum}{42}}
+\citation{Zab}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.2}{\ignorespaces ZooKeeper usage example}}{43}}
+\newlabel{fig:ZooKeeper}{{3.2}{43}}
+\@writefile{toc}{\contentsline {subsubsection}{Shadowed Master}{43}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5.1}Modules}{44}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.3}{\ignorespaces Implementation Overview}}{44}}
+\newlabel{fig:DronErlang}{{3.3}{44}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5.2}Scheduler}{45}}
+\@writefile{toc}{\contentsline {subsubsection}{Description}{45}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.4}{\ignorespaces Job instance state transitions}}{47}}
+\newlabel{fig:JobStates}{{3.4}{47}}
+\@writefile{toc}{\contentsline {subsubsection}{Failures}{47}}
+\@writefile{toc}{\contentsline {subsubsection}{Leader Election}{47}}
+\citation{LeaderElection1}
+\citation{LeaderElection2}
+\citation{GenLeader}
+\newlabel{lst:GLeader}{{3.3}{49}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3.3}gen\_leader behaviour}{49}}
+\citation{CAP}
+\@writefile{toc}{\contentsline {subsubsection}{Gen Leader}{50}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5.3}Pool}{50}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5.4}Publisher/Subscriber}{51}}
+\@writefile{toc}{\contentsline {subsubsection}{Kafka}{51}}
+\@writefile{toc}{\contentsline {subsubsection}{RabbitMQ}{52}}
+\@writefile{toc}{\contentsline {subsubsection}{Usage}{54}}
+\newlabel{lst:DronPubSub}{{3.4}{55}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3.4}Publisher/Subscriber usage}{55}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5.5}Worker}{55}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5.6}Issues Encountered}{56}}
+\@writefile{lot}{\contentsline {table}{\numberline {3.1}{\ignorespaces Scalability issues encountered by the first architecture as optimization were conducted}}{56}}
+\newlabel{tab:Dron1JI}{{3.1}{56}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.6}Second Iteration}{57}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.6.1}Description}{57}}
+\@writefile{toc}{\contentsline {subsubsection}{Coordinator}{57}}
+\citation{ConsistentHashing}
+\@writefile{toc}{\contentsline {subsubsection}{Scheduler}{58}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.5}{\ignorespaces Architecture Overview}}{59}}
+\newlabel{fig:DronDesign2}{{3.5}{59}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.6.2}Workers Balancing}{59}}
+\newlabel{subsec:WorkersBalancing}{{3.6.2}{59}}
+\@writefile{lot}{\contentsline {table}{\numberline {3.2}{\ignorespaces Worker Pools Balancing Protocol}}{60}}
+\newlabel{tab:WorkersBalancing}{{3.2}{60}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.6}{\ignorespaces Workers Balancing}}{61}}
+\newlabel{fig:DronWorkers}{{3.6}{61}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.7}Summary}{62}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {4}Integrating Frameworks}{63}}
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:Integration}{{4}{63}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.1}Introduction}{63}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.1}{\ignorespaces Possibilities of Adapting Frameworks}}{64}}
+\newlabel{fig:AdaptFramework}{{4.1}{64}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.1}{\ignorespaces Dron Events}}{65}}
+\newlabel{tab:DronEvents}{{4.1}{65}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.2}Hadoop MapReduce}{65}}
+\newlabel{lst:MRAdapt}{{4.1}{66}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.1}Job State Listener}{66}}
+\citation{Spark}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.2}{\ignorespaces Hadoop Integration Design}}{67}}
+\newlabel{fig:HadoopAdapt}{{4.2}{67}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.3}Spark}{67}}
+\newlabel{lst:MRAdapt2}{{4.2}{68}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.2}Event Publisher}{68}}
+\newlabel{lst:Spark}{{4.3}{68}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.3}Additions to the Mesos scheduler: whenever a job completes, a JSON object is constructed and published according to the job's state.}{68}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.4}Mahout}{69}}
+\newlabel{lst:Mahout}{{4.4}{69}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.4}Excerpt of Mahout Adaptation}{69}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.5}Summary}{69}}
+\citation{Oozie}
+\citation{ClusterFailure}
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}Evaluation}{71}}
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:Evaluation}{{5}{71}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.1}Dron's Scalability}{71}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.1}Dron and Oozie}{71}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.1}{\ignorespaces Histogram showing Oozie's scheduling delay on a test with 100 jobs}}{72}}
+\newlabel{fig:OozieDelay}{{5.1}{72}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.2}{\ignorespaces Histogram showing Dron's scheduling delay on a test with 100 jobs}}{73}}
+\newlabel{fig:DronDelay}{{5.2}{73}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.2}Scheduling Delay}{73}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.3}{\ignorespaces Histogram showing Oozie's scheduling delay on a test with 1000 jobs}}{74}}
+\newlabel{fig:OozieDelayBig}{{5.3}{74}}
+\citation{LinearHashing}
+\citation{ConsistentHashing}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.4}{\ignorespaces Histogram showing Dron's scheduling delay on a test with 1000 jobs}}{75}}
+\newlabel{fig:DronDelayBig}{{5.4}{75}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.3}High Load}{75}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.5}{\ignorespaces CPU usage on the machine running the Dron Coordinator, Scheduler and Database during the benchmark testing scheduling delay}}{76}}
+\newlabel{fig:LatencyOneCpu}{{5.5}{76}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.6}{\ignorespaces Memory usage on the machine running the Dron Coordinator, Scheduler and Database during the benchmark testing scheduling delay}}{76}}
+\newlabel{fig:LatencyOneMem}{{5.6}{76}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.7}{\ignorespaces CPU usage on the machine running the Dron Coordinator, Scheduler and Database during the high load benchmark}}{77}}
+\newlabel{fig:DronLargeCpu}{{5.7}{77}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.8}{\ignorespaces Memory usage on the machine running the Dron Coordinator, Scheduler and Database during the high load benchmark}}{77}}
+\newlabel{fig:DronLargeMem}{{5.8}{77}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.2}Scheduling Evaluation}{77}}
+\newlabel{sec:schedulingEvaluation}{{5.2}{77}}
+\citation{PavloBenchmark}
+\citation{HiveBenchmark}
+\citation{MapReduce}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2.1}Node Configuration}{78}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2.2}Benchmark Description}{78}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.9}{\ignorespaces Direct acyclic graph of jobs used for benchmark}}{79}}
+\newlabel{fig:TestDAG}{{5.9}{79}}
+\@writefile{lot}{\contentsline {table}{\numberline {5.1}{\ignorespaces Benchmark Hive table's information}}{80}}
+\newlabel{tab:TestHiveTables}{{5.1}{80}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2.3}Scheduling Strategies}{80}}
+\@writefile{toc}{\contentsline {subsubsection}{1st Strategy}{81}}
+\@writefile{lot}{\contentsline {table}{\numberline {5.2}{\ignorespaces Hadoop jobs running information for scheduling using 1st strategy}}{81}}
+\newlabel{tab:DronTest1Jobs}{{5.2}{81}}
+\@writefile{toc}{\contentsline {subsubsection}{2nd Strategy}{81}}
+\@writefile{toc}{\contentsline {subsubsection}{3rd Strategy}{81}}
+\@writefile{lot}{\contentsline {table}{\numberline {5.3}{\ignorespaces Hadoop jobs running information for scheduling using 2nd strategy}}{82}}
+\newlabel{tab:DronTest2Jobs}{{5.3}{82}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.10}{\ignorespaces Example of Dron jobs composed of multiple MapReduce jobs}}{82}}
+\newlabel{fig:MultiJoin}{{5.10}{82}}
+\@writefile{toc}{\contentsline {subsubsection}{4th Strategy}{82}}
+\@writefile{lot}{\contentsline {table}{\numberline {5.4}{\ignorespaces Hadoop jobs running information for scheduling using 3rd strategy}}{83}}
+\newlabel{tab:DronTest3Jobs}{{5.4}{83}}
+\@writefile{lot}{\contentsline {table}{\numberline {5.5}{\ignorespaces Hadoop jobs running information for scheduling using 4th strategy}}{83}}
+\newlabel{tab:DronTest4Jobs}{{5.5}{83}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2.4}Results}{83}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.11}{\ignorespaces Duration of benchmark depending on the strategy used while scheduling}}{84}}
+\newlabel{fig:BenchmarkDuration}{{5.11}{84}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.12}{\ignorespaces CPU usage on Dron node}}{85}}
+\newlabel{fig:DronCpu}{{5.12}{85}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.13}{\ignorespaces Memory usage on Dron node}}{85}}
+\newlabel{fig:DronMem}{{5.13}{85}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.14}{\ignorespaces CPU usage on JobTracker/NameNode node}}{85}}
+\newlabel{fig:jtnnCpu}{{5.14}{85}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.15}{\ignorespaces Memory usage on JobTracker/NameNode node}}{85}}
+\newlabel{fig:jtnnMem}{{5.15}{85}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.16}{\ignorespaces Average CPU usage on worker nodes}}{86}}
+\newlabel{fig:AvgCpuW}{{5.16}{86}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.17}{\ignorespaces CPU usage standard deviation on worker nodes}}{86}}
+\newlabel{fig:SdCpuW}{{5.17}{86}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.18}{\ignorespaces Average memory usage on worker nodes}}{86}}
+\newlabel{fig:AvgMemW}{{5.18}{86}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.19}{\ignorespaces Memory usage standard deviation on worker nodes}}{86}}
+\newlabel{fig:SdMemW}{{5.19}{86}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.20}{\ignorespaces Average network usage on worker nodes}}{87}}
+\newlabel{fig:AvgNetW}{{5.20}{87}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5.21}{\ignorespaces Average disk usage on worker nodes}}{87}}
+\newlabel{fig:AvgDskW}{{5.21}{87}}
+\@writefile{lot}{\contentsline {table}{\numberline {5.6}{\ignorespaces Average Network Utilization on Worker Nodes}}{87}}
+\newlabel{tab:NetSpeed}{{5.6}{87}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.3}Discussion}{87}}
+\citation{RecommenderSystem}
+\@writefile{toc}{\contentsline {chapter}{\numberline {6}Recommendation Engine Based on Dron and Mahout}{89}}
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:Recommendation}{{6}{89}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.1}Description}{89}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.2}Implementation}{89}}
+\newlabel{lst:CreatePreferences}{{6.1}{90}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6.1}SQL statement that creates the rpeferences table}{90}}
+\newlabel{lst:CreateSimilarities}{{6.2}{90}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6.2}SQL statement that creates the similarities table}{90}}
+\newlabel{lst:DumpPreferences}{{6.3}{90}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6.3}SQL statement that dumps the preferences table to a file}{90}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6.1}{\ignorespaces Workflow implementing a recommender system}}{91}}
+\newlabel{fig:RecommendationEngine}{{6.1}{91}}
+\newlabel{lst:MahoutJob}{{6.4}{91}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6.4}Unix command starting the ItemSimilarity Mahout job}{91}}
+\newlabel{lst:LoadSimilarities}{{6.5}{92}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6.5}MySQL query that loads data into the similarities table}{92}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {7}Conclusions}{93}}
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\@writefile{toc}{\contentsline {section}{\numberline {7.1}Future Work}{94}}
+\bibcite{IDC}{1}
+\bibcite{ClusterFailure}{2}
+\bibcite{MapReduce}{3}
+\bibcite{Hadoop}{4}
+\bibcite{Dryad}{5}
+\bibcite{DryadLinq}{6}
+\bibcite{Hive}{7}
+\bibcite{Pig}{8}
+\bibcite{Sawzall}{9}
+\bibcite{FlumeJava}{10}
+\bibcite{FacebookWarehouse}{11}
+\bibcite{Scribe}{12}
+\bibcite{HDFS}{13}
+\bibcite{PageRank}{14}
+\bibcite{Mahout}{15}
+\bibcite{Spark}{16}
+\bibcite{Spark2}{17}
+\bibcite{HaLoop}{18}
+\bibcite{Twister}{19}
+\bibcite{Skywriting}{20}
+\bibcite{Ciel}{21}
+\bibcite{Pregel}{22}
+\bibcite{Mesos}{23}
+\bibcite{Mesos2}{24}
+\bibcite{Zookeeper}{25}
+\bibcite{Zab}{26}
+\bibcite{LinearHashing}{27}
+\bibcite{ConsistentHashing}{28}
+\bibcite{GFS}{29}
+\bibcite{Cascading}{30}
+\bibcite{Piccolo}{31}
+\bibcite{Oozie}{32}
+\bibcite{Gearman}{33}
+\bibcite{Quartz}{34}
+\bibcite{Moab}{35}
+\bibcite{Tenzing}{36}
+\bibcite{Dremel}{37}
+\bibcite{Thrift}{38}
+\bibcite{Bigtable}{39}
+\bibcite{Boom}{40}
+\bibcite{Nova}{41}
+\bibcite{Condor}{42}
+\bibcite{DAGMan}{43}
+\bibcite{Percolator}{44}
+\bibcite{DryadInc}{45}
+\bibcite{LeaderElection1}{46}
+\bibcite{LeaderElection2}{47}
+\bibcite{GenLeader}{48}
+\bibcite{CAP}{49}
+\bibcite{HiveBenchmark}{50}
+\bibcite{PavloBenchmark}{51}
+\bibcite{RecommenderSystem}{52}
+\@writefile{toc}{\contentsline {chapter}{\numberline {A}Benchmark Evalution}{101}}
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:EvalQueries}{{A}{101}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.1}Dron Latency Test}{101}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.1}{\ignorespaces CPU usage on the machine running Dron Coordinator, Scheduler and Database}}{101}}
+\newlabel{fig:LatencyFourCpu}{{A.1}{101}}
+\@writefile{lof}{\contentsline {figure}{\numberline {A.2}{\ignorespaces Memory usage on the machine running Dron Coordinator, Scheduler and Database}}{101}}
+\newlabel{fig:LatencyFourMem}{{A.2}{101}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.2}Hive Queries}{101}}
+\newlabel{lst:CreateGrepSel}{{A.1}{101}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {A.1}Create Grep select table}{101}}
+\newlabel{lst:CreateRankingSel}{{A.2}{102}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {A.2}Create Rankings select table}{102}}
+\newlabel{lst:CreateUVJoin}{{A.3}{102}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {A.3}Create UserVisits join table}{102}}
+\newlabel{lst:CreateUVAgg}{{A.4}{102}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {A.4}Create UserVisits aggregation table}{102}}
+\newlabel{lst:CreateUVAd}{{A.5}{102}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {A.5}Create UserVisits ads table}{102}}
+\newlabel{lst:Grep}{{A.6}{102}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {A.6}Selects entries that contains XYZ}{102}}
+\newlabel{lst:JoinUV}{{A.7}{102}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {A.7}Joins Rankings and UserVisits tables}{102}}
+\newlabel{lst:SelRank}{{A.8}{102}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {A.8}Selects entries that have a page rank higher than 10}{102}}
+\newlabel{lst:AggUV}{{A.9}{102}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {A.9}Calculates ads revenue generated by each IP}{102}}
+\newlabel{lst:AdUV}{{A.10}{102}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {A.10}Calculates ads revenue for each day}{102}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.3}Benchmark Run Information}{103}}
+\@writefile{lot}{\contentsline {table}{\numberline {A.1}{\ignorespaces Information about the Map tasks executed with every strategy}}{103}}
+\newlabel{tab:LocalMaps}{{A.1}{103}}

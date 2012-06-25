@@ -1,0 +1,48 @@
+
+Trans = fun() ->
+		qlc:eval(qlc:q([JI || JI <- mnesia:table(job_instances)]))
+        end.
+mnesia:transaction(Trans).
+
+
+
+TI = fun(TN, TInfo) -> mnesia:table_info(TN, TInfo) end.
+mnesia:activity(async_dirty, TI, [job_instances, frag_size], mnesia_frag).
+
+rr(dron_api).
+dron_api:register_job(#job{name="ls",cmd_line="ls",start_time={{2012, 01, 18}, {11,77,0}},frequency=10,timeout=10,max_retries=2,dependencies=[],deps_timeout=10}).
+
+
+---------------------------------------------------------------------------------------
+rr(dron_api).
+
+dron_api:register_job(#job{name="lsdep",cmd_line="ls",start_time={{2012, 03, 30}, {12,32,0}},frequency=10,timeout=10,max_retries=2,dependencies=[{"ls", {{2012,01,29},{12,32,0}}}],deps_timeout=10}).
+
+dron_api:register_job(#job{name="ls",cmd_line="ls",start_time={{2012, 03, 30}, {13,18,0}},frequency=0,timeout=10,max_retries=2,dependencies=[],deps_timeout=10}).
+
+
+dron_api:register_job(#job{name="lsdep",cmd_line="ls",start_time={{2012, 03, 30}, {13,07,0}},frequency=0,timeout=10,max_retries=2,dependencies=[{"ls", {today}}],deps_timeout=100}).
+
+
+dron_pubsub:start_link().
+dron_pubsub:setup_exchange(<<"test">>, <<"topic">>).
+dron_pubsub:start_consumer(dron_consumer, <<"test">>, <<"test">>).
+dron_pubsub:publish_message(<<"test">>, <<"test">>, <<"muhahah">>).
+
+
+
+dron_test:register_long_jobs(1,20000,1000).
+dron_test:unregister_long_jobs(1,30).
+dron_test:register_long_jobs(1,20,5).
+
+
+dron_test:register_short_jobs(1001,2000).
+dron_test:register_short_jobs(2001,3000).
+dron_test:register_short_jobs(3001,4000).
+dron_test:register_short_jobs(4001,5000).
+dron_test:register_short_jobs(5001,6000).
+dron_test:register_short_jobs(6001,7000).
+dron_test:register_short_jobs(7001,8000).
+dron_test:register_short_jobs(8001,9000).
+dron_test:register_short_jobs(9001,10000).
+

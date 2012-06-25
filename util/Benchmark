@@ -1,0 +1,22 @@
+1. cd Dron;./rebar get-deps
+2. git pull origin dron3
+3. scp ~/code/amazon/DronTest.pem
+4. ssh-agent
+5. ssh-add DronTest.pem
+6. sudo apt-get install hadoop
+7. sudo apt-get install hadoop-hive
+8. https://ccp.cloudera.com/display/CDHDOC/Hive+Installation
+9. vim ~/.bashrc update DATA_DIR, HADOOP_HOME, HADOOP_CONF_DIR, AWS STUFF
+10. sudo chmod -R 777 /tmp
+10. cd Dron/benchmark/pavlo/datagen/htmlgen
+11. vim config.txt update host & values & path to /mnt/ (Big hdd)
+12. ./mygen config.txt
+13. cp /tmp/data/Rankings.dat ~/data/rankings/
+14. cp /tmp/data/UserVisits.dat ~/data/uservisits/
+15. curl -O http://www.apache.org/dist/whirr/whirr-0.7.1/whirr-0.7.1.tar.gz
+16. tar zxf whirr-0.7.1.tar.gz; cd whirr-0.7.1
+17. ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa_whirr
+18. bin/whirr launch-cluster --config ~/Dron/hadoop.properties --private-key-file ~/.ssh/id_rsa_whirr
+19. start proxy
+20. deploy collect on all nodes
+21. make DRON_MASTERS="dron" DRON_SCHEDULERS="s" DRON_WORKERS="w" DRON_DB="dron s" DRON_NODES="s w" run

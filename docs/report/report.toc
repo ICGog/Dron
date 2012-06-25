@@ -1,0 +1,91 @@
+\contentsline {chapter}{\numberline {1}Introduction}{10}
+\contentsline {section}{\numberline {1.1}Motivation}{10}
+\contentsline {section}{\numberline {1.2}Contributions}{11}
+\contentsline {section}{\numberline {1.3}Outline of this report}{12}
+\contentsline {chapter}{\numberline {2}Background}{14}
+\contentsline {section}{\numberline {2.1}MapReduce}{14}
+\contentsline {section}{\numberline {2.2}Hadoop Ecosystem}{15}
+\contentsline {subsection}{\numberline {2.2.1}MapReduce}{15}
+\contentsline {subsection}{\numberline {2.2.2}Hadoop Distributed File System}{17}
+\contentsline {subsection}{\numberline {2.2.3}Mahout}{18}
+\contentsline {subsection}{\numberline {2.2.4}Dron and Hadoop}{19}
+\contentsline {section}{\numberline {2.3}Query Engines on Top of MapReduce}{19}
+\contentsline {subsection}{\numberline {2.3.1}Hive}{19}
+\contentsline {subsection}{\numberline {2.3.2}Pig}{20}
+\contentsline {subsection}{\numberline {2.3.3}Google's Solutions}{20}
+\contentsline {subsubsection}{Sawzall}{21}
+\contentsline {subsubsection}{Dremel}{21}
+\contentsline {subsubsection}{Tenzing}{21}
+\contentsline {section}{\numberline {2.4}Iterative Computation}{22}
+\contentsline {subsection}{\numberline {2.4.1}Spark}{22}
+\contentsline {subsection}{\numberline {2.4.2}HaLoop}{22}
+\contentsline {section}{\numberline {2.5}Non-MapReduce Systems}{23}
+\contentsline {subsection}{\numberline {2.5.1}Dryad}{23}
+\contentsline {subsection}{\numberline {2.5.2}CIEL}{24}
+\contentsline {section}{\numberline {2.6}Mesos}{25}
+\contentsline {section}{\numberline {2.7}Related Work}{26}
+\contentsline {subsection}{\numberline {2.7.1}FlumeJava}{26}
+\contentsline {subsection}{\numberline {2.7.2}Oozie}{27}
+\contentsline {subsection}{\numberline {2.7.3}Condor and DAGMan}{30}
+\contentsline {subsection}{\numberline {2.7.4}Gearman}{31}
+\contentsline {subsection}{\numberline {2.7.5}Cascading}{32}
+\contentsline {subsection}{\numberline {2.7.6}Quartz}{33}
+\contentsline {subsection}{\numberline {2.7.7}Moab}{34}
+\contentsline {chapter}{\numberline {3}Dron Architecture and Implementation}{36}
+\contentsline {section}{\numberline {3.1}Overview}{36}
+\contentsline {section}{\numberline {3.2}Dron API}{37}
+\contentsline {section}{\numberline {3.3}Architecture}{38}
+\contentsline {section}{\numberline {3.4}Erlang Background}{41}
+\contentsline {section}{\numberline {3.5}First Iteration}{41}
+\contentsline {subsubsection}{Single Master With a Database}{42}
+\contentsline {subsubsection}{Multiple Masters Organized in a ZooKeeper Quorum}{42}
+\contentsline {subsubsection}{Shadowed Master}{43}
+\contentsline {subsection}{\numberline {3.5.1}Modules}{44}
+\contentsline {subsection}{\numberline {3.5.2}Scheduler}{45}
+\contentsline {subsubsection}{Description}{45}
+\contentsline {subsubsection}{Failures}{47}
+\contentsline {subsubsection}{Leader Election}{47}
+\contentsline {subsubsection}{Gen Leader}{50}
+\contentsline {subsection}{\numberline {3.5.3}Pool}{50}
+\contentsline {subsection}{\numberline {3.5.4}Publisher/Subscriber}{51}
+\contentsline {subsubsection}{Kafka}{51}
+\contentsline {subsubsection}{RabbitMQ}{52}
+\contentsline {subsubsection}{Usage}{54}
+\contentsline {subsection}{\numberline {3.5.5}Worker}{55}
+\contentsline {subsection}{\numberline {3.5.6}Issues Encountered}{56}
+\contentsline {section}{\numberline {3.6}Second Iteration}{57}
+\contentsline {subsection}{\numberline {3.6.1}Description}{57}
+\contentsline {subsubsection}{Coordinator}{57}
+\contentsline {subsubsection}{Scheduler}{58}
+\contentsline {subsection}{\numberline {3.6.2}Workers Balancing}{59}
+\contentsline {section}{\numberline {3.7}Summary}{62}
+\contentsline {chapter}{\numberline {4}Integrating Frameworks}{63}
+\contentsline {section}{\numberline {4.1}Introduction}{63}
+\contentsline {section}{\numberline {4.2}Hadoop MapReduce}{65}
+\contentsline {section}{\numberline {4.3}Spark}{67}
+\contentsline {section}{\numberline {4.4}Mahout}{69}
+\contentsline {section}{\numberline {4.5}Summary}{69}
+\contentsline {chapter}{\numberline {5}Evaluation}{71}
+\contentsline {section}{\numberline {5.1}Dron's Scalability}{71}
+\contentsline {subsection}{\numberline {5.1.1}Dron and Oozie}{71}
+\contentsline {subsection}{\numberline {5.1.2}Scheduling Delay}{73}
+\contentsline {subsection}{\numberline {5.1.3}High Load}{75}
+\contentsline {section}{\numberline {5.2}Scheduling Evaluation}{77}
+\contentsline {subsection}{\numberline {5.2.1}Node Configuration}{78}
+\contentsline {subsection}{\numberline {5.2.2}Benchmark Description}{78}
+\contentsline {subsection}{\numberline {5.2.3}Scheduling Strategies}{80}
+\contentsline {subsubsection}{1st Strategy}{81}
+\contentsline {subsubsection}{2nd Strategy}{81}
+\contentsline {subsubsection}{3rd Strategy}{81}
+\contentsline {subsubsection}{4th Strategy}{82}
+\contentsline {subsection}{\numberline {5.2.4}Results}{83}
+\contentsline {section}{\numberline {5.3}Discussion}{87}
+\contentsline {chapter}{\numberline {6}Recommendation Engine Based on Dron and Mahout}{89}
+\contentsline {section}{\numberline {6.1}Description}{89}
+\contentsline {section}{\numberline {6.2}Implementation}{89}
+\contentsline {chapter}{\numberline {7}Conclusions}{93}
+\contentsline {section}{\numberline {7.1}Future Work}{94}
+\contentsline {chapter}{\numberline {A}Benchmark Evalution}{101}
+\contentsline {section}{\numberline {A.1}Dron Latency Test}{101}
+\contentsline {section}{\numberline {A.2}Hive Queries}{101}
+\contentsline {section}{\numberline {A.3}Benchmark Run Information}{103}
